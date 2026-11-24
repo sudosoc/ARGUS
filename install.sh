@@ -5,7 +5,7 @@
 #   ./install.sh --user          install into ~/.local (no root needed)
 #   ./install.sh --uninstall     remove what this script installed
 #
-# What it does: installs build/runtime dependencies, installs Go >= 1.22 if
+# What it does: installs build/runtime dependencies, installs Go >= 1.26 if
 # missing, builds rectool from this directory, installs the binary, downloads
 # the 600+ site WhatsMyName list, and installs the optional external tools
 # (whois, dig, sherlock, theHarvester) that the syswrap module can wrap.
@@ -13,7 +13,7 @@
 set -Eeuo pipefail
 
 # ---------------------------------------------------------------- settings --
-GO_MIN_MINOR=22
+GO_MIN_MINOR=26   # must match the "go" line in go.mod (dependencies need 1.26)
 WMN_URL="https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

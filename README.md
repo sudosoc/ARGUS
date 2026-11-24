@@ -15,11 +15,11 @@ chmod +x install.sh
 ./update.sh             # later: pull the latest version, rebuild, reinstall (--check only looks)
 ```
 
-The installer installs the OS packages it needs, installs Go 1.22+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/rectool/` (rectool finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
+The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/rectool/` (rectool finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
 
 If `~/.local/bin` is not in your `PATH` after a `--user` install, the script prints the line to add.
 
-Manual build instead (needs Go 1.22+):
+Manual build instead (needs Go 1.26+):
 
 ```bash
 make build              # bin/rectool
@@ -48,7 +48,7 @@ It prints a URL containing a random access token; open it in your browser (the t
 
 **Case panel (left).** Fill in whatever you know: every input, collector and option has an **ⓘ** hint (English and Arabic) explaining what turning it on will do. *Aggressive* is on by default; untick it for a quicker, lighter run. Proxies are optional.
 
-**Workspace (right).** Live progress per collector, then seven views of the same data:
+**Workspace (right).** Live progress per collector, then eight views of the same data:
 
 | View | What it gives you |
 |---|---|
@@ -57,6 +57,7 @@ It prints a URL containing a random access token; open it in your browser (the t
 | **Intelligence tree** | Everything organised as Subject → Identity / Contact points / Online accounts / Infrastructure / Organisation / Exposure / Crypto / Search leads, searchable, click any leaf for its evidence |
 | **Relationship graph** | Force-directed map of how leads were found: subject → inputs → what the first pass found → what following those leads found. Drag, zoom, click nodes, hide weak leads |
 | **Findings** | Filterable table (collector, category, minimum confidence); click a row for the full record |
+| **Location** | Where the subject probably is: geocoded evidence clustered on a map, EXIF GPS, activity-hours time zone |
 | **Photos** | Gallery of every profile picture found, with "same picture" groups, size/hash, and reverse-image-search links |
 | **Coverage & integrity** | Per-collector results, **every check that could not complete** (a coverage gap is not proof of absence), run settings, and a SHA-256 digest of the evidence |
 
@@ -78,6 +79,21 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 ### CLI
 
 At least one identifier is required. Ctrl-C stops the run and still writes a partial report (exit code 130).
+
+Other flags worth knowing (`rectool -h` lists all):
+
+| Flag | Effect |
+|---|---|
+| `-list-modules`, `-version` | list the modules / print the version and exit |
+| `-v` | keep not-found and error records in exported reports |
+| `-no-color` | plain console output |
+| `-pivot-depth N`, `-max-pivots N` | rounds of following discovered leads (default 2) / leads followed per round (default 10) |
+| `-retries N`, `-tool-timeout D` | retries on transient errors (default 1) / cap on any external tool's runtime |
+| `-proxy-file F` | one proxy URL per line, rotated |
+| `-insecure` | skip TLS verification (use only for broken targets you are allowed to test) |
+| `-no-wayback` | skip the Internet Archive query in the domain module |
+| `-dork-engines`, `-dork-delay`, `-max-dorks` | dorking engines in order (default `brave,bing,duckduckgo,google`), per-engine delay (3s), dork cap (60) |
+| `-selftest-sites` | validate every site signature, see *Reliability* |
 
 ## Inputs
 
@@ -121,6 +137,8 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 | `records` | full name, domain, IP | SEC EDGAR filings naming the person (needs `-contact you@example.com`, which the SEC requires and which is sent only to sec.gov) and urlscan.io history of a domain or IP. |
 | `images` | name or username | Pictures of the subject: avatars of the handle on ~18 services (via unavatar.io) and web image search for the quoted name, filtered to pages whose title has the name. Always shown as unverified candidates, separate from profile photos. |
 | `people` | full name, LinkedIn link or pasted text | Candidate profiles as structured records for identity resolution: LinkedIn public view (when allowed), ORCID, Wikidata, OpenAlex, Crossref authors, Wikipedia, GitHub, Fediverse WebFinger, Wayback snapshots of profile links, CV documents, pasted text. Name lookups also cover arXiv, Europe PMC, INSPIRE-HEP, the French company register (officers), MusicBrainz and the wider Stack Exchange network. Username lookups add Lobsters, Duolingo, Launchpad, Hex.pm, MetaCPAN, Kitsu, Minecraft, LeetCode, Codewars, Matrix, Gitea, Wikimedia Commons, 13 link-in-bio hubs and ~27 creative and community platforms. Names match across spellings and scripts (Mohamed / Muhammad / محمد, Bob / Robert). |
+| `breach` | e-mail | Which known data breaches the address appears in (XposedOrNot public index): breach names, dates and data types only, never the data itself. |
+| `activity` | username | Estimates the owner's time zone from the hours the handle is active on GitHub, Hacker News, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess; shown in the Location tab. |
 | `footprint` | email or phone | MX, Gravatar profile (name, linked accounts, sites), infostealer exposure (counts/dates only), phone analysis, and web mentions that are verified by fetching each page. |
 | `dorks` | any identifier | Generates dorks from every identifier (site:, filetype:, inurl:, leaks, code, people…) and scrapes Brave / Bing / DuckDuckGo / Google. |
 | `syswrap` | domain, username | Runs `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, `sherlock`, `maigret`, `holehe`, `phoneinfoga` and your custom tools through `os/exec` (those installed). |
@@ -221,6 +239,12 @@ internal/
     dorks/              Dork generation, search-engine scrapers, shared Searcher
     footprint/          Email / phone footprint
     syswrap/            External CLI tool wrappers
+  identity/             Identity resolution: records, clustering, scoring, name matching/transliteration
+  geo/                  Location analysis: geocoding, evidence clustering, time-zone inference
+  media/                Safe (SSRF-guarded) picture download, SHA-256 and perceptual hashing
+  browser/              Opt-in headless Chrome/Chromium fetch of public pages (-browser)
+  cvparse/ jsonld/      CV text parsing; schema.org Person extraction
+  leads/ health/        Manual-lead links per identifier; liveness probes of the public services used
   extract/ probe/ rdap/ intel/   Shared helpers: HTML extraction, web/TLS probes, RDAP client, normalisation
 configs/  data/  scripts/
 ```
@@ -266,7 +290,7 @@ go vet ./... && go test -race ./...
 
 - **Search engines.** Google and DuckDuckGo usually challenge plain-HTTP scrapers, and Bing may return unrelated pages; Brave works best. Blocked engines are skipped for the rest of the run. The dorks module reports this as errors, and footprint only keeps pages it could fetch and verify. A proxy via `-proxy` may help, but results are never guaranteed.
 - **Site signatures.** Social checks depend on each platform's current responses and can produce false positives or negatives.
-- **No breach data.** `footprint` does not query or download breach or credential databases.
+- **Breach data is names only.** The `breach` module queries the public XposedOrNot index and reports which breaches an e-mail appears in (names, dates, data types). `footprint` and rectool never download or store breach contents or credentials.
 - **Offline phone analysis.** The calling-code table is partial and does not look up carriers or owners.
 
 ## Credits
