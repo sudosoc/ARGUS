@@ -213,6 +213,9 @@ func flatten(e rEntity) []Contact {
 				}
 				name, _ := arr[0].(string)
 				val, _ := arr[3].(string)
+				if a, ok := arr[3].([]any); ok && len(a) > 0 { // structured values (org) are arrays
+					val, _ = a[0].(string)
+				}
 				val = strings.TrimSpace(val)
 				if redacted(val) {
 					continue
@@ -221,11 +224,6 @@ func flatten(e rEntity) []Contact {
 				case "fn":
 					c.Name = val
 				case "org":
-					if val == "" { // org may be an array value
-						if a, ok := arr[3].([]any); ok && len(a) > 0 {
-							val, _ = a[0].(string)
-						}
-					}
 					c.Org = val
 				case "email":
 					c.Email = strings.ToLower(val)
