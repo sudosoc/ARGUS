@@ -20,6 +20,7 @@ import (
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -173,7 +174,7 @@ func wpUsers(ctx context.Context, c *httpx.Client, base string, emit func(models
 	for _, u := range users {
 		line := html.UnescapeString(u.Name)
 		if u.Desc != "" {
-			line += " — " + clip(strings.Join(strings.Fields(html.UnescapeString(u.Desc)), " "), 100)
+			line += " — " + util.Clip(strings.Join(strings.Fields(html.UnescapeString(u.Desc)), " "), 100)
 		}
 		lines = append(lines, line)
 		if strings.Contains(strings.TrimSpace(u.Name), " ") {
@@ -186,14 +187,6 @@ func wpUsers(ctx context.Context, c *httpx.Client, base string, emit func(models
 	emit(models.Finding{Source: "WordPress authors", Category: "site-people", URL: base + "/wp-json/wp/v2/users", Status: models.StatusFound, Confidence: 0.75,
 		Details: map[string]string{"authors": fmt.Sprint(len(users)), "who": strings.Join(lines, " | "),
 			"note": "the site's public author list; a slug is also the author's WordPress login name"}, Entities: ents})
-}
-
-func clip(s string, n int) string {
-	r := []rune(s)
-	if len(r) > n {
-		return string(r[:n]) + "…"
-	}
-	return s
 }
 
 var feedLink = regexp.MustCompile(`(?i)<link[^>]+type=["']application/(?:rss|atom)\+xml["'][^>]*>`)

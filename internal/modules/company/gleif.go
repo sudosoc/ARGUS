@@ -8,6 +8,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // gleif queries the Global LEI Foundation registry: official legal-entity
@@ -47,7 +48,7 @@ func gleif(ctx context.Context, c *httpx.Client, name string, tokens []string, e
 		} `json:"data"`
 	}
 	u := "https://api.gleif.org/api/v1/lei-records?page%5Bsize%5D=8&filter%5Bfulltext%5D=" + url.QueryEscape(name)
-	if !getJSON(ctx, c, u, &r) {
+	if !util.GetJSON(ctx, c, u, &r) {
 		return
 	}
 	emitted := 0
@@ -66,18 +67,18 @@ func gleif(ctx context.Context, c *httpx.Client, name string, tokens []string, e
 		}
 		emitted++
 		d := map[string]string{"LEI": rec.Attributes.LEI, "legal name": legal, "status": e.Status}
-		put(d, "jurisdiction", e.Jurisdiction)
-		put(d, "category", e.Category)
-		put(d, "legal form", strings.TrimSpace(e.LegalForm.Other+" "+e.LegalForm.ID))
-		put(d, "registered as (local ID)", e.RegisteredAs)
-		put(d, "legal address", e.LegalAddress.String())
-		put(d, "headquarters", e.HQAddress.String())
-		put(d, "created", e.CreationDate)
+		util.Put(d, "jurisdiction", e.Jurisdiction)
+		util.Put(d, "category", e.Category)
+		util.Put(d, "legal form", strings.TrimSpace(e.LegalForm.Other+" "+e.LegalForm.ID))
+		util.Put(d, "registered as (local ID)", e.RegisteredAs)
+		util.Put(d, "legal address", e.LegalAddress.String())
+		util.Put(d, "headquarters", e.HQAddress.String())
+		util.Put(d, "created", e.CreationDate)
 		var others []string
 		for _, o := range e.OtherNames {
 			others = append(others, o.Name)
 		}
-		put(d, "other names", strings.Join(others, ", "))
+		util.Put(d, "other names", strings.Join(others, ", "))
 		d["note"] = "official GLEIF record; several legal entities can share a brand name"
 		var ents []models.Entity
 		if loc := e.HQAddress.short(); loc != "" {

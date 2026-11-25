@@ -11,6 +11,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // More public records that name people: research indexes (arXiv, Europe PMC,
@@ -177,7 +178,7 @@ func europePMC(ctx context.Context, c *httpx.Client, t models.Target, emit func(
 			}
 			cd.n++
 			if aff != "" {
-				cd.affs = appendUniq(cd.affs, clip(aff, 160))
+				cd.affs = appendUniq(cd.affs, util.Clip(aff, 160))
 			}
 			if res.Journal != "" {
 				cd.jrn = appendUniq(cd.jrn, res.Journal)
@@ -325,20 +326,10 @@ func franceCompanies(ctx context.Context, c *httpx.Client, t models.Target, emit
 			n++
 			rec := models.Record{Platform: "French company register", URL: "https://annuaire-entreprises.data.gouv.fr/entreprise/" + co.Siren, Name: strings.Title(strings.ToLower(full)),
 				Employers: []string{co.Name}, Roles: []string{d.Qualite + " of " + co.Name}, Headline: d.Qualite,
-				Location: strings.Join(nonEmptyS(co.Siege.Commune, co.Siege.Dept), ", ") + ", France"}
+				Location: strings.Join(util.NonEmpty(co.Siege.Commune, co.Siege.Dept), ", ") + ", France"}
 			emit(finding("French company register officer", "person", 0.5, rec, t))
 		}
 	}
-}
-
-func nonEmptyS(v ...string) []string {
-	var out []string
-	for _, s := range v {
-		if s = strings.TrimSpace(s); s != "" {
-			out = append(out, s)
-		}
-	}
-	return out
 }
 
 // musicBrainz lists people recorded as artists with the name: country, area and
@@ -372,19 +363,10 @@ func musicBrainz(ctx context.Context, c *httpx.Client, t models.Target, emit fun
 			continue
 		}
 		n++
-		rec := models.Record{Platform: "MusicBrainz", URL: "https://musicbrainz.org/artist/" + a.ID, Name: a.Name, Headline: firstNonEmpty2(a.Disamb, "recorded artist"),
-			Location: firstNonEmpty2(a.Area.Name, a.Country), IDs: map[string]string{"musicbrainz": a.ID}}
+		rec := models.Record{Platform: "MusicBrainz", URL: "https://musicbrainz.org/artist/" + a.ID, Name: a.Name, Headline: util.FirstNonEmpty(a.Disamb, "recorded artist"),
+			Location: util.FirstNonEmpty(a.Area.Name, a.Country), IDs: map[string]string{"musicbrainz": a.ID}}
 		emit(finding("MusicBrainz artist", "person", 0.4, rec, t))
 	}
-}
-
-func firstNonEmpty2(v ...string) string {
-	for _, s := range v {
-		if s = strings.TrimSpace(s); s != "" {
-			return s
-		}
-	}
-	return ""
 }
 
 // stackNetwork lists the other Stack Exchange communities a member is active

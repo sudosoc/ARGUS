@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 func TestIsoDate(t *testing.T) {
@@ -17,10 +18,10 @@ func TestIsoDate(t *testing.T) {
 }
 
 func TestClip(t *testing.T) {
-	if got := clip("abc", 5); got != "abc" {
+	if got := util.Clip("abc", 5); got != "abc" {
 		t.Errorf("got %q", got)
 	}
-	if got := clip("héllo wörld", 5); len([]rune(got)) > 7 || got == "héllo wörld" {
+	if got := util.Clip("héllo wörld", 5); len([]rune(got)) > 7 || got == "héllo wörld" {
 		t.Errorf("rune-safe clip failed: %q", got)
 	}
 }

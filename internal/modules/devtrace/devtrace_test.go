@@ -1,6 +1,7 @@
 package devtrace
 
 import (
+	"github.com/sudosoc/argus/internal/util"
 	"reflect"
 	"testing"
 )
@@ -35,7 +36,7 @@ func TestTop(t *testing.T) {
 }
 
 func TestClip(t *testing.T) {
-	if got := clip([]string{"a", "b", "c"}, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
+	if got := util.ClipList([]string{"a", "b", "c"}, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
 		t.Errorf("%v", got)
 	}
 }

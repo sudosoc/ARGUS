@@ -18,6 +18,7 @@ import (
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -382,15 +383,8 @@ func rubyGems(ctx context.Context, c *httpx.Client, h string, emit func(models.F
 	}
 	sort.Strings(al)
 	emit(models.Finding{Source: "RubyGems", Category: "developer", Status: models.StatusUncertain, Confidence: 0.45, URL: "https://rubygems.org/profiles/" + h,
-		Details: map[string]string{"handle": h, "gems": fmt.Sprint(len(gems)), "examples": strings.Join(names, ", "), "author names on gems": strings.Join(clip(al, 8), "; "),
+		Details: map[string]string{"handle": h, "gems": fmt.Sprint(len(gems)), "examples": strings.Join(names, ", "), "author names on gems": strings.Join(util.ClipList(al, 8), "; "),
 			"note": "RubyGems account with this exact username; may belong to someone else"}})
-}
-
-func clip(s []string, n int) []string {
-	if len(s) > n {
-		return s[:n]
-	}
-	return s
 }
 
 // pgpKeyserver lists the identities on public PGP keys that carry the e-mail:
@@ -432,7 +426,7 @@ func pgpKeyserver(ctx context.Context, c *httpx.Client, email string, emit func(
 		return
 	}
 	emit(models.Finding{Source: "PGP keyserver", Category: "developer", Status: models.StatusFound, Confidence: 0.75, URL: "https://keyserver.ubuntu.com/pks/lookup?op=vindex&search=" + url.QueryEscape(email),
-		Details: map[string]string{"identities on keys with this e-mail": strings.Join(clip(uids, 12), "; "),
+		Details: map[string]string{"identities on keys with this e-mail": strings.Join(util.ClipList(uids, 12), "; "),
 			"note": "anyone can upload a key with any e-mail, so a name here is a lead until a second source agrees"},
 		Entities: ents})
 }

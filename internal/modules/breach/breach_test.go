@@ -1,19 +1,20 @@
 package breach
 
 import (
+	"github.com/sudosoc/argus/internal/util"
 	"reflect"
 	"testing"
 )
 
 func TestClip(t *testing.T) {
 	in := []string{"a", "b", "c"}
-	if got := clip(in, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
+	if got := util.ClipList(in, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
 		t.Errorf("clip: %v", got)
 	}
-	if got := clip(in, 5); !reflect.DeepEqual(got, in) {
+	if got := util.ClipList(in, 5); !reflect.DeepEqual(got, in) {
 		t.Errorf("clip longer: %v", got)
 	}
-	if got := clip(nil, 3); len(got) != 0 {
+	if got := util.ClipList(nil, 3); len(got) != 0 {
 		t.Errorf("clip nil: %v", got)
 	}
 }

@@ -7,10 +7,12 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // crossref finds papers whose author list contains the name and groups the
@@ -267,7 +269,7 @@ func stackExchange(ctx context.Context, c *httpx.Client, t models.Target, emit f
 		}
 		n++
 		rec := models.Record{Platform: "Stack Overflow", URL: u.Link, Name: u.DisplayName, Location: u.Location,
-			Photo: u.Image, Bio: clip(stripHTML(u.About), 400), IDs: map[string]string{"stackexchange": itoa(u.AccountID)}}
+			Photo: u.Image, Bio: util.Clip(stripHTML(u.About), 400), IDs: map[string]string{"stackexchange": strconv.Itoa(u.AccountID)}}
 		if u.Website != "" {
 			rec.Websites = []string{u.Website}
 		}

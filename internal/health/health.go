@@ -5,6 +5,7 @@ package health
 import (
 	"context"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -76,7 +77,7 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 				// 404 from lookup-style APIs (e.g. no breaches) still proves the service answers
 				r.OK = resp.StatusCode < 400 || resp.StatusCode == 404
 				if !r.OK {
-					r.Error = "HTTP " + itoa(resp.StatusCode)
+					r.Error = "HTTP " + strconv.Itoa(resp.StatusCode)
 				}
 			}
 			out[i] = r
@@ -85,18 +86,4 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 	wg.Wait()
 	sort.SliceStable(out, func(a, b int) bool { return !out[a].OK && out[b].OK })
 	return out
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [10]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(b[i:])
 }

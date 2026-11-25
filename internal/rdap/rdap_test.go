@@ -2,6 +2,7 @@ package rdap
 
 import (
 	"encoding/json"
+	"github.com/sudosoc/argus/internal/util"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func TestRedacted(t *testing.T) {
 }
 
 func TestFirstNonEmpty(t *testing.T) {
-	if firstNonEmpty("", "", "x", "y") != "x" || firstNonEmpty() != "" {
+	if util.FirstNonEmpty("", "", "x", "y") != "x" || util.FirstNonEmpty() != "" {
 		t.Error("firstNonEmpty")
 	}
 }

@@ -22,6 +22,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Place is a geocoded location.
@@ -213,7 +214,7 @@ func Analyse(points []models.GeoPoint, given string, givenPlace *Place) *models.
 		}
 		lbl := p.City
 		if lbl == "" {
-			lbl = firstNonEmpty(p.Region, p.Country, p.Label)
+			lbl = util.FirstNonEmpty(p.Region, p.Country, p.Label)
 		}
 		if p.City != "" && p.Country != "" {
 			lbl += ", " + p.Country
@@ -275,15 +276,6 @@ func addUniq(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
-}
-
-func firstNonEmpty(v ...string) string {
-	for _, x := range v {
-		if x != "" {
-			return x
-		}
-	}
-	return ""
 }
 
 // ------------------------------------------------------------- timezone

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Contact is a registrant / admin / tech / abuse entity.
@@ -146,7 +147,7 @@ func LookupDomain(ctx context.Context, c *httpx.Client, name string) (*Domain, e
 		for _, c := range d.Contacts {
 			for _, role := range c.Roles {
 				if role == "registrar" && d.Registrar == "" {
-					d.Registrar = firstNonEmpty(c.Org, c.Name)
+					d.Registrar = util.FirstNonEmpty(c.Org, c.Name)
 				}
 			}
 		}
@@ -190,15 +191,6 @@ func LookupIP(ctx context.Context, c *httpx.Client, ip string) (*IPNet, error) {
 		n.Contacts = append(n.Contacts, flatten(e)...)
 	}
 	return n, nil
-}
-
-func firstNonEmpty(s ...string) string {
-	for _, v := range s {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 // flatten turns an entity tree into contacts, parsing each jCard.
