@@ -75,21 +75,83 @@ func TestLoadSitesEmbedded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(sites) < 500 {
+	if len(sites) < 5000 {
 		t.Fatalf("embedded list suspiciously small: %d", len(sites))
 	}
 	seen := map[string]bool{}
+	tiers := map[int]int{}
 	for _, s := range sites {
+		tiers[s.tier()]++
 		if s.Name == "" || s.URICheck == "" {
 			t.Fatalf("site without name or URL: %+v", s)
 		}
-		if !contains(s.URICheck, "{account}") {
-			t.Errorf("%s: uri_check lacks {account}", s.Name)
+		if !contains(s.URICheck+s.PostBody, "{account}") {
+			t.Errorf("%s: neither uri_check nor post_body has {account}", s.Name)
 		}
 		if seen[s.Name] {
 			t.Errorf("duplicate site name %q", s.Name)
 		}
 		seen[s.Name] = true
+	}
+	if tiers[TierCore] < 1000 || tiers[TierExtended] < 1500 || tiers[TierAll] < 5000 {
+		t.Errorf("tier split looks wrong: %v", tiers)
+	}
+}
+
+func TestTierFilter(t *testing.T) {
+	core, _ := New(Config{Tier: TierCore})
+	ext, _ := New(Config{})
+	all, _ := New(Config{Tier: TierAll})
+	if !(core.SiteCount() < ext.SiteCount() && ext.SiteCount() < all.SiteCount()) {
+		t.Errorf("tiers must nest: %d < %d < %d", core.SiteCount(), ext.SiteCount(), all.SiteCount())
+	}
+}
+
+func TestClassifyMultiMarker(t *testing.T) {
+	site := &Site{ECode: 200, EStrings: []string{"profilePage", "memberHeader"}, MStrings: []string{"not found", "no such member"}}
+	cases := map[string]struct {
+		r    *httpx.Response
+		want verdict
+	}{
+		"present marker 2": {resp(200, "<div class='memberHeader'>"), vPresent},
+		"absent marker 2":  {resp(200, "Sorry, no such member"), vAbsent},
+		"neither":          {resp(200, "<html>shell</html>"), vAbsent},
+	}
+	for n, c := range cases {
+		if got := classify(site, c.r); got != c.want {
+			t.Errorf("%s: got %v want %v", n, got, c.want)
+		}
+	}
+}
+
+func TestClassifyBlockedErrorsAndIgnore403(t *testing.T) {
+	site := &Site{ECode: 200, Errors: []string{"captcha required"}}
+	if classify(site, resp(200, "please solve: captcha required")) != vBlocked {
+		t.Error("error marker must classify as blocked")
+	}
+	f := &Site{ECode: 200, EStrings: []string{"profilePage"}, Ignore403: true}
+	if classify(f, resp(403, "profilePage")) != vPresent || classify(f, resp(403, "denied")) != vAbsent {
+		t.Error("ignore403 must judge a 403 page by its content")
+	}
+}
+
+func TestClassifyRedirectCheck(t *testing.T) {
+	site := &Site{Check: checkRedirect}
+	for code, want := range map[int]verdict{200: vPresent, 302: vAbsent, 404: vAbsent, 429: vBlocked, 500: vUnknown} {
+		if got := classify(site, resp(code, "")); got != want {
+			t.Errorf("redirect check %d: got %v want %v", code, got, want)
+		}
+	}
+}
+
+func TestRegexAndStrip(t *testing.T) {
+	s := &Site{Regex: `^[a-z0-9]{3,10}$`, Strip: ".-"}
+	_ = s.compile()
+	if !s.applicable("ab-c.d") || s.applicable("ab") || s.applicable("UPPER") {
+		t.Error("regex is checked after stripping disallowed characters")
+	}
+	if got := s.clean("a.b-c"); got != "abc" {
+		t.Errorf("clean: %q", got)
 	}
 }
 

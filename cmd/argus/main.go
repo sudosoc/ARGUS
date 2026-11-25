@@ -61,6 +61,7 @@ func run() int {
 		insecure   = flag.Bool("insecure", false, "skip TLS certificate verification")
 		sitesFile  = flag.String("sites", "", "custom site list in WhatsMyName JSON format")
 		categories = flag.String("categories", "", "restrict social sites to these categories (comma-separated)")
+		siteTier   = flag.String("site-tier", "extended", "how many username sites to probe: core (best maintained), extended (default), all (adds template forums, slow)")
 		verify     = flag.Bool("verify", false, "re-test hits with a random canary username to drop false positives")
 		derive     = flag.Bool("derive", false, "derive candidate usernames from the full name")
 		noPivot    = flag.Bool("no-pivot", false, "do not follow discovered emails/domains/IPs/usernames")
@@ -107,7 +108,7 @@ func run() int {
 		Workers: *workers, Timeout: *timeout, Retries: *retries, Proxies: proxyList, Insecure: *insecure, InFlight: *inflight,
 		Modules: splitCSV(*modules), Derive: *derive, KeepAll: *verbose,
 		NoPivot: *noPivot, MaxPivots: *maxPivots, PivotDepth: *depth, NoWayback: *noWayback, Aggressive: *aggress, Browser: *useBrowser,
-		SitesFile: *sitesFile, Categories: splitCSV(*categories), Verify: *verify,
+		SiteTier: parseTier(*siteTier), SitesFile: *sitesFile, Categories: splitCSV(*categories), Verify: *verify,
 		DorkEngines: splitCSV(*dorkEngine), DorkDelay: *dorkDelay, MaxDorks: *maxDorks,
 		Tools: splitCSV(*tools), ToolsFile: *toolsFile, ToolTimeout: *toolCap,
 	}
@@ -297,4 +298,15 @@ func readNotes(path string) string {
 		return ""
 	}
 	return string(b)
+}
+
+// parseTier maps -site-tier to the social module's tier numbers.
+func parseTier(s string) int {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "core", "1":
+		return 1
+	case "all", "3":
+		return 3
+	}
+	return 2
 }

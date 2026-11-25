@@ -146,6 +146,7 @@ type ScanRequest struct {
 	Aggressive bool     `json:"aggressive"`
 	Browser    bool     `json:"browser"`
 	Verify     bool     `json:"verify"`
+	SiteTier   string   `json:"site_tier"` // core | extended (default) | all
 	Derive     bool     `json:"derive"`
 	NoPivot    bool     `json:"no_pivot"`
 	Proxies    []string `json:"proxies"`
@@ -239,6 +240,14 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	opts := m.base
 	opts.Modules = req.Modules
 	opts.Verify = req.Verify
+	switch req.SiteTier {
+	case "core":
+		opts.SiteTier = 1
+	case "all":
+		opts.SiteTier = 3
+	case "extended":
+		opts.SiteTier = 2
+	}
 	opts.Derive = req.Derive
 	opts.NoPivot = req.NoPivot
 	opts.Aggressive = req.Aggressive

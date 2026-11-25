@@ -7,19 +7,18 @@
 #
 # What it does: installs build/runtime dependencies, installs Go >= 1.26 if
 # missing, builds argus from this directory, installs the binary, downloads
-# the 600+ site WhatsMyName list, and installs the optional external tools
+# the username-site list, and installs the optional external tools
 # (whois, dig, sherlock, theHarvester) that the syswrap module can wrap.
 
 set -Eeuo pipefail
 
 # ---------------------------------------------------------------- settings --
 GO_MIN_MINOR=26   # must match the "go" line in go.mod (dependencies need 1.26)
-WMN_URL="https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 MODE=""            # system | user (auto-detected unless forced)
 PREFIX=""          # override install prefix (bin/ and share/argus/ go under it)
-DO_DEPS=1 DO_EXTRAS=1 DO_SITES=1 DO_UNINSTALL=0
+DO_DEPS=1 DO_EXTRAS=1 DO_UNINSTALL=0
 SUDO=""
 PM=""
 TMP=""
@@ -45,7 +44,7 @@ Options:
   --prefix DIR      custom prefix (binary in DIR/bin, data in DIR/share/argus)
   --no-deps         skip OS package installation
   --no-extras       skip whois/dig/sherlock/theHarvester
-  --no-sites        skip downloading the WhatsMyName site list
+  --no-sites        (accepted for compatibility; the 10,000+ site list is built into the binary)
   --uninstall       remove argus binary and data
   -h, --help        show this help
 EOF
@@ -59,7 +58,7 @@ while [[ $# -gt 0 ]]; do
     --prefix) PREFIX="${2:?--prefix needs a directory}"; shift ;;
     --no-deps) DO_DEPS=0 ;;
     --no-extras) DO_EXTRAS=0 ;;
-    --no-sites) DO_SITES=0 ;;
+    --no-sites) ;;
     --uninstall) DO_UNINSTALL=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; die "unknown option: $1" ;;
@@ -221,16 +220,6 @@ install_files() {
   ok "installed $BIN_DIR/argus"
 }
 
-fetch_sites() {
-  info "downloading WhatsMyName site list (600+ platforms)"
-  if curl -fsSL --retry 3 -o "$TMP/wmn.json" "$WMN_URL" && grep -q '"sites"' "$TMP/wmn.json"; then
-    $PRIV install -m 0644 "$TMP/wmn.json" "$DATA_DIR/wmn-data.json"
-    ok "site list saved to $DATA_DIR/wmn-data.json (argus picks it up automatically)"
-  else
-    warn "could not download the site list; argus will use its small built-in list"
-  fi
-}
-
 # ------------------------------------------------------------------ extras --
 pipx_run() { # pipx_run ARGS... : pipx with a system-wide home in system mode
   if [[ "$MODE" == system ]]; then
@@ -299,7 +288,6 @@ main() {
   ensure_go
   build_argus
   install_files
-  [[ $DO_SITES -eq 1 ]] && fetch_sites
   [[ $DO_EXTRAS -eq 1 && $DO_DEPS -eq 1 && -n "$PM" ]] && install_extras
 
   # ---- verify
