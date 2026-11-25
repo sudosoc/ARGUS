@@ -38,6 +38,16 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 
 The **Settings** button (top bar, or `Ctrl+K` → Settings) holds the interface **language** (English or Arabic; Arabic switches the whole interface and layout to right-to-left, the choice is kept in your browser, reports and exports stay in English) and keys for model providers (Claude, OpenAI, Gemini, a local Ollama or OpenAI-compatible server) and for tools that need one (a Google API key for The 3rd Eye). Each provider has a masked field, an Enabled switch and **Test connection**; pick the provider and type the exact model name under *Model*. Keys are saved in an AES-256-GCM encrypted file under your config directory (`~/.config/argus/settings.enc`, mode 0600; the key sits next to it, or set `ARGUS_SETTINGS_KEY`), are never sent back to the browser (only the last four characters) and never enter reports or cases. Environment variables (`GOOGLE_API_KEY`, `OPENAI_API_KEY`, …) are read when nothing is stored. A tool that needs a key is skipped, with a note in the report, when its provider is off or has no key; otherwise the key is passed to it in its environment variable only. The encryption protects the file from accidental exposure (backups, a stray copy); it cannot protect against someone who already controls your user account. ARGUS has no model-powered feature yet: the model choice is stored and tested for when one is added.
 
+## Uninstall
+
+```bash
+./uninstall.sh --dry-run     # show what would be removed
+./uninstall.sh               # remove it (asks first)
+./uninstall.sh --purge       # ALSO delete your saved cases, settings and API keys (asks you to type DELETE)
+```
+
+It removes the `argus` program, the helper tools `install.sh` put in its private data directory (the `maigret`, `sherlock`, `holehe`, `h8mail` and `theHarvester` virtualenvs and their links), `phoneinfoga` and `subfinder` from the bin directory, the automatic-update timer or cron entry, and the PATH lines `install.sh` added to your shell start-up files. It finds user (`~/.local`) and system (`/usr/local`) installs; force one with `--user`, `--system` or `--prefix DIR`. It keeps your saved cases and settings unless you pass `--purge`, and never touches exported reports, the source folder you cloned, or OS packages (it prints the commands for those). `--remove-go` also removes the Go toolchain `install.sh` installed; `--keep-extras` leaves `phoneinfoga` and `subfinder`; `--yes` skips the question. `./install.sh --uninstall` runs the same script. It works from a temporary copy, so it can delete the folder it lives in.
+
 ## Documentation
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised, what happens in a run, the web server, the front end and the language layer.

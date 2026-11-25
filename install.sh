@@ -6,7 +6,7 @@
 #   ./install.sh --user            install for the current user only (~/.local, no root needed)
 #   ./install.sh --auto-update     also schedule a daily self-update
 #   ./install.sh --doctor          only report what is installed / missing
-#   ./install.sh --uninstall       remove what this script installed
+#   ./install.sh --uninstall       remove what this script installed (see ./uninstall.sh --help)
 #
 # What it does, end to end:
 #   1. installs the OS packages ARGUS and its helper tools need (curl, git, python3 + venv,
@@ -78,7 +78,7 @@ Options:
   --no-path           do not edit your shell start-up files
   --auto-update[=daily|weekly]   schedule update.sh (default daily)
   --doctor            report installed / missing tools and exit
-  --uninstall         remove the argus binary, its data and helper tools
+  --uninstall         remove ARGUS (runs uninstall.sh; add --purge there to also delete saved cases and keys)
   -h, --help          show this help
 EOF
 }
@@ -149,19 +149,28 @@ fi
 
 # --------------------------------------------------------------- uninstall --
 if [[ $DO_UNINSTALL -eq 1 ]]; then
-  info "removing $BIN_DIR/argus, its helper tools and $DATA_DIR"
-  [[ -f "$SRC_DIR/update.sh" ]] && bash "$SRC_DIR/update.sh" --disable-auto >/dev/null 2>&1 || true
-  for t in "${HELPERS[@]}"; do
-    if [[ -L "$BIN_DIR/$t" && "$(readlink "$BIN_DIR/$t")" == "$TOOLS_DIR/"* ]]; then $PRIV rm -f -- "$BIN_DIR/$t"; fi
-  done
-  $PRIV rm -f -- "$BIN_DIR/argus" "$BIN_DIR/phoneinfoga"
-  safe_rm "$DATA_DIR"
-  for rc in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
-    if [[ -f "$rc" ]]; then sed -i '/# added by SUDOSOC ARGUS/,+1d' "$rc" || true; fi
-  done
-  ok "removed. (Go, OS packages, your reports and saved cases were left untouched.)"
-  exit 0
+  # the standalone uninstaller does the work (previews, asks, keeps your cases unless --purge)
+  [[ -f "$SRC_DIR/uninstall.sh" ]] || die "uninstall.sh not found next to install.sh"
+  args=()
+  if [[ -n "$PREFIX" ]]; then args+=(--prefix "$PREFIX"); elif [[ "$MODE" == user ]]; then args+=(--user); else args+=(--system); fi
+  exec bash "$SRC_DIR/uninstall.sh" "${args[@]}"
 fi
+
+# --------------------------------------------------------------------- WSL --
+is_wsl() { [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; }
+
+# wsl_preflight: the things that commonly go wrong on Windows Subsystem for Linux, said up front.
+wsl_preflight() {
+  info "Windows Subsystem for Linux detected (${WSL_DISTRO_NAME:-unknown distribution})"
+  grep -qi "wsl2" /proc/version 2>/dev/null || warn "this looks like WSL 1: use WSL 2 (in PowerShell: wsl --set-version <distro> 2); builds and downloads are much slower on WSL 1"
+  case "$SRC_DIR" in /mnt/*) warn "the source is on a Windows drive ($SRC_DIR): this is slow and can break file permissions. Clone it inside Linux instead (cd ~ && git clone $REPO_URL)";; esac
+  case "$PWD" in /mnt/*) warn "you are on a Windows drive ($PWD). Work from your Linux home (cd ~) for speed and correct permissions" ;; esac
+  local mem; mem="$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)"
+  [[ "$mem" -gt 0 && "$mem" -lt 2000 ]] && warn "WSL has only ${mem} MB of memory; the build needs about 2 GB. Raise it in %UserProfile%\\.wslconfig ([wsl2] memory=4GB) and run: wsl --shutdown"
+  if ! curl -fsS -m 12 -o /dev/null "https://go.dev/VERSION?m=text" 2>/dev/null; then
+    warn "cannot reach go.dev from WSL. Check the Windows network, VPN or proxy; if names do not resolve, try: sudo sh -c 'echo nameserver 1.1.1.1 > /etc/resolv.conf'"
+  fi
+}
 
 # -------------------------------------------------------- package managers --
 detect_pm() {
@@ -244,8 +253,15 @@ install_browser() { # Chrome/Chromium is needed only for -browser and PDF report
   if browser_present; then ok "browser already installed"; return; fi
   local p
   for p in chromium chromium-browser; do
+    # on Ubuntu "chromium-browser" is a snap stub that does not work under WSL
+    if [[ "$p" == chromium-browser ]] && is_wsl; then continue; fi
     if pm_install "$p" 2>/dev/null && browser_present; then ok "installed $p"; return; fi
   done
+  if is_wsl && [[ "$PM" == apt-get && "$(uname -m)" == x86_64 ]]; then
+    info "installing Google Chrome (.deb) for -browser and PDF reports"
+    if retry 2 curl -fSL -o "$TMP/chrome.deb" "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+       && $PSUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$TMP/chrome.deb" >/dev/null 2>&1 && browser_present; then ok "installed google-chrome"; return; fi
+  fi
   warn "no Chrome/Chromium package available (optional: only -browser and PDF reports need it; the html report can be printed to PDF by hand)"
 }
 
@@ -314,6 +330,7 @@ install_files() {
   $PRIV install -m 0755 "$TMP/argus" "$BIN_DIR/argus.new"
   $PRIV mv -f "$BIN_DIR/argus.new" "$BIN_DIR/argus"          # atomic: never leaves a half-written binary
   if [[ -d "$SRC_DIR/configs" ]]; then $PRIV cp -r "$SRC_DIR/configs/." "$DATA_DIR/"; fi
+  if [[ -f "$SRC_DIR/scripts/argus-ui.sh" ]]; then $PRIV install -m 0755 "$SRC_DIR/scripts/argus-ui.sh" "$BIN_DIR/argus-ui"; fi
   ok "installed $BIN_DIR/argus"
 }
 
@@ -440,6 +457,7 @@ main() {
   TMP="$(mktemp -d)"
   info "SUDOSOC ARGUS installer   mode: $MODE   binary: $BIN_DIR/argus   data: $DATA_DIR"
 
+  if is_wsl; then wsl_preflight; fi
   detect_pm
   if [[ $DO_DEPS -eq 1 ]]; then
     if [[ -z "$PM" ]]; then warn "no supported package manager found; assuming curl, tar, git and python3 are present"
@@ -476,7 +494,8 @@ main() {
   cat <<EOT
 
 Try it:
-  argus -web 127.0.0.1:8080          browser UI (prints a URL with your access token)
+  argus-ui                           start the browser UI and open it (under WSL: in Windows)
+  argus -web 127.0.0.1:8080          browser UI by hand (prints a URL with your access token)
   argus -u johndoe -verify -o reports
   argus -n "Jane Doe" -e jane@example.com -derive -o reports
   argus -doctor                      what is installed / missing
