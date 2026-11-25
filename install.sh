@@ -8,7 +8,7 @@
 # What it does: installs build/runtime dependencies, installs Go >= 1.26 if
 # missing, builds argus from this directory, installs the binary, downloads
 # the username-site list, and installs the optional external tools
-# (whois, dig, sherlock, theHarvester) that the syswrap module can wrap.
+# (whois, dig, exiftool, sherlock, maigret, holehe, theHarvester) that ARGUS can use.
 
 set -Eeuo pipefail
 
@@ -43,7 +43,7 @@ Options:
   --system          force system-wide install (/usr/local)
   --prefix DIR      custom prefix (binary in DIR/bin, data in DIR/share/argus)
   --no-deps         skip OS package installation
-  --no-extras       skip whois/dig/sherlock/theHarvester
+  --no-extras       skip whois/dig/exiftool/sherlock/maigret/holehe/theHarvester
   --no-sites        (accepted for compatibility; the 10,000+ site list is built into the binary)
   --uninstall       remove argus binary and data
   -h, --help        show this help
@@ -133,6 +133,10 @@ pkg_names() { # echo package list for role $1
   case "$1:$PM" in
     base:*)            echo "curl ca-certificates tar gzip git" ;;
     whois:*)           echo "whois" ;;
+    exiftool:apt-get)  echo "libimage-exiftool-perl" ;;
+    exiftool:dnf|exiftool:yum|exiftool:zypper) echo "perl-Image-ExifTool" ;;
+    exiftool:pacman)   echo "perl-image-exiftool" ;;
+    exiftool:apk)      echo "exiftool" ;;
     dig:apt-get)       echo "dnsutils" ;;
     dig:dnf|dig:yum|dig:zypper) echo "bind-utils" ;;
     dig:pacman)        echo "bind" ;;
@@ -233,6 +237,7 @@ install_extras() {
   info "installing optional external tools"
   have whois || install_roles optional whois
   have dig   || install_roles optional dig
+  have exiftool || install_roles optional exiftool
   have pipx  || install_roles optional pipx
 
   if have pipx; then
