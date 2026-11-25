@@ -49,6 +49,11 @@ func Export(r *models.Report, dir, base string, formats []string) ([]string, err
 			write = writeSpiderFoot
 		case "maltego":
 			write = writeMaltego
+		case "md", "markdown":
+			f = "md"
+			write = writeMarkdown
+		case "sql":
+			write = writeSQL
 		case "":
 			continue
 		default:
@@ -268,12 +273,16 @@ func Render(w io.Writer, r *models.Report, format string) error {
 		return writeSpiderFoot(w, r)
 	case "maltego":
 		return writeMaltego(w, r)
+	case "md", "markdown":
+		return writeMarkdown(w, r)
+	case "sql":
+		return writeSQL(w, r)
 	}
 	return fmt.Errorf("unknown format %q (%s)", format, Formats)
 }
 
 // Formats lists the report formats.
-const Formats = "json, csv, txt, html, pdf, graphml, stix, entities, misp, spiderfoot, maltego"
+const Formats = "json, csv, txt, html, pdf, graphml, stix, entities, misp, spiderfoot, maltego, md, sql"
 
 // ContentType returns the MIME type and file extension for a format.
 func ContentType(format string) (mime, ext string, ok bool) {
@@ -300,6 +309,10 @@ func ContentType(format string) (mime, ext string, ok bool) {
 		return "text/csv", "spiderfoot.csv", true
 	case "maltego":
 		return "text/csv", "maltego.csv", true
+	case "md", "markdown":
+		return "text/markdown", "md", true
+	case "sql":
+		return "application/sql", "sql", true
 	}
 	return "", "", false
 }
