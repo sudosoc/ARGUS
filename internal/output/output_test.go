@@ -131,3 +131,23 @@ func TestHTMLReportCarriesTheEmblem(t *testing.T) {
 		t.Error("template sanitiser replaced a URL")
 	}
 }
+
+func TestInsightsAppearInMarkdownAndHTML(t *testing.T) {
+	r := &models.Report{Tool: "argus", Version: "x", Target: models.Target{Username: "lhassan"}, Insights: &models.Insights{
+		Brief:   models.Brief{Headline: "Layla Hassan · Cairo", Level: "strong", Paragraphs: []string{"The best match is Layla Hassan."}, Concerns: []string{"Sources disagree about: location"}},
+		Actions: []models.Action{{Priority: 90, Title: "Add a location", Why: "two people match", How: "enter a city"}},
+	}}
+	var md, html strings.Builder
+	if err := writeMarkdown(&md, r); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(md.String(), "## Intelligence brief") || !strings.Contains(md.String(), "Add a location") {
+		t.Fatalf("markdown: %s", md.String())
+	}
+	if err := writeHTML(&html, r); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(html.String(), "Intelligence brief") || !strings.Contains(html.String(), "Layla Hassan · Cairo") {
+		t.Fatal("html lacks the brief")
+	}
+}

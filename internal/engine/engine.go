@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/insights"
 	"github.com/sudosoc/argus/internal/intel"
 	"github.com/sudosoc/argus/internal/leads"
 	"github.com/sudosoc/argus/internal/models"
@@ -217,6 +218,7 @@ func (e *Engine) Run(ctx context.Context, t models.Target) (*models.Report, erro
 	}
 	e.cloneStage(rep)
 	e.timelineStage(rep)
+	rep.Insights = insights.Build(rep)
 	rep.ManualLeads = leads.Build(rep.Target)
 	rep.Interrupted = ctx.Err() != nil
 	rep.FinishedAt = time.Now().UTC()

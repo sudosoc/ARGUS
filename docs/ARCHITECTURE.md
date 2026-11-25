@@ -40,6 +40,7 @@ Everything a run produces is one `models.Report`: the target, the findings, the 
 | `internal/files` | Analysis of uploaded pictures, documents and videos. |
 | `internal/extract`, `internal/cvparse`, `internal/jsonld`, `internal/doc` | Text extraction: e-mails, phones, links, CV structure, structured data, PDFs. |
 | `internal/intel`, `internal/rdap`, `internal/openpgp`, `internal/probe` | Domain/IP helpers, registration data, PGP keys, username-site probing. |
+| `internal/insights` | The conclusions stage: brief, next actions, persona, authenticity, associates, hidden links, life timeline, movement and per-fact reasoning, by fixed rules (see [INSIGHTS.md](INSIGHTS.md)). |
 | `internal/leads` | The pre-filled manual links for sources that need a login or payment. |
 | `internal/output` | Every export format. |
 | `internal/settings` | Encrypted API keys and the language/model choice. |
@@ -61,6 +62,7 @@ Everything a run produces is one `models.Report`: the target, the findings, the 
    - `locationStage`: geocode every location clue, cluster, score, report conflicts.
    - `archiveStage`: Internet Archive first/last capture of profiles and the domain.
    - `cloneStage`, `timelineStage`: copies of pictures and the dated-event timeline.
+   - `insights.Build`: the conclusions (brief, actions, persona…), stored in `Report.Insights`.
 6. **Finish.** Manual leads, interrupted flag, settings used, the integrity digest (SHA-256 of target, entities and findings).
 
 Everything that can fail is recorded: a check that could not run is a *failure* in the report (shown as a coverage gap), never silence. The complete output of every external tool is kept whole in `tool_runs`.

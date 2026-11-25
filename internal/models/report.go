@@ -93,6 +93,7 @@ type Report struct {
 	ToolRuns    []ToolRun         `json:"tool_runs,omitempty"` // the complete, unparsed output of every external tool and raw check list
 	Settings    map[string]string `json:"settings,omitempty"`  // how the run was configured, for reproducibility
 	Integrity   *Integrity        `json:"integrity,omitempty"`
+	Insights    *Insights         `json:"insights,omitempty"` // conclusions derived from the evidence by fixed rules
 }
 
 // ToolRun is the complete, unfiltered output of one external tool run (or the

@@ -21,7 +21,7 @@
     const i = TABS.findIndex((t) => t.id === def.id);
     if (i >= 0) TABS[i] = def; else TABS.push(def);
   };
-  UI.TAB_ORDER = ["overview", "identity", "footprint", "infrastructure", "media", "graph", "location", "timeline", "exposure", "findings", "evidence", "reports"];
+  UI.TAB_ORDER = ["overview", "insights", "identity", "footprint", "infrastructure", "media", "graph", "location", "timeline", "exposure", "findings", "evidence", "reports"];
   const ordered = () => [...TABS].sort((a, b) => UI.TAB_ORDER.indexOf(a.id) - UI.TAB_ORDER.indexOf(b.id));
   Object.defineProperty(UI, "TABS", { get: () => ordered().map((t) => ({ id: t.id, label: t.label, icon: t.icon })) });
 

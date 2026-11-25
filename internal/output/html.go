@@ -225,6 +225,8 @@ a{color:var(--fg);text-decoration-color:var(--emph);word-break:break-all}a:hover
 <h2>Summary</h2>
 <div class="card">{{range .Summary}}<div>• {{.}}</div>{{end}}</div>
 
+{{with .R.Insights}}{{if .Brief.Headline}}<h2>Intelligence brief</h2><div class="card"><b>{{.Brief.Headline}}</b> <span class="mut">({{.Brief.Level}})</span>{{range .Brief.Paragraphs}}<p>{{.}}</p>{{end}}{{if .Brief.Concerns}}<div class="mut">Concerns</div>{{range .Brief.Concerns}}<div>• {{.}}</div>{{end}}{{end}}{{if .Actions}}<div class="mut" style="margin-top:8px">Next actions</div>{{range .Actions}}<div>• <b>{{.Title}}</b>: {{.Why}}</div>{{end}}{{end}}</div>{{end}}{{end}}
+
 <h2>Identities</h2>
 {{if .R.Ambiguity}}<div class="card warn">{{.R.Ambiguity}}</div>{{end}}
 {{range .Identities}}{{if not .Weak}}

@@ -151,4 +151,16 @@ func (c *Console) Summary(r *models.Report) {
 	if r.Interrupted {
 		cYellow.Fprintln(c.out, "  run interrupted — results are partial")
 	}
+	if in := r.Insights; in != nil && in.Brief.Headline != "" {
+		fmt.Fprintln(c.out)
+		cCyan.Fprintln(c.out, "── Insights ─────────────────────────────")
+		fmt.Fprintf(c.out, "  %s  [%s]\n", in.Brief.Headline, in.Brief.Level)
+		for i, a := range in.Actions {
+			if i == 3 {
+				break
+			}
+			fmt.Fprintf(c.out, "  next %d: %s\n", i+1, a.Title)
+		}
+		cDim.Fprintln(c.out, "  full brief, persona, authenticity and more: the web UI (Insights) or the JSON/HTML report")
+	}
 }
