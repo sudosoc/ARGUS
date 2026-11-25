@@ -59,7 +59,7 @@
     ["General", "Esc", "Close the palette, a menu, the details drawer or this help"],
     ["General", "t", "Switch between dark and light theme"],
     ["General", "d", "Switch between compact and comfortable density"],
-    ["Navigate", "1–8", "Identity, Overview, Tree, Graph, Location, Photos, Findings, Coverage"],
+    ["Navigate", "1–9", "Jump to the 1st–9th main view (Overview, Identity, Footprint…); the rail on the left holds its sections"],
     ["Navigate", "← | →", "Move between tabs when a tab has focus"],
     ["Navigate", "[", "Show or hide the left case panel"],
     ["Investigation", "n", "New investigation: focus the first field of the form"],
@@ -230,7 +230,7 @@
     else if (k === "n") { e.preventDefault(); UI.showPanel(true); UI.panelTab("new"); const f = $("f_full_name"); if (f) f.focus(); }
     else if (k === "t") UI.toggleTheme();
     else if (k === "d") UI.toggleDensity();
-    else if (/^[1-8]$/.test(k) && UI.S) UI.selectTab(UI.TABS[Number(k) - 1].id);
+    else if (/^[1-9]$/.test(k) && UI.S && UI.TABS[Number(k) - 1]) UI.selectTab(UI.TABS[Number(k) - 1].id);
   });
 
   // ---------------------------------------------------------------- top bar

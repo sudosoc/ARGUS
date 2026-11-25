@@ -211,26 +211,24 @@
           <div id="bars" class="bars" role="list" aria-label="Collector progress"></div>
         </div>
 
-        <nav class="tabs" role="tablist" aria-label="Result views">
-          <button class="tab active" type="button" role="tab" data-tab="identity" aria-selected="true" aria-controls="tab-identity"><svg class="ic" aria-hidden="true"><use href="#i-id"/></svg>Identity <span id="cnt-identity" class="count">0</span></button>
-          <button class="tab" type="button" role="tab" data-tab="overview" aria-selected="false" aria-controls="tab-overview" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg>Overview</button>
-          <button class="tab" type="button" role="tab" data-tab="tree" aria-selected="false" aria-controls="tab-tree" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>Intelligence tree</button>
-          <button class="tab" type="button" role="tab" data-tab="graph" aria-selected="false" aria-controls="tab-graph" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-graph"/></svg>Relationship graph</button>
-          <button class="tab" type="button" role="tab" data-tab="location" aria-selected="false" aria-controls="tab-location" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg>Location <span id="cnt-location" class="count" hidden>0</span></button>
-          <button class="tab" type="button" role="tab" data-tab="photos" aria-selected="false" aria-controls="tab-photos" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Photos <span id="cnt-photos" class="count">0</span></button>
-          <button class="tab" type="button" role="tab" data-tab="findings" aria-selected="false" aria-controls="tab-findings" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>Findings <span id="cnt-findings" class="count">0</span></button>
-          <button class="tab" type="button" role="tab" data-tab="coverage" aria-selected="false" aria-controls="tab-coverage" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Coverage &amp; integrity <span id="cnt-coverage" class="count warn" hidden>0</span></button>
-        </nav>
+        <nav id="tabs" class="tabs" role="tablist" aria-label="Result views"></nav>
       </div>
 
-      <div id="tab-identity" class="tabpanel" role="tabpanel"></div>
-      <div id="tab-overview" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-tree" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-graph" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-location" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-photos" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-findings" class="tabpanel" role="tabpanel" hidden></div>
-      <div id="tab-coverage" class="tabpanel" role="tabpanel" hidden></div>
+      <!-- The original full-page views live here and are mounted into a section when it is opened. -->
+      <div id="legacy" hidden>
+        <div id="tab-identity" class="tabpanel" role="tabpanel"></div>
+        <div id="tab-overview" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-tree" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-graph" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-location" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-photos" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-findings" class="tabpanel" role="tabpanel" hidden></div>
+        <div id="tab-coverage" class="tabpanel" role="tabpanel" hidden></div>
+      </div>
+      <div id="tabbody" class="tabbody">
+        <nav id="subnav" class="subnav" aria-label="Sections of this view"></nav>
+        <div id="subhost" class="subhost" role="tabpanel" tabindex="-1"></div>
+      </div>
     </div>
   </main>
 </div>
@@ -270,6 +268,20 @@
 <script src="/js/v-photos.js"></script>
 <script src="/js/v-location.js"></script>
 <script src="/js/v-graph.js"></script>
+<script src="/js/kit.js"></script>
+<script src="/js/model.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/sec-identity.js"></script>
+<script src="/js/sec-footprint.js"></script>
+<script src="/js/sec-infra.js"></script>
+<script src="/js/sec-media.js"></script>
+<script src="/js/sec-graph.js"></script>
+<script src="/js/sec-location.js"></script>
+<script src="/js/sec-timeline.js"></script>
+<script src="/js/sec-exposure.js"></script>
+<script src="/js/sec-findings.js"></script>
+<script src="/js/sec-evidence.js"></script>
+<script src="/js/sec-reports.js"></script>
 <script src="/js/cases.js"></script>
 <script src="/js/shell.js"></script>
 <script src="/js/boot.js"></script>

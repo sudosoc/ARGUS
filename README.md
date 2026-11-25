@@ -92,7 +92,9 @@ It prints a URL containing a random access token; open it in your browser (the t
 
 **Case panel (left).** Fill in whatever you know: every input, collector and option has an **ⓘ** hint (English and Arabic) explaining what turning it on will do. *Aggressive* is on by default; untick it for a quicker, lighter run. Proxies are optional.
 
-**Look and feel.** A restrained dark workstation (black, charcoal, off-white, light gray and two blood reds; no neon) with a matching light theme, a command palette (`Ctrl+K` or `/`: search the case or run any command), `?` for all keyboard shortcuts, `t` theme, `d` density, `1`-`8` tabs, and a print stylesheet. The HTML report uses the same palette.
+**Navigation.** Twelve main views run along the top (Overview, Identity, Footprint, Infrastructure, Media, Graph, Location, Timeline, Exposure, Findings, Evidence, Reports). Each has a left rail of sections with live counts: for example Identity → Profile, Aliases, Usernames, E-mails, Phones, Digital identifiers, Verification; Evidence → Source registry, Evidence library, Source reliability, Confidence, Timestamps, Provenance, SHA-256 hashes, Coverage, Missing data, Validation, Conflicts, Duplicates, Confidence score; Reports → Investigation summary, Technical, Intelligence and Evidence reports, Exports, Export history. Sections with nothing yet are tucked under "Not available yet" and say what input would fill them. Nothing is hidden: every section is computed from the same findings.
+
+**Look and feel.** A restrained dark workstation (black, charcoal, off-white, light gray and two blood reds; no neon) with a matching light theme, a command palette (`Ctrl+K` or `/`: search the case or run any command), `?` for all keyboard shortcuts, `t` theme, `d` density, `1`-`9` main views, and a print stylesheet. The HTML report uses the same palette.
 
 **Workspace (right).** Live progress per collector, then eight views of the same data:
 
