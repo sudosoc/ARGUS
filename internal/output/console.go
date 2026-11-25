@@ -9,8 +9,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/fatih/color"
 
@@ -31,6 +34,13 @@ type Console struct {
 	mu       sync.Mutex
 	out, err io.Writer
 	progress atomic.Bool // a progress line is currently on screen
+	live     map[string]*liveMod
+}
+
+// liveMod is what the console knows about one running collector.
+type liveMod struct {
+	done, total int
+	now         string
 }
 
 // NewConsole writes results to stdout and progress/diagnostics to stderr.
@@ -38,7 +48,7 @@ func NewConsole(noColor bool) *Console {
 	if noColor {
 		color.NoColor = true
 	}
-	return &Console{out: os.Stdout, err: os.Stderr}
+	return &Console{out: os.Stdout, err: os.Stderr, live: map[string]*liveMod{}}
 }
 
 func (c *Console) clearProgress() {
@@ -110,19 +120,70 @@ func (c *Console) Finding(f models.Finding) {
 	}
 }
 
-// Progress draws a single self-overwriting progress line (throttled).
+// Module reports a collector starting, finishing or failing, and what it last looked at.
+// state is "running", "done" or "failed".
+func (c *Console) Module(name, state string, found, errs int, now, errMsg string, took time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	m := c.live[name]
+	switch state {
+	case "running":
+		if m == nil {
+			c.clearProgress()
+			cDim.Fprintf(c.err, "[>] %s started\n", name)
+			c.live[name] = &liveMod{now: now}
+			return
+		}
+		m.now = now
+	case "done":
+		c.clearProgress()
+		cDim.Fprintf(c.err, "[✓] %s finished · %d found · %d errors · %.1fs\n", name, found, errs, took.Seconds())
+		delete(c.live, name)
+	case "failed":
+		c.clearProgress()
+		cRed.Fprintf(c.err, "[x] %s stopped: %s\n", name, errMsg)
+		delete(c.live, name)
+	}
+}
+
+// Progress draws one self-overwriting line that lists every collector that is running, with how far
+// each has got (throttled).
 func (c *Console) Progress(module string, done, total int) {
 	if total <= 0 || (done%20 != 0 && done != total) {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if done == total {
-		c.clearProgress()
-		return
+	m := c.live[module]
+	if m == nil {
+		m = &liveMod{}
+		c.live[module] = m
+	}
+	m.done, m.total = done, total
+	var names []string
+	for n := range c.live {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	var b strings.Builder
+	fmt.Fprintf(&b, "    running %d: ", len(names))
+	for i, n := range names {
+		l := c.live[n]
+		part := n
+		if l.total > 0 {
+			part = fmt.Sprintf("%s %d%%", n, l.done*100/l.total)
+		}
+		if i > 0 {
+			b.WriteString(" · ")
+		}
+		if b.Len()+len(part) > 118 {
+			fmt.Fprintf(&b, "+%d more", len(names)-i)
+			break
+		}
+		b.WriteString(part)
 	}
 	c.progress.Store(true)
-	cDim.Fprintf(c.err, "\r\033[K    %s: %d/%d (%d%%)", module, done, total, done*100/total)
+	cDim.Fprintf(c.err, "\r\033[K%s", b.String())
 }
 
 // Summary prints the end-of-run table.

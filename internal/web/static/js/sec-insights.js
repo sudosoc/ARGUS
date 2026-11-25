@@ -32,7 +32,7 @@
       go.addEventListener("click", () => UI.go("insights", "actions"));
       page.append(K.panel("Do this first", "list", ...I.actions.slice(0, 3).map(actionCard), go));
     }
-    page.append(K.hint((I.limits || []).join(" ")));
+    for (const l of I.limits || []) page.append(K.hint(l));
   }, (M) => (INS(M) ? 1 : 0));
 
   // -------------------------------------------------------------- actions

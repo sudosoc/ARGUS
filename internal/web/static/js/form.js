@@ -118,6 +118,14 @@
     const showTier = () => { tierNote.textContent = TIER_NOTES[tier.value] || ""; };
     tier.addEventListener("change", showTier); showTier();
     $("tier").replaceChildren(el("label", { class: "field-tier", for: "o_site_tier" }, el("span", { text: "Username sites" }), UI.infoBtn("site_tier")), tier, tierNote);
+    const goalSel = el("select", { name: "goal", id: "goalSel", "aria-label": "What do you want to find out?" }, ...(info.goals || []).map((g) => el("option", { value: g.id, text: g.label })));
+    const goalNote = el("small", { class: "tier-note" });
+    const showGoal = () => { const g = (info.goals || []).find((x) => x.id === goalSel.value); goalNote.textContent = g ? g.question : ""; };
+    goalSel.addEventListener("change", showGoal);
+    try { const gv = UI.store.get("goal", ""); if (gv && (info.goals || []).some((x) => x.id === gv)) goalSel.value = gv; } catch (e) { /* ignore */ }
+    goalSel.addEventListener("change", () => UI.store.set("goal", goalSel.value));
+    showGoal();
+    $("goal").replaceChildren(el("label", { class: "field-tier", for: "goalSel" }, el("span", { text: "What do you want to find out?" })), goalSel, goalNote);
     $("intensity").replaceChildren(check("aggressive", "Aggressive", "maximum coverage, slower, many more requests", true));
     $("options").replaceChildren(
       check("verify", "Verify social hits", "canary test removes false positives", false),
@@ -192,8 +200,14 @@
         site_tier: f.elements["site_tier"].value,
         proxies: f.elements["proxies"].value.split("\n").map((s) => s.trim()).filter(Boolean),
       };
+      body.goal = f.elements["goal"].value;
       $("startBtn").disabled = true;
       try {
+        // Show what would be collected first; nothing is sent until the operator agrees.
+        const allowed = chosen.length === mods.length ? null : new Set(chosen);
+        const ok = await UI.confirmPlan({ ...body, modules: [] }, allowed);
+        if (!ok) return;
+        body.modules = ok.all && !allowed ? [] : ok.modules;
         const s = await UI.api("/api/scans", { method: "POST", body: JSON.stringify(body) });
         UI.openScan(s.id);
         if (window.innerWidth < 1100) UI.showPanel(false);

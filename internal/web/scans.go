@@ -21,6 +21,7 @@ import (
 	"github.com/sudosoc/argus/internal/identity"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/plan"
 )
 
 const (
@@ -48,6 +49,7 @@ type scan struct {
 	events   []event
 	notify   chan struct{} // closed and replaced whenever events grows
 	progress map[string][2]int
+	live     map[string]engine.ModuleLive // what each collector is doing right now
 	hits     int
 	report   *models.Report
 	caseID   string           // saved case file this scan belongs to
@@ -75,6 +77,12 @@ func (sc *scan) finish(state, errMsg string, rep *models.Report, ev event) {
 	sc.mu.Unlock()
 }
 
+func (sc *scan) setLive(l engine.ModuleLive) {
+	sc.mu.Lock()
+	sc.live[l.Name] = l
+	sc.mu.Unlock()
+}
+
 func (sc *scan) setProgress(module string, done, total int) {
 	sc.mu.Lock()
 	sc.progress[module] = [2]int{done, total}
@@ -86,6 +94,7 @@ type snapshot struct {
 	events   []event
 	notify   chan struct{}
 	progress map[string][2]int
+	live     map[string]engine.ModuleLive
 	state    string
 }
 
@@ -98,6 +107,10 @@ func (sc *scan) snapshotFrom(idx int) snapshot {
 	}
 	for k, v := range sc.progress {
 		s.progress[k] = v
+	}
+	s.live = make(map[string]engine.ModuleLive, len(sc.live))
+	for k, v := range sc.live {
+		s.live[k] = v
 	}
 	return s
 }
@@ -151,6 +164,7 @@ type ScanRequest struct {
 	DateTo     string   `json:"date_to"`
 	Files      []string `json:"files"` // ids returned by POST /api/uploads
 	Modules    []string `json:"modules"`
+	Goal       string   `json:"goal"` // the question being answered (internal/plan); recorded in the report
 	Aggressive bool     `json:"aggressive"`
 	Browser    bool     `json:"browser"`
 	Verify     bool     `json:"verify"`
@@ -239,9 +253,10 @@ func validateRequest(r *ScanRequest) error {
 	return nil
 }
 
-func (m *manager) start(req ScanRequest) (*scan, error) {
-	if err := validateRequest(&req); err != nil {
-		return nil, err
+// prepare validates the request and builds the engine that would run it.
+func (m *manager) prepare(req *ScanRequest) (models.Target, *app.Built, error) {
+	if err := validateRequest(req); err != nil {
+		return models.Target{}, nil, err
 	}
 
 	// Validate/normalise the identifiers up front so mistakes (a malformed
@@ -251,7 +266,7 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 		Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet, Notes: req.Notes,
 		Coords: req.Coords, DateFrom: req.DateFrom, DateTo: req.DateTo, Files: req.Files}
 	if err := engine.Enrich(&probe, false, 0); err != nil {
-		return nil, err
+		return probe, nil, err
 	}
 
 	opts := m.base
@@ -273,6 +288,11 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 		opts.Proxies = req.Proxies
 	}
 	built, err := app.Build(opts)
+	return probe, built, err
+}
+
+func (m *manager) start(req ScanRequest) (*scan, error) {
+	probe, built, err := m.prepare(&req)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +311,7 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	ctx, cancel := context.WithCancel(m.root)
 	sc := &scan{
 		ID: newID(), Created: time.Now().UTC(), state: stateRunning, cancel: cancel,
-		notify: make(chan struct{}), progress: map[string][2]int{},
+		notify: make(chan struct{}), progress: map[string][2]int{}, live: map[string]engine.ModuleLive{},
 		Target: models.Target{FullName: req.FullName, Username: req.Username, Email: req.Email, Phone: req.Phone,
 			Domain: req.Domain, IP: req.IP, Company: req.Company, Location: req.Location,
 			Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet, Notes: req.Notes,
@@ -303,7 +323,14 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	m.mu.Unlock()
 
 	eng := built.Engine
+	if req.Goal != "" {
+		if eng.Meta == nil {
+			eng.Meta = map[string]string{}
+		}
+		eng.Meta["goal"] = plan.GoalByID(req.Goal).ID
+	}
 	eng.OnProgress = sc.setProgress
+	eng.OnModule = sc.setLive
 	// Show every collector that will run from the first second, including those that
 	// never report progress, so the live table is complete.
 	if plan, _, perr := eng.Plan(probe); perr == nil {
@@ -311,6 +338,9 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 		for _, s := range plan {
 			if _, ok := sc.progress[s.Name()]; !ok {
 				sc.progress[s.Name()] = [2]int{0, 0}
+			}
+			if _, ok := sc.live[s.Name()]; !ok {
+				sc.live[s.Name()] = engine.ModuleLive{Name: s.Name(), State: "waiting"}
 			}
 		}
 		sc.mu.Unlock()

@@ -27,7 +27,7 @@
   ];
 
   UI.newState = (id) => ({
-    id, es: null, findings: [], entities: new Map(), target: {}, report: null, progress: {}, state: "running",
+    id, es: null, findings: [], entities: new Map(), target: {}, report: null, progress: {}, live: {}, state: "running",
     identities: [], ambiguity: "", sameName: 0, created: Date.now(),
     mod: new Map(), // collector -> {n, hit, err}: live counters
     cat: new Map(), // category -> n
@@ -62,6 +62,7 @@
     S.es = es;
     es.addEventListener("finding", (e) => UI.addFinding(JSON.parse(e.data)));
     es.addEventListener("progress", (e) => UI.onProgress(JSON.parse(e.data)));
+    es.addEventListener("modules", (e) => { S.live = JSON.parse(e.data) || {}; UI.paintRun(); });
     es.addEventListener("identities", (e) => UI.onIdentities(JSON.parse(e.data)));
     es.addEventListener("done", (e) => { UI.onDone(JSON.parse(e.data)); es.close(); });
     es.addEventListener("error", (e) => {
@@ -115,9 +116,13 @@
     UI.scheduleRender();
   };
 
+  // The server sends an empty list as null; make every list an array so views can index it freely.
+  const LISTS = ["matched", "reasons", "conflicts", "names", "headlines", "employers", "locations", "education", "interests", "emails", "phones", "usernames", "websites", "photos", "documents", "records"];
+  UI.normIdentities = (ids) => (ids || []).map((i) => { for (const k of LISTS) if (!Array.isArray(i[k])) i[k] = []; return i; });
+
   UI.onIdentities = function onIdentities(d) {
     const S = UI.S;
-    S.identities = d.identities || [];
+    S.identities = UI.normIdentities(d.identities);
     S.ambiguity = d.ambiguity || "";
     S.sameName = d.same_name || 0;
     UI.scheduleRender();
@@ -138,7 +143,7 @@
     const S = UI.S;
     S.report = rep;
     S.target = rep.target || S.target;
-    if (rep.identities) { S.identities = rep.identities; S.ambiguity = rep.ambiguity || ""; }
+    if (rep.identities) { S.identities = UI.normIdentities(rep.identities); S.ambiguity = rep.ambiguity || ""; }
     // Authoritative per-collector durations replace the client-side stopwatch.
     S.dur = {};
     for (const m of rep.modules || []) S.dur[m.name] = (S.dur[m.name] || 0) + (m.duration_ms || 0);
@@ -178,7 +183,7 @@
       let row = bars.querySelector('[data-mod="' + CSS.escape(mod) + '"]');
       if (!row) {
         row = el("div", { class: "crow", "data-mod": mod, role: "listitem" },
-          el("span", { class: "c-ico" }), el("span", { class: "c-name", text: mod }),
+          el("span", { class: "c-ico" }), el("span", { class: "c-name" }, el("span", { class: "c-n", text: mod }), el("small", { class: "c-now" })),
           el("span", { class: "meter" }, el("span", { class: "meter-fill" })),
           el("span", { class: "c-prog num" }), el("span", { class: "c-hit num" }), el("span", { class: "c-err num" }), el("span", { class: "c-time num" }));
         bars.append(row);
@@ -189,16 +194,27 @@
       const isDone = total > 0 && done >= total;
       const t = S.modT[mod];
       const stopped = S.state !== "running";
-      const state = isDone || (stopped && S.state === "done") ? "done" : stopped ? "idle" : "run";
+      const lv = S.live[mod];
+      let state = isDone || (stopped && S.state === "done") ? "done" : stopped ? "idle" : "run";
+      if (lv && !stopped) state = lv.state === "done" ? "done" : lv.state === "failed" ? "fail" : lv.state === "waiting" ? "wait" : "run";
       row.className = "crow st-" + state + (cnt.err ? " has-err" : "");
-      row.querySelector(".c-ico").replaceChildren(UI.icon(state === "done" ? "check" : state === "run" ? "pulse" : "circle"));
+      const nowEl = row.querySelector(".c-now");
+      let now = "";
+      if (lv && state === "run") now = lv.now ? "checking " + lv.now : total > 0 ? "working · " + done + " of " + total + " done" : Date.now() - (Date.parse(lv.started) || Date.now()) > 4000 ? "working…" : "starting…";
+      else if (state === "wait") now = "waiting to start";
+      else if (state === "fail") now = "stopped: " + (lv.error || "error");
+      else if (state === "done" && lv) now = "finished";
+      nowEl.textContent = now;
+      nowEl.title = now;
+      row.querySelector(".c-ico").replaceChildren(UI.icon(state === "done" ? "check" : state === "run" ? "pulse" : state === "fail" ? "alert" : "circle"));
       row.querySelector(".meter-fill").style.width = Math.round((state === "done" && S.state === "done" ? 1 : frac) * 100) + "%";
       row.querySelector(".c-prog").textContent = total ? done + "/" + total : "·";
       row.querySelector(".c-hit").textContent = cnt.hit + " hit" + (cnt.hit === 1 ? "" : "s");
       const errEl = row.querySelector(".c-err");
       errEl.textContent = cnt.err ? cnt.err + " err" : "";
       errEl.title = cnt.err ? "checks that could not complete" : "";
-      const ms = S.dur && S.dur[mod] != null ? S.dur[mod] : t ? (t.end || now) - t.start : 0;
+      const lms = lv && Date.parse(lv.started) > 0 ? (Date.parse(lv.ended) > 0 ? Date.parse(lv.ended) : Date.now()) - Date.parse(lv.started) : 0;
+      const ms = S.dur && S.dur[mod] != null ? S.dur[mod] : lms || (t ? (t.end || Date.now()) - t.start : 0);
       row.querySelector(".c-time").textContent = ms ? UI.dur(ms) : "";
       sum += state === "done" && S.state === "done" ? 1 : frac;
       nTracked++;

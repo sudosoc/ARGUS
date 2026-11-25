@@ -6,6 +6,7 @@ package web
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"image"
 	"image/png"
 	"io"
@@ -214,5 +215,41 @@ func TestImageProxyServesOnlyDiscoveredPictures(t *testing.T) {
 	if r.StatusCode != 200 || r.Header.Get("Content-Type") != "image/png" || len(body) < 50 ||
 		!strings.Contains(r.Header.Get("Content-Security-Policy"), "sandbox") {
 		t.Fatalf("known image: %d %q len=%d", r.StatusCode, r.Header.Get("Content-Type"), len(body))
+	}
+}
+
+func TestPlanProposesTheSmallestSet(t *testing.T) {
+	ts := newTestServer(t)
+	body := `{"username":"torvalds","email":"a@example.org","goal":"identify"}`
+	resp := do(t, "POST", ts.URL+"/api/plan", body, authed())
+	var out struct {
+		Goal       string `json:"goal"`
+		Supplied   []string
+		Collectors []struct {
+			Name     string
+			Selected bool
+			Uses     []string
+			SendsTo  string `json:"sends_to"`
+		}
+		Never []string
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Goal != "identify" || len(out.Never) != 4 || len(out.Supplied) < 2 {
+		t.Fatalf("unexpected plan: %+v", out)
+	}
+	sel := map[string]bool{}
+	for _, c := range out.Collectors {
+		sel[c.Name] = c.Selected
+		if c.Selected && len(c.Uses) == 0 && c.Name != "dorks" && c.Name != "context" {
+			t.Errorf("%s is proposed but reads none of the supplied details", c.Name)
+		}
+	}
+	if !sel["social"] || !sel["profiles"] {
+		t.Errorf("identify should propose social and profiles: %v", sel)
+	}
+	if v, ok := sel["dorks"]; ok && v {
+		t.Errorf("dorks is not part of identify")
 	}
 }

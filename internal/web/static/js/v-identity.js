@@ -83,9 +83,9 @@
 
     const main = el("div", { class: "hero-main" },
       el("div", { class: "eyebrow", text: id.primary ? "Best match" : "Candidate" }),
-      el("h2", { class: "hero-name", text: (id.names[0] && id.names[0].value) || "Unnamed profile" }),
-      el("div", { class: "hero-sub", text: [(id.headlines[0] || {}).value, (id.locations[0] || {}).value].filter(Boolean).join(" · ") }),
-      el("div", { class: "hero-stats" }, stat(id.records.length, "sources"), stat(confirmedN, "confirmed facts"), stat((id.usernames || []).length, "accounts"), stat((id.emails || []).length, "e-mails")),
+      el("h2", { class: "hero-name", text: ((id.names || [])[0] || {}).value || "Unnamed profile" }),
+      el("div", { class: "hero-sub", text: [((id.headlines || [])[0] || {}).value, ((id.locations || [])[0] || {}).value].filter(Boolean).join(" · ") }),
+      el("div", { class: "hero-stats" }, stat((id.records || []).length, "sources"), stat(confirmedN, "confirmed facts"), stat((id.usernames || []).length, "accounts"), stat((id.emails || []).length, "e-mails")),
       chips);
     card.append(el("div", { class: "hero" }, left, main, scoreFig(id)));
 

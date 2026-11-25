@@ -20,7 +20,7 @@ func life(c *ctx) *models.LifeTimeline {
 	}
 	var evs []ev
 	for _, e := range c.rep.Timeline {
-		if t, ok := parseDate(e.Date); ok {
+		if t, ok := parseDate(e.Date); ok && !c.protected(e.Event) {
 			evs = append(evs, ev{t, e})
 		}
 	}

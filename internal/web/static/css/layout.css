@@ -86,7 +86,12 @@
 .crow .c-hit { color: var(--text); }
 .crow .c-err { color: var(--emph); font-weight: 600; min-height: 1em; }
 .crow .c-time { color: var(--text-3); }
-.crow .c-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow .c-name { overflow: hidden; display: grid; line-height: 1.25; min-width: 0; }
+.crow .c-n, .crow .c-now { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow .c-now { color: var(--text-3); font: var(--fs-xs) var(--sans); min-height: 1em; }
+.crow.st-run .c-now { color: var(--text-2); }
+.crow.st-fail .c-ico, .crow.st-fail .c-now { color: var(--emph); }
+.crow.st-wait .c-name { color: var(--text-3); }
 
 .tabs { display: flex; gap: 2px; margin: var(--sp-3) 0 -1px; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }

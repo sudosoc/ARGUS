@@ -4,14 +4,18 @@
 package insights
 
 import (
+	"fmt"
+
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/sensitive"
 )
 
 // ctx is what every rule reads.
 type ctx struct {
-	rep     *models.Report
-	primary *models.Identity // the best-matching person, nil when none could be resolved
-	hits    []models.Finding
+	withheld int // derived items left out because they concern a protected category (package sensitive)
+	rep      *models.Report
+	primary  *models.Identity // the best-matching person, nil when none could be resolved
+	hits     []models.Finding
 }
 
 // Build derives the insights of a finished report. It never fails and never changes the report.
@@ -36,6 +40,11 @@ func Build(rep *models.Report) *models.Insights {
 	in.Brief = brief(c, in)
 	in.Actions = actions(c, in)
 	in.Limits = limits(c, in)
+	// Last line of defence: nothing derived may state a protected characteristic.
+	c.withheld += sensitive.Scrub(in)
+	if c.withheld > 0 {
+		in.Limits = append([]string{fmt.Sprintf("%d derived item(s) were left out because they concern religion or belief, health, sexual orientation or gender identity, or political or trade-union affiliation. ARGUS never analyses these, even when they appear in the evidence.", c.withheld)}, in.Limits...)
+	}
 	return in
 }
 

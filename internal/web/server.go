@@ -25,6 +25,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +39,8 @@ import (
 	"github.com/sudosoc/argus/internal/modules/dorks"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/plan"
+	"github.com/sudosoc/argus/internal/sensitive"
 	"github.com/sudosoc/argus/internal/settings"
 )
 
@@ -151,6 +154,7 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	mux.HandleFunc("GET /api/info", s.handleInfo)
 	mux.HandleFunc("GET /api/scans", s.handleList)
 	mux.HandleFunc("POST /api/scans", s.handleStart)
+	mux.HandleFunc("POST /api/plan", s.handlePlan)
 	mux.HandleFunc("GET /api/scans/{id}", s.handleGet)
 	mux.HandleFunc("POST /api/scans/{id}/cancel", s.handleCancel)
 	mux.HandleFunc("GET /api/scans/{id}/events", s.handleEvents)
@@ -323,7 +327,7 @@ func writeErr(w http.ResponseWriter, status int, msg string) {
 
 func (s *Server) handleInfo(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt, "site_tiers": s.tiers,
+		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt, "site_tiers": s.tiers, "goals": plan.Goals,
 	})
 }
 
@@ -445,7 +449,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(700 * time.Millisecond)
 	defer tick.Stop()
-	lastProgress := ""
+	lastProgress, lastLive := "", ""
 	for {
 		snap := sc.snapshotFrom(idx)
 		for _, ev := range snap.events {
@@ -457,6 +461,12 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		if pj, _ := json.Marshal(snap.progress); string(pj) != lastProgress {
 			lastProgress = string(pj)
 			if !send(-1, "progress", snap.progress) {
+				return
+			}
+		}
+		if lj, _ := json.Marshal(snap.live); string(lj) != lastLive {
+			lastLive = string(lj)
+			if !send(-1, "modules", snap.live) {
 				return
 			}
 		}
@@ -497,4 +507,101 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	h.Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	h.Set("Content-Length", strconv.Itoa(len(img.Data)))
 	_, _ = w.Write(img.Data)
+}
+
+// planCollector is one row of the "what will be collected" step.
+type planCollector struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Question    string   `json:"question"`
+	Uses        []string `json:"uses"`     // the supplied details it reads
+	SendsTo     string   `json:"sends_to"` // empty: nothing leaves this machine
+	Weight      string   `json:"weight"`
+	Requests    int      `json:"requests,omitempty"` // about how many requests (only where it is large and known)
+	Selected    bool     `json:"selected"`           // proposed for the chosen goal
+}
+
+// handlePlan answers, before anything runs: which collectors the question needs, what each
+// would read from what was entered, and where it would be sent.
+func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
+	var req ScanRequest
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	req.Modules = nil // the proposal covers every collector that could apply
+	probe, built, err := s.mgr.prepare(&req)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	run, skipped, err := built.Engine.Plan(probe)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	goal := plan.GoalByID(req.Goal)
+	desc := map[string]string{}
+	for _, m := range s.modules {
+		desc[m.Name] = m.Description
+	}
+	supplied := map[string]bool{
+		"name": probe.FullName != "", "username": len(probe.Usernames()) > 0, "email": probe.Email != "", "phone": probe.Phone != "",
+		"domain": probe.Domain != "", "ip": probe.IP != "", "company": probe.Company != "", "wallet": probe.Wallet != "", "asn": probe.ASN != "",
+		"location": probe.Location != "", "files": len(probe.Files) > 0, "notes": probe.Notes != "", "coords": probe.Coords != "",
+		"period": probe.DateFrom != "" || probe.DateTo != "",
+	}
+	kinds := []string{}
+	for k, v := range supplied {
+		if v {
+			kinds = append(kinds, k)
+		}
+	}
+	sort.Strings(kinds)
+
+	type skip struct {
+		Name   string `json:"name"`
+		Reason string `json:"reason"`
+	}
+	out := struct {
+		Goal       string          `json:"goal"`
+		Goals      []plan.Goal     `json:"goals"`
+		Supplied   []string        `json:"supplied"`
+		Collectors []planCollector `json:"collectors"`
+		Skipped    []skip          `json:"skipped"`
+		Requests   int             `json:"requests"` // rough total for the proposed collectors
+		Never      []string        `json:"never"`
+	}{Goal: goal.ID, Goals: plan.Goals, Supplied: kinds, Never: sensitive.Categories, Collectors: []planCollector{}, Skipped: []skip{}}
+	for _, sc := range run {
+		m := plan.Of(sc.Name())
+		uses := []string{}
+		for _, u := range m.Uses {
+			if supplied[u] {
+				uses = append(uses, u)
+			}
+		}
+		pc := planCollector{Name: sc.Name(), Description: desc[sc.Name()], Question: m.Question, Uses: uses, SendsTo: m.SendsTo,
+			Weight: m.Weight, Selected: goal.Includes(sc.Name())}
+		if len(uses) == 0 && m.SendsTo == "" { // offline and nothing of yours to read: it would do nothing
+			pc.Selected = false
+		}
+		if sc.Name() == "social" {
+			tier := req.SiteTier
+			if tier == "" {
+				tier = "all"
+			}
+			pc.Requests = s.tiers[tier] * len(probe.Usernames())
+		}
+		if pc.Selected {
+			out.Requests += pc.Requests + map[string]int{"light": 6, "medium": 25, "heavy": 60}[pc.Weight]
+		}
+		out.Collectors = append(out.Collectors, pc)
+	}
+	for _, k := range skipped {
+		name, why, _ := strings.Cut(k, ": ")
+		out.Skipped = append(out.Skipped, skip{Name: name, Reason: why})
+	}
+	writeJSON(w, http.StatusOK, out)
 }
