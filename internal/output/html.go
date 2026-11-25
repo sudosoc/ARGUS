@@ -197,7 +197,7 @@ var reportTmpl = template.Must(template.New("report").Funcs(template.FuncMap{
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans","Noto Sans Arabic",sans-serif;font-variant-numeric:tabular-nums}
 main{max-width:960px;margin:0 auto;padding:24px 16px;border-top:3px solid var(--acc)}
-.brandrow{display:flex;align-items:center;gap:12px;margin-bottom:10px}.emblem{display:grid;place-items:center;height:48px;padding:0 6px;background:#0a0a0b;border-radius:8px;border:1px solid var(--line)}.emblem img{height:40px;width:auto;display:block}.brandrow .brand{margin:0}
+.brandrow{display:flex;align-items:center;gap:12px;margin-bottom:10px}.emblem{display:grid;place-items:center;height:52px}.emblem img{height:52px;width:auto;display:block;border-radius:50%;background:radial-gradient(ellipse at center,#0a0a0b 0 58%,transparent 72%)}.brandrow .brand{margin:0}
 .brand{font-size:12px;letter-spacing:.2em;color:var(--sec);margin:0 0 6px}.brand b{font-size:15px;letter-spacing:.16em;color:var(--fg);font-weight:800;margin-left:6px}
 h1{font-size:24px;margin:0 0 4px}h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin:28px 0 10px;color:var(--sec);border-bottom:1px solid var(--line);padding-bottom:5px}
 h3{font-size:14px;margin:14px 0 6px}
@@ -212,7 +212,7 @@ th{color:var(--mut);font-weight:600;width:150px}
 .gal img{width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 a{color:var(--fg);text-decoration-color:var(--emph);word-break:break-all}a:hover{color:var(--emph)}code{font-size:12px;word-break:break-all}
 </style></head><body><main>
-<div class="brandrow"><span class="emblem"><img src="{{.Logo}}" alt="" width="54" height="40"></span><div class="brand">SUDOSOC<b>ARGUS</b></div></div>
+<div class="brandrow"><span class="emblem"><img src="{{.Logo}}" alt="" width="63" height="52"></span><div class="brand">SUDOSOC<b>ARGUS</b></div></div>
 <h1>Reconnaissance report</h1>
 <div class="mut">{{.R.Tool}} v{{.R.Version}} · {{.Started}} · duration {{.Duration}}{{if .R.Interrupted}} · <span class="warn">interrupted: results are partial</span>{{end}}</div>
 
