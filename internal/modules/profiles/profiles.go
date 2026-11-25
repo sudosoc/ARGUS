@@ -54,10 +54,7 @@ var enrichers = []enricher{
 }
 
 func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emit func(models.Finding)) error {
-	users := t.Usernames()
-	if len(users) > 3 {
-		users = users[:3]
-	}
+	users := t.Usernames() // every username and alias, not just the first few
 	total := len(users) * len(enrichers)
 
 	// Findings are buffered per username so they can be cross-checked (and

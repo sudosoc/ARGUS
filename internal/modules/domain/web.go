@@ -203,8 +203,8 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 	}
 	if r, ok := fetch(ctx, c, base+"/humans.txt", 8*time.Second); ok && !strings.Contains(strings.ToLower(string(r.Body[:min(len(r.Body), 200)])), "<html") {
 		txt := strings.TrimSpace(string(r.Body))
-		if len(txt) > 600 {
-			txt = txt[:600] + "…"
+		if len(txt) > 5000 {
+			txt = txt[:5000] + "…"
 		}
 		if txt != "" {
 			emit(fnd("humans.txt", "contact", base+"/humans.txt", 0.6, map[string]string{"content": txt}))

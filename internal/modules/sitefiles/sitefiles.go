@@ -135,15 +135,9 @@ func adsTxt(ctx context.Context, c *httpx.Client, base string, emit func(models.
 			l = append(l, id)
 		}
 		sort.Strings(l)
-		if len(l) > 3 {
-			l = append(l[:3], fmt.Sprintf("+%d", len(l)-3))
-		}
 		parts = append(parts, dom+": "+strings.Join(l, ", "))
 	}
 	sort.Strings(parts)
-	if len(parts) > 15 {
-		parts = parts[:15]
-	}
 	det := map[string]string{"ad networks": fmt.Sprint(len(nets)), "publisher accounts": strings.Join(parts, " | "),
 		"note": "the same publisher ID on another site means the same business or owner; search the ID to find sister sites"}
 	if len(owner) > 0 {

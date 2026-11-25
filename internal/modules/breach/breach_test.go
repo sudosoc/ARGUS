@@ -8,7 +8,7 @@ import (
 
 func TestClip(t *testing.T) {
 	in := []string{"a", "b", "c"}
-	if got := util.ClipList(in, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
+	if got := util.ClipList(in, 2); !reflect.DeepEqual(got, in) { // nothing below the floor is dropped
 		t.Errorf("clip: %v", got)
 	}
 	if got := util.ClipList(in, 5); !reflect.DeepEqual(got, in) {

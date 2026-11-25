@@ -127,7 +127,7 @@ func subdomainsJob(ctx context.Context, c *httpx.Client, domain string, emit fun
 		names = append(names, n)
 	}
 	sort.Strings(names)
-	const maxResolve = 400
+	const maxResolve = 3000
 	if len(names) > maxResolve {
 		names = names[:maxResolve]
 	}

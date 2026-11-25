@@ -70,7 +70,7 @@ func france(ctx context.Context, c *httpx.Client, name string, emit func(models.
 			} `json:"dirigeants"`
 		} `json:"results"`
 	}
-	if !util.GetJSON(ctx, c, "https://recherche-entreprises.api.gouv.fr/search?per_page=5&q="+url.QueryEscape(name), &r) {
+	if !util.GetJSON(ctx, c, "https://recherche-entreprises.api.gouv.fr/search?per_page=25&q="+url.QueryEscape(name), &r) {
 		return
 	}
 	for _, co := range r.Results {

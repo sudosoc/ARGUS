@@ -32,6 +32,7 @@ import (
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/media"
 	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
 )
 
@@ -58,6 +59,7 @@ type Server struct {
 	cases    *caseStore
 	modules  []moduleInfo
 	siteCnt  int
+	tiers    map[string]int // username sites per depth: core, extended, all
 	loopback bool
 	handler  http.Handler
 	img      *httpx.Client // fetches profile pictures for the image proxy
@@ -111,6 +113,12 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 		s.modules = append(s.modules, moduleInfo{sc.Name(), sc.Description()})
 	}
 	s.siteCnt = built.SocialSites
+	s.tiers = map[string]int{}
+	for name, tier := range map[string]int{"core": 1, "extended": 2, "all": 3} {
+		if sm, err := social.New(social.Config{SitesFile: app.ResolveSites(cfg.Base.SitesFile), Tier: tier}); err == nil {
+			s.tiers[name] = sm.SiteCount()
+		}
+	}
 	s.mgr = newManager(ctx, cfg.Base, cfg.MaxRunning, cfg.ReportDir)
 	s.cases = &caseStore{dir: cfg.CaseDir}
 	s.mgr.cases = s.cases
@@ -285,7 +293,7 @@ func writeErr(w http.ResponseWriter, status int, msg string) {
 
 func (s *Server) handleInfo(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt,
+		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt, "site_tiers": s.tiers,
 	})
 }
 

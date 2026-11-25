@@ -101,8 +101,8 @@ func (c *caseStore) list() []caseInfo {
 		}
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(names)))
-	if len(names) > 100 {
-		names = names[:100]
+	if len(names) > 2000 {
+		names = names[:2000]
 	}
 	for _, id := range names {
 		rep, err := c.load(id)

@@ -49,7 +49,7 @@ func orcid(ctx context.Context, c *httpx.Client, t models.Target, emit func(mode
 		} `json:"expanded-result"`
 	}
 	q := "given-names:" + given + " AND family-name:" + family
-	if !getJSON(ctx, c, "https://pub.orcid.org/v3.0/expanded-search/?rows=12&q="+esc(q), nil, &sr) {
+	if !getJSON(ctx, c, "https://pub.orcid.org/v3.0/expanded-search/?rows=50&q="+esc(q), nil, &sr) {
 		return
 	}
 	n := 0

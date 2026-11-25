@@ -354,7 +354,7 @@ func musicBrainz(ctx context.Context, c *httpx.Client, t models.Target, emit fun
 			} `json:"life-span"`
 		} `json:"artists"`
 	}
-	if !getJSON(ctx, c, "https://musicbrainz.org/ws/2/artist?fmt=json&limit=5&query=artist:%22"+esc(t.FullName)+"%22", ua(), &r) {
+	if !getJSON(ctx, c, "https://musicbrainz.org/ws/2/artist?fmt=json&limit=25&query=artist:%22"+esc(t.FullName)+"%22", ua(), &r) {
 		return
 	}
 	n := 0

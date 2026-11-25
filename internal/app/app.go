@@ -84,7 +84,7 @@ func Defaults() Options {
 	return Options{
 		Workers: 200, Timeout: 12 * time.Second, Retries: 1,
 		DorkEngines: []string{"brave", "bing", "duckduckgo", "google"},
-		DorkDelay:   3 * time.Second, MaxDorks: 60, MaxPivots: 10, PivotDepth: 2,
+		DorkDelay:   3 * time.Second, MaxDorks: 200, MaxPivots: 30, PivotDepth: 3,
 	}
 }
 
@@ -211,14 +211,14 @@ func (o Options) applyPreset() Options {
 	}
 	o.Derive = true
 	o.Verify = true
-	if o.MaxPivots < 25 {
-		o.MaxPivots = 25
+	if o.MaxPivots < 80 {
+		o.MaxPivots = 80
 	}
-	if o.PivotDepth < 3 {
-		o.PivotDepth = 3
+	if o.PivotDepth < 4 {
+		o.PivotDepth = 4
 	}
-	if o.MaxDorks < 120 {
-		o.MaxDorks = 120
+	if o.MaxDorks < 500 {
+		o.MaxDorks = 500
 	}
 	return o
 }

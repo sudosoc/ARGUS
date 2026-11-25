@@ -245,8 +245,8 @@ func wikipedia(ctx context.Context, c *httpx.Client, name string, emit func(mode
 	util.Put(d, "title", r.Title)
 	util.Put(d, "description", r.Description)
 	ex := r.Extract
-	if len(ex) > 500 {
-		ex = ex[:500] + "…"
+	if len(ex) > 5000 {
+		ex = ex[:5000] + "…"
 	}
 	util.Put(d, "summary", ex)
 	emit(fnd("Wikipedia article", "reference", r.ContentURLs.Desktop.Page, 0.6, d))
@@ -260,7 +260,7 @@ func wikidata(ctx context.Context, c *httpx.Client, name string, emit func(model
 			Description string `json:"description"`
 		} `json:"search"`
 	}
-	if !util.GetJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=5&search="+url.QueryEscape(name), &r) ||
+	if !util.GetJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=50&search="+url.QueryEscape(name), &r) ||
 		len(r.Search) == 0 {
 		return
 	}

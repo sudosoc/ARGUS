@@ -23,7 +23,7 @@ func blueskySearch(ctx context.Context, c *httpx.Client, t models.Target, emit f
 			Avatar      string `json:"avatar"`
 		} `json:"actors"`
 	}
-	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors?limit=15&q="+esc(t.FullName), nil, &r) {
+	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors?limit=100&q="+esc(t.FullName), nil, &r) {
 		return
 	}
 	n := 0
@@ -61,7 +61,7 @@ func mastodonSearch(ctx context.Context, c *httpx.Client, t models.Target, emit 
 			Bot bool `json:"bot"`
 		} `json:"accounts"`
 	}
-	if !getJSON(ctx, c, "https://mastodon.social/api/v2/search?type=accounts&limit=10&q="+esc(t.FullName), nil, &r) {
+	if !getJSON(ctx, c, "https://mastodon.social/api/v2/search?type=accounts&limit=40&q="+esc(t.FullName), nil, &r) {
 		return
 	}
 	n := 0

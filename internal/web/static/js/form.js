@@ -88,9 +88,21 @@
       if (checked) cb.checked = true;
       return el("label", { class: "check", for: "o_" + name }, cb, el("span", { class: "t" }, el("b", { text: title }), el("small", { text: sub })), UI.infoBtn(name));
     };
+    const tc = info.site_tiers || {};
+    const nTier = (k, d) => UI.n(tc[k] || d);
     const tier = el("select", { name: "site_tier", id: "o_site_tier", "aria-label": "Username sites to probe" },
-      el("option", { value: "core", text: "Core · about 1,100 sites (fast)" }), el("option", { value: "extended", text: "Extended · about 3,200 sites" }), el("option", { value: "all", text: "All · about 10,600 sites (default, slower)", selected: "" }));
-    $("tier").replaceChildren(el("label", { class: "field-tier", for: "o_site_tier" }, el("span", { text: "Username sites" }), UI.infoBtn("site_tier")), tier);
+      el("option", { value: "core", text: `Core · ${nTier("core", 1100)} sites · quick` }),
+      el("option", { value: "extended", text: `Extended · ${nTier("extended", 3200)} sites · faster pass` }),
+      el("option", { value: "all", text: `All · ${nTier("all", 10600)} sites · nothing left out (default)`, selected: "" }));
+    const tierNote = el("small", { class: "tier-note" });
+    const TIER_NOTES = {
+      core: "Popular, well-maintained platforms. Minutes at most; the fewest false leads.",
+      extended: "Adds the long tail of ordinary platforms. A faster pass when you are in a hurry.",
+      all: "Everything: adds thousands of template-based forums and small communities. Slowest (one request per site per username) and the most leads to verify.",
+    };
+    const showTier = () => { tierNote.textContent = TIER_NOTES[tier.value] || ""; };
+    tier.addEventListener("change", showTier); showTier();
+    $("tier").replaceChildren(el("label", { class: "field-tier", for: "o_site_tier" }, el("span", { text: "Username sites" }), UI.infoBtn("site_tier")), tier, tierNote);
     $("intensity").replaceChildren(check("aggressive", "Aggressive", "maximum coverage, slower, many more requests", true));
     $("options").replaceChildren(
       check("verify", "Verify social hits", "canary test removes false positives", false),

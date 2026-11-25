@@ -14,7 +14,7 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 )
 
-const maxPhotos = 80
+const maxPhotos = 1000
 
 var (
 	imageKeys     = []string{"avatar", "photo", "picture"}

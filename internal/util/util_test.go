@@ -5,14 +5,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sudosoc/argus/internal/httpx"
 )
 
 func TestClip(t *testing.T) {
-	if Clip("  abc  ", 5) != "abc" || Clip("héllo wörld", 5) != "héllo…" || Clip("", 3) != "" {
-		t.Error("Clip")
+	if Clip("  abc  ", 5) != "abc" || Clip("héllo wörld", 5) != "héllo wörld" || Clip("", 3) != "" {
+		t.Error("Clip must not cut anything shorter than MinClip, whatever limit the caller passes")
+	}
+	long := strings.Repeat("é", MinClip+10)
+	if got := Clip(long, 5); len([]rune(got)) != MinClip+1 || !strings.HasSuffix(got, "…") {
+		t.Errorf("a huge value is cut rune-safely at MinClip and marked: %d", len([]rune(got)))
 	}
 }
 
@@ -23,8 +28,11 @@ func TestListHelpers(t *testing.T) {
 	if FirstNonEmpty("", " x ", "y") != "x" || FirstNonEmpty() != "" {
 		t.Error("FirstNonEmpty")
 	}
-	if !reflect.DeepEqual(ClipList([]string{"a", "b", "c"}, 2), []string{"a", "b"}) || len(ClipList[string](nil, 2)) != 0 {
-		t.Error("ClipList")
+	if !reflect.DeepEqual(ClipList([]string{"a", "b", "c"}, 2), []string{"a", "b", "c"}) || len(ClipList[string](nil, 2)) != 0 {
+		t.Error("ClipList must not drop items below MinClip")
+	}
+	if got := ClipList(make([]int, MinClip+3), 1); len(got) != MinClip {
+		t.Errorf("ClipList cap: %d", len(got))
 	}
 	d := map[string]string{}
 	Put(d, "a", "  ")

@@ -56,8 +56,15 @@ func GetJSONStatus(ctx context.Context, c *httpx.Client, u string, out any, opts
 	return 200, json.Unmarshal(resp.Body, out) == nil
 }
 
-// Clip trims s and shortens it to at most n runes, appending an ellipsis.
+// MinClip is the least Clip and ClipList ever cut to: callers pass display-sized
+// limits (120, 300…), but nothing a source returned is dropped below this size.
+const MinClip = 5000
+
+// Clip trims s and shortens it to at most n runes (never below MinClip), appending an ellipsis.
 func Clip(s string, n int) string {
+	if n < MinClip {
+		n = MinClip
+	}
 	s = strings.TrimSpace(s)
 	r := []rune(s)
 	if len(r) > n {
@@ -66,8 +73,11 @@ func Clip(s string, n int) string {
 	return s
 }
 
-// ClipList returns at most n items of s.
+// ClipList returns at most n items of s (never fewer than MinClip).
 func ClipList[T any](s []T, n int) []T {
+	if n < MinClip {
+		n = MinClip
+	}
 	if len(s) > n {
 		return s[:n]
 	}

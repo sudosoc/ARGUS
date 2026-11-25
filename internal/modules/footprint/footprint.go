@@ -74,9 +74,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		pi := parsePhone(t.Phone)
 		m := pi.matcher()
 		vs := pi.variants()
-		if len(vs) > 3 {
-			vs = vs[:3]
-		}
 		for _, v := range vs {
 			jobs = append(jobs, func() { s.mentions(ctx, d.HTTP, "phone", `"`+v+`"`, m, seen, emit) })
 		}

@@ -12,7 +12,7 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 )
 
-const maxGeocodes = 16
+const maxGeocodes = 60
 
 type rawGeo struct {
 	label   string
