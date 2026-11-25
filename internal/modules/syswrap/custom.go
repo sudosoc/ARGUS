@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // CustomSpec is the JSON schema for user-defined wrappers (-tools-file):

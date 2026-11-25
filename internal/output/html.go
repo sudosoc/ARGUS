@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // maxEmbedded caps the total size of pictures inlined into the HTML report.
@@ -185,7 +185,7 @@ var reportTmpl = template.Must(template.New("report").Funcs(template.FuncMap{
 }).Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>rectool report</title>
+<title>argus report</title>
 <style>
 :root{--bg:#0e1116;--fg:#d7dde5;--mut:#8b96a5;--card:#161b22;--line:#262e38;--acc:#3fb6a8;--ok:#3fb950;--warn:#d29922}
 @media print{:root{--bg:#fff;--fg:#111;--mut:#555;--card:#fff;--line:#ccc;--acc:#0a6;--ok:#070;--warn:#a60}a{color:#000}}
@@ -204,7 +204,7 @@ th{color:var(--mut);font-weight:600;width:150px}
 .gal img{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 a{color:var(--acc);word-break:break-all}code{font-size:12px;word-break:break-all}
 </style></head><body><main>
-<h1>rectool reconnaissance report</h1>
+<h1>argus reconnaissance report</h1>
 <div class="mut">{{.R.Tool}} v{{.R.Version}} · {{.Started}} · duration {{.Duration}}{{if .R.Interrupted}} · <span class="warn">interrupted: results are partial</span>{{end}}</div>
 
 <h2>Target</h2>
@@ -243,7 +243,7 @@ a{color:var(--acc);word-break:break-all}code{font-size:12px;word-break:break-all
 
 {{if .Notes}}<h2>Analyst notes</h2>{{range .Notes}}<div class="card"><b>{{index . 0}}</b><div style="white-space:pre-wrap">{{index . 1}}</div></div>{{end}}{{end}}
 
-{{if .R.ManualLeads}}<h2>Manual leads</h2><div class="card"><div class="mut">Sources that need a login, CAPTCHA or payment. rectool does not bypass those; open them yourself.</div>
+{{if .R.ManualLeads}}<h2>Manual leads</h2><div class="card"><div class="mut">Sources that need a login, CAPTCHA or payment. argus does not bypass those; open them yourself.</div>
 {{range .R.ManualLeads}}<div class="fact"><b>{{.Group}}</b> · {{if safe .URL}}<a href="{{safe .URL}}">{{.Label}}</a>{{else}}{{.Label}}{{end}} <span class="src">{{.Why}}</span></div>{{end}}</div>{{end}}
 
 {{if .Failures}}<h2>Coverage gaps</h2><div class="card"><div class="mut">Checks that could not complete. A missing result is not evidence of absence.</div>

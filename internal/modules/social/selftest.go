@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // Health is the self-test verdict for one site.

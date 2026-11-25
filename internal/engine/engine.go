@@ -18,17 +18,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/leads"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/pool"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/leads"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/pool"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 const (
-	ToolName = "rectool"
-	Version  = "0.2.0"
+	ToolName = "SUDOSOC ARGUS"
+	Version  = "0.3.0"
 )
 
 var (

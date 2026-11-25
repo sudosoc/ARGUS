@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // Contact is a registrant / admin / tech / abuse entity.

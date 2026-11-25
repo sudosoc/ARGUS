@@ -11,7 +11,7 @@
 window.RT = window.RT || {};
 const $ = (id) => document.getElementById(id);
 RT.$ = $;
-const HDR = { "Content-Type": "application/json", "X-Requested-With": "rectool" };
+const HDR = { "Content-Type": "application/json", "X-Requested-With": "argus" };
 
 RT.el = function el(tag, props = {}, ...kids) {
   const e = document.createElement(tag);
@@ -130,12 +130,12 @@ RT.buildForm = function buildForm(info) {
 
   const fields = collapsible("Evidence you already have");
   const notesLabel = el("label", { for: "f_notes" }, el("span", { text: "Paste text (CV, LinkedIn page, bio…)" }), RT.infoBtn("notes"));
-  const notes = el("textarea", { name: "notes", id: "f_notes", rows: "3", maxlength: "30000", class: "notes", placeholder: "Optional. Text you copied from a source rectool cannot open." });
+  const notes = el("textarea", { name: "notes", id: "f_notes", rows: "3", maxlength: "30000", class: "notes", placeholder: "Optional. Text you copied from a source argus cannot open." });
   fields.append(el("div", { class: "field" }, notesLabel, notes));
   // Clipper: the operator logs in and looks at the page themself; this bookmarklet
-  // only copies what is on screen so it can be pasted above. rectool never logs in.
-  const clip = el("a", { class: "btn small", text: "📋 Copy page for rectool", title: "Drag this to your bookmarks bar. On a page you are logged in to (e.g. a LinkedIn profile) click it, then paste into the box above." });
-  clip.setAttribute("href", "javascript:(()=>{const t=location.href+'\\n\\n'+document.body.innerText;navigator.clipboard.writeText(t).then(()=>alert('Copied '+t.length+' characters for rectool. Paste them into the Paste text box.'),()=>prompt('Copy this text:',t.slice(0,3000)))})()");
+  // only copies what is on screen so it can be pasted above. argus never logs in.
+  const clip = el("a", { class: "btn small", text: "📋 Copy page for argus", title: "Drag this to your bookmarks bar. On a page you are logged in to (e.g. a LinkedIn profile) click it, then paste into the box above." });
+  clip.setAttribute("href", "javascript:(()=>{const t=location.href+'\\n\\n'+document.body.innerText;navigator.clipboard.writeText(t).then(()=>alert('Copied '+t.length+' characters for argus. Paste them into the Paste text box.'),()=>prompt('Copy this text:',t.slice(0,3000)))})()");
   clip.addEventListener("click", (e) => { e.preventDefault(); alert("Drag this button to your bookmarks bar. Then open the profile in your own logged-in browser, click the bookmark, and paste here."); });
   fields.append(el("div", { class: "hint-line", style: "margin:-2px 0 10px" }, clip, document.createTextNode("  logged-in pages: you open it, this only copies what you see")));
 
@@ -256,7 +256,7 @@ RT.newState = (id) => ({ id, es: null, findings: [], entities: new Map(), target
 RT.openScan = function openScan(id) {
   if (RT.S && RT.S.es) RT.S.es.close();
   const S = (RT.S = RT.newState(id));
-  sessionStorage.setItem("rectool_last", id);
+  sessionStorage.setItem("argus_last", id);
   RT.closeDrawer();
 
   $("empty").hidden = true;

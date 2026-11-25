@@ -1,4 +1,4 @@
-module github.com/sudosoc/rectool
+module github.com/sudosoc/argus
 
 go 1.26.0
 

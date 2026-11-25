@@ -3,7 +3,7 @@ package syswrap
 import (
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Tool describes how to run one external CLI program and turn its stdout into
@@ -26,7 +26,7 @@ func (t *Tool) applicable(in Inputs) bool {
 	return true
 }
 
-// builtinTools is the registry of wrappers that ship with rectool.
+// builtinTools is the registry of wrappers that ship with argus.
 func builtinTools() []*Tool {
 	return []*Tool{
 		{

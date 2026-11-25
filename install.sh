@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# rectool installer for Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine).
+# argus installer for Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine).
 #
 #   ./install.sh                 system-wide install (uses sudo if not root)
 #   ./install.sh --user          install into ~/.local (no root needed)
 #   ./install.sh --uninstall     remove what this script installed
 #
 # What it does: installs build/runtime dependencies, installs Go >= 1.26 if
-# missing, builds rectool from this directory, installs the binary, downloads
+# missing, builds argus from this directory, installs the binary, downloads
 # the 600+ site WhatsMyName list, and installs the optional external tools
 # (whois, dig, sherlock, theHarvester) that the syswrap module can wrap.
 
@@ -18,7 +18,7 @@ WMN_URL="https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 MODE=""            # system | user (auto-detected unless forced)
-PREFIX=""          # override install prefix (bin/ and share/rectool/ go under it)
+PREFIX=""          # override install prefix (bin/ and share/argus/ go under it)
 DO_DEPS=1 DO_EXTRAS=1 DO_SITES=1 DO_UNINSTALL=0
 SUDO=""
 PM=""
@@ -42,11 +42,11 @@ usage() {
 Options:
   --user            install for the current user only (~/.local)
   --system          force system-wide install (/usr/local)
-  --prefix DIR      custom prefix (binary in DIR/bin, data in DIR/share/rectool)
+  --prefix DIR      custom prefix (binary in DIR/bin, data in DIR/share/argus)
   --no-deps         skip OS package installation
   --no-extras       skip whois/dig/sherlock/theHarvester
   --no-sites        skip downloading the WhatsMyName site list
-  --uninstall       remove rectool binary and data
+  --uninstall       remove argus binary and data
   -h, --help        show this help
 EOF
 }
@@ -79,11 +79,11 @@ fi
 if [[ -n "$PREFIX" && "$MODE" == system && $EUID -ne 0 && ! -w "$PREFIX" ]] && have sudo; then SUDO="sudo"; fi
 
 if [[ -n "$PREFIX" ]]; then
-  BIN_DIR="$PREFIX/bin"; DATA_DIR="$PREFIX/share/rectool"
+  BIN_DIR="$PREFIX/bin"; DATA_DIR="$PREFIX/share/argus"
 elif [[ "$MODE" == system ]]; then
-  BIN_DIR=/usr/local/bin; DATA_DIR=/usr/local/share/rectool
+  BIN_DIR=/usr/local/bin; DATA_DIR=/usr/local/share/argus
 else
-  BIN_DIR="$HOME/.local/bin"; DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/rectool"
+  BIN_DIR="$HOME/.local/bin"; DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/argus"
 fi
 if [[ "$MODE" == system ]]; then GO_ROOT=/usr/local/go; else GO_ROOT="$HOME/.local/go"; fi
 if [[ -n "$PREFIX" ]]; then GO_ROOT="$PREFIX/go"; fi
@@ -95,8 +95,8 @@ PRIV="$SUDO"; [[ "$MODE" == user && -z "$PREFIX" ]] && PRIV=""
 
 # --------------------------------------------------------------- uninstall --
 if [[ $DO_UNINSTALL -eq 1 ]]; then
-  info "removing $BIN_DIR/rectool and $DATA_DIR"
-  $PRIV rm -f "$BIN_DIR/rectool"
+  info "removing $BIN_DIR/argus and $DATA_DIR"
+  $PRIV rm -f "$BIN_DIR/argus"
   $PRIV rm -rf "$DATA_DIR"
   ok "removed. (Go, OS packages and pipx tools were left untouched.)"
   exit 0
@@ -203,31 +203,31 @@ ensure_go() {
 }
 
 # ------------------------------------------------------------------- build --
-build_rectool() {
-  [[ -f "$SRC_DIR/go.mod" && -d "$SRC_DIR/cmd/rectool" ]] || die "run install.sh from the rectool source directory"
-  info "building rectool"
+build_argus() {
+  [[ -f "$SRC_DIR/go.mod" && -d "$SRC_DIR/cmd/argus" ]] || die "run install.sh from the argus source directory"
+  info "building argus"
   ( cd "$SRC_DIR"
     export PATH="$(dirname "$GO_BIN"):$PATH" CGO_ENABLED=0 GOFLAGS=-trimpath
     "$GO_BIN" mod tidy
-    "$GO_BIN" build -ldflags "-s -w" -o "$TMP/rectool" ./cmd/rectool )
+    "$GO_BIN" build -ldflags "-s -w" -o "$TMP/argus" ./cmd/argus )
   ok "build complete"
 }
 
 install_files() {
   info "installing to $BIN_DIR and $DATA_DIR"
   $PRIV install -d -m 0755 "$BIN_DIR" "$DATA_DIR"
-  $PRIV install -m 0755 "$TMP/rectool" "$BIN_DIR/rectool"
+  $PRIV install -m 0755 "$TMP/argus" "$BIN_DIR/argus"
   if [[ -d "$SRC_DIR/configs" ]]; then $PRIV cp -r "$SRC_DIR/configs/." "$DATA_DIR/" ; fi
-  ok "installed $BIN_DIR/rectool"
+  ok "installed $BIN_DIR/argus"
 }
 
 fetch_sites() {
   info "downloading WhatsMyName site list (600+ platforms)"
   if curl -fsSL --retry 3 -o "$TMP/wmn.json" "$WMN_URL" && grep -q '"sites"' "$TMP/wmn.json"; then
     $PRIV install -m 0644 "$TMP/wmn.json" "$DATA_DIR/wmn-data.json"
-    ok "site list saved to $DATA_DIR/wmn-data.json (rectool picks it up automatically)"
+    ok "site list saved to $DATA_DIR/wmn-data.json (argus picks it up automatically)"
   else
-    warn "could not download the site list; rectool will use its small built-in list"
+    warn "could not download the site list; argus will use its small built-in list"
   fi
 }
 
@@ -278,7 +278,7 @@ install_extras() {
 # --------------------------------------------------------------------- run --
 main() {
   TMP="$(mktemp -d)"
-  info "mode: $MODE   binary: $BIN_DIR/rectool   data: $DATA_DIR"
+  info "mode: $MODE   binary: $BIN_DIR/argus   data: $DATA_DIR"
 
   if [[ $DO_DEPS -eq 1 ]]; then
     detect_pm
@@ -297,13 +297,13 @@ main() {
   have curl || die "curl is required"
 
   ensure_go
-  build_rectool
+  build_argus
   install_files
   [[ $DO_SITES -eq 1 ]] && fetch_sites
   [[ $DO_EXTRAS -eq 1 && $DO_DEPS -eq 1 && -n "$PM" ]] && install_extras
 
   # ---- verify
-  local bin="$BIN_DIR/rectool"
+  local bin="$BIN_DIR/argus"
   "$bin" -version >/dev/null || die "installed binary does not run"
   ok "$("$bin" -version)"
   "$bin" -list-modules | sed 's/^/    /'
@@ -317,10 +317,10 @@ main() {
   cat <<EOF
 
 Try it:
-  rectool -u johndoe -verify -o reports
-  rectool -n "Jane Doe" -e jane@example.com -derive -o reports
-  rectool -web 127.0.0.1:8080     # browser UI (prints a URL with your access token)
-  rectool -h
+  argus -u johndoe -verify -o reports
+  argus -n "Jane Doe" -e jane@example.com -derive -o reports
+  argus -web 127.0.0.1:8080     # browser UI (prints a URL with your access token)
+  argus -h
 
 Use only on subjects you are lawfully permitted to investigate.
 EOF

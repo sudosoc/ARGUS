@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func TestInputsRejectInjection(t *testing.T) {

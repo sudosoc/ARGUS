@@ -115,7 +115,7 @@
   btn.addEventListener("click", showCases);
 
   const hb = el("button", { type: "button", class: "ghost small", id: "healthBtn", text: "Source status" });
-  hb.title = "Check which of the public services rectool relies on are reachable right now";
+  hb.title = "Check which of the public services argus relies on are reachable right now";
   document.querySelector(".top-right").prepend(hb);
   hb.addEventListener("click", async () => {
     const body = open("Source status");

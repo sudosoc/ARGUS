@@ -1,4 +1,4 @@
-// Package web serves rectool's browser UI: a small JSON API, live results over
+// Package web serves argus's browser UI: a small JSON API, live results over
 // Server-Sent Events, and an embedded single-page front end (no CDN, no
 // external assets).
 //
@@ -26,19 +26,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/health"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/output"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/health"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/output"
 )
 
 //go:embed static
 var staticFS embed.FS
 
-const cookieName = "rectool_session"
+const cookieName = "argus_session"
 
 // Config configures the server.
 type Config struct {
@@ -228,10 +228,10 @@ func (s *Server) secure(next http.Handler) http.Handler {
 		}
 
 		c, err := r.Cookie(cookieName)
-		if (err != nil || !s.tokenOK(c.Value)) && !s.tokenOK(r.Header.Get("X-Rectool-Token")) {
+		if (err != nil || !s.tokenOK(c.Value)) && !s.tokenOK(r.Header.Get("X-Argus-Token")) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintln(w, "rectool: unauthorized. Open the URL printed in the terminal (it contains ?token=…).")
+			fmt.Fprintln(w, "argus: unauthorized. Open the URL printed in the terminal (it contains ?token=…).")
 			return
 		}
 
@@ -244,7 +244,7 @@ func (s *Server) secure(next http.Handler) http.Handler {
 					return
 				}
 			}
-			if r.Header.Get("X-Requested-With") != "rectool" {
+			if r.Header.Get("X-Requested-With") != "argus" {
 				http.Error(w, "missing X-Requested-With header", http.StatusForbidden)
 				return
 			}
@@ -361,7 +361,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", ct+"; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="rectool_`+sc.ID+"."+ext+`"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="argus_`+sc.ID+"."+ext+`"`)
 	_ = output.Render(w, rep, format)
 }
 

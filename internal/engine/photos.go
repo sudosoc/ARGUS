@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 const maxPhotos = 80

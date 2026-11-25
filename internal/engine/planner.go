@@ -7,9 +7,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Enrich is the "intelligence" step that runs before dispatch: it validates

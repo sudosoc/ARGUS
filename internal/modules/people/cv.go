@@ -2,16 +2,16 @@ package people
 
 import (
 	"context"
-	"github.com/sudosoc/rectool/internal/geo"
+	"github.com/sudosoc/argus/internal/geo"
 	"net/url"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/cvparse"
-	"github.com/sudosoc/rectool/internal/doc"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/cvparse"
+	"github.com/sudosoc/argus/internal/doc"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/modules/dorks"
 )
 
 // cvFinder searches the web for the person's CV / resume, downloads the few

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // More public records that name people: research indexes (arXiv, Europe PMC,
@@ -19,7 +19,7 @@ import (
 // people, so each result is a separate candidate for identity resolution.
 
 func ua() map[string]string {
-	return map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)", "Accept": "application/json"}
+	return map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)", "Accept": "application/json"}
 }
 
 func two(name string) bool { return len(strings.Fields(name)) >= 2 }

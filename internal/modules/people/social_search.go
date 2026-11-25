@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/geo"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/geo"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // blueskySearch looks people up by name among Bluesky's public profiles.

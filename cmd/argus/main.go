@@ -1,4 +1,4 @@
-// Command rectool is an API-less OSINT reconnaissance tool (CLI and web UI).
+// Command argus is an API-less OSINT reconnaissance tool (CLI and web UI).
 package main
 
 import (
@@ -12,13 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/modules/social"
-	"github.com/sudosoc/rectool/internal/output"
-	"github.com/sudosoc/rectool/internal/web"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/modules/social"
+	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/web"
 )
 
 func main() { os.Exit(run()) }
@@ -78,16 +78,16 @@ func run() int {
 		noColor    = flag.Bool("no-color", false, "disable colour output")
 	)
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: rectool [options]\n       rectool -web 127.0.0.1:8080\n\nAll identifiers are optional; with none given on a terminal you are prompted.\n\n")
+		fmt.Fprintf(os.Stderr, "Usage: argus [options]\n       argus -web 127.0.0.1:8080\n\nAll identifiers are optional; with none given on a terminal you are prompted.\n\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 	if *contact != "" {
-		_ = os.Setenv("RECTOOL_CONTACT", *contact)
+		_ = os.Setenv("ARGUS_CONTACT", *contact)
 	}
 
 	if *showVer {
-		fmt.Println("rectool", engine.Version)
+		fmt.Println("argus", engine.Version)
 		return 0
 	}
 
@@ -159,7 +159,7 @@ func run() int {
 	ui.Summary(rep)
 
 	if *outDir != "" {
-		base := "rectool_" + rep.StartedAt.Format("20060102_150405")
+		base := "argus_" + rep.StartedAt.Format("20060102_150405")
 		paths, err := output.Export(rep, *outDir, base, splitCSV(*formats))
 		for _, p := range paths {
 			ui.Info("wrote %s", p)
@@ -209,7 +209,7 @@ func runSelfTest(ctx context.Context, ui *output.Console, opts app.Options, time
 		counts[social.HealthNoisy], counts[social.HealthBlocked], counts[social.HealthUntested])
 	path := app.DisabledSitesPath()
 	if path == "" {
-		ui.Warn("no data directory; set RECTOOL_DATA to save the result")
+		ui.Warn("no data directory; set ARGUS_DATA to save the result")
 		return 1
 	}
 	if err := social.SaveDisabled(path, disable); err != nil {

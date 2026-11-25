@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
 )
 
 var interestingSub = []string{"admin", "dev", "stage", "staging", "test", "uat", "qa", "vpn", "mail", "webmail",

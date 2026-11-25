@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
 )
 
 var contactPage = regexp.MustCompile(`(?i)/(contact|contact-us|contactus|about|about-us|team|impressum|legal|imprint|kontakt|company)(/|\.html?|\.php)?$`)

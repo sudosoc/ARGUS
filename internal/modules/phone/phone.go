@@ -11,8 +11,8 @@ import (
 
 	"github.com/nyaruka/phonenumbers"
 
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Scanner is the phone module.
@@ -86,7 +86,7 @@ func (s *Scanner) Scan(_ context.Context, t models.Target, _ scanner.Deps, emit 
 	set("national", phonenumbers.Format(num, phonenumbers.NATIONAL))
 	digits := strings.TrimPrefix(phonenumbers.Format(num, phonenumbers.E164), "+")
 	d["chat apps (open manually)"] = "https://wa.me/" + digits + "  ·  https://t.me/+" + digits
-	d["note"] = "rectool does not query caller-ID / subscriber databases; ownership cannot be derived from the number alone"
+	d["note"] = "argus does not query caller-ID / subscriber databases; ownership cannot be derived from the number alone"
 
 	conf := 0.95
 	if !valid {

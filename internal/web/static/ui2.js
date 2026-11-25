@@ -7,8 +7,8 @@
 
   // ------------------------------------------------------------ preferences
   const store = {
-    get(k, d) { try { const v = localStorage.getItem("rectool_" + k); return v === null ? d : v; } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem("rectool_" + k, v); } catch (e) { /* private mode */ } },
+    get(k, d) { try { const v = localStorage.getItem("argus_" + k); return v === null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("argus_" + k, v); } catch (e) { /* private mode */ } },
   };
   RT.store = store;
   RT.ui = { full: store.get("full", "0") === "1" };
@@ -177,12 +177,12 @@
     go.addEventListener("click", () => { store.set("consent_v1", "yes"); bg.remove(); });
     bg.append(el("div", { class: "modal" },
       el("h2", { id: "consentTitle", text: "Before you start" }),
-      el("p", { text: "rectool gathers information that is already public. It is for lawful, authorised work such as security research, due diligence, journalism, and checking your own exposure." }),
+      el("p", { text: "argus gathers information that is already public. It is for lawful, authorised work such as security research, due diligence, journalism, and checking your own exposure." }),
       el("ul", {},
         el("li", { text: "Everything it shows is a lead. A name is not an identity: verify before you act on or share anything." }),
         el("li", { text: "It does not log in anywhere, solve CAPTCHAs, or look for home addresses. Do not use it to stalk, harass or profile private people." }),
         el("li", { text: "You are responsible for following the law and each site's terms where you operate." })),
-      el("label", { class: "check" }, cb, el("span", { class: "t" }, el("b", { text: "I will use rectool only for lawful, authorised purposes." }))),
+      el("label", { class: "check" }, cb, el("span", { class: "t" }, el("b", { text: "I will use argus only for lawful, authorised purposes." }))),
       el("div", { class: "actions-row" }, go)));
     document.body.append(bg);
     setTimeout(() => cb.focus(), 50);

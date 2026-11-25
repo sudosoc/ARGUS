@@ -29,8 +29,8 @@ import (
 
 	_ "golang.org/x/image/webp" // register the WebP decoder
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
 )
 
 // MaxBytes caps a downloaded image.

@@ -18,12 +18,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
-	"github.com/sudosoc/rectool/internal/rdap"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/rdap"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Scanner is the IP module.
@@ -260,7 +260,7 @@ func internetDBJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func
 	if len(r.Ports)+len(r.Hostnames)+len(r.CPEs)+len(r.Tags)+len(r.Vulns) == 0 {
 		return
 	}
-	d := map[string]string{"note": "passively indexed by Shodan InternetDB; not scanned by rectool"}
+	d := map[string]string{"note": "passively indexed by Shodan InternetDB; not scanned by argus"}
 	var ps []string
 	for _, p := range r.Ports {
 		ps = append(ps, strconv.Itoa(p))

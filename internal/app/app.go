@@ -9,29 +9,29 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/modules/activity"
-	"github.com/sudosoc/rectool/internal/modules/asn"
-	"github.com/sudosoc/rectool/internal/modules/bizreg"
-	"github.com/sudosoc/rectool/internal/modules/breach"
-	"github.com/sudosoc/rectool/internal/modules/company"
-	"github.com/sudosoc/rectool/internal/modules/crypto"
-	"github.com/sudosoc/rectool/internal/modules/devtrace"
-	"github.com/sudosoc/rectool/internal/modules/docmeta"
-	"github.com/sudosoc/rectool/internal/modules/domain"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/modules/footprint"
-	"github.com/sudosoc/rectool/internal/modules/images"
-	"github.com/sudosoc/rectool/internal/modules/ip"
-	"github.com/sudosoc/rectool/internal/modules/mentions"
-	"github.com/sudosoc/rectool/internal/modules/people"
-	"github.com/sudosoc/rectool/internal/modules/phone"
-	"github.com/sudosoc/rectool/internal/modules/profiles"
-	"github.com/sudosoc/rectool/internal/modules/records"
-	"github.com/sudosoc/rectool/internal/modules/sitefiles"
-	"github.com/sudosoc/rectool/internal/modules/social"
-	"github.com/sudosoc/rectool/internal/modules/syswrap"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/modules/activity"
+	"github.com/sudosoc/argus/internal/modules/asn"
+	"github.com/sudosoc/argus/internal/modules/bizreg"
+	"github.com/sudosoc/argus/internal/modules/breach"
+	"github.com/sudosoc/argus/internal/modules/company"
+	"github.com/sudosoc/argus/internal/modules/crypto"
+	"github.com/sudosoc/argus/internal/modules/devtrace"
+	"github.com/sudosoc/argus/internal/modules/docmeta"
+	"github.com/sudosoc/argus/internal/modules/domain"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/modules/footprint"
+	"github.com/sudosoc/argus/internal/modules/images"
+	"github.com/sudosoc/argus/internal/modules/ip"
+	"github.com/sudosoc/argus/internal/modules/mentions"
+	"github.com/sudosoc/argus/internal/modules/people"
+	"github.com/sudosoc/argus/internal/modules/phone"
+	"github.com/sudosoc/argus/internal/modules/profiles"
+	"github.com/sudosoc/argus/internal/modules/records"
+	"github.com/sudosoc/argus/internal/modules/sitefiles"
+	"github.com/sudosoc/argus/internal/modules/social"
+	"github.com/sudosoc/argus/internal/modules/syswrap"
 )
 
 // Options is the complete configuration of one engine.
@@ -170,15 +170,15 @@ func ResolveSites(explicit string) string {
 		return explicit
 	}
 	var dirs []string
-	if d := os.Getenv("RECTOOL_DATA"); d != "" {
+	if d := os.Getenv("ARGUS_DATA"); d != "" {
 		dirs = append(dirs, d)
 	}
 	if x := os.Getenv("XDG_DATA_HOME"); x != "" {
-		dirs = append(dirs, x+"/rectool")
+		dirs = append(dirs, x+"/argus")
 	} else if h, err := os.UserHomeDir(); err == nil {
-		dirs = append(dirs, h+"/.local/share/rectool")
+		dirs = append(dirs, h+"/.local/share/argus")
 	}
-	dirs = append(dirs, "/usr/local/share/rectool", "/usr/share/rectool")
+	dirs = append(dirs, "/usr/local/share/argus", "/usr/share/argus")
 	for _, d := range dirs {
 		p := d + "/wmn-data.json"
 		if st, err := os.Stat(p); err == nil && st.Size() > 0 {
@@ -208,17 +208,17 @@ func (o Options) applyPreset() Options {
 	return o
 }
 
-// DataDir is where rectool keeps downloaded/generated data: $RECTOOL_DATA,
-// else $XDG_DATA_HOME/rectool, else ~/.local/share/rectool.
+// DataDir is where argus keeps downloaded/generated data: $ARGUS_DATA,
+// else $XDG_DATA_HOME/argus, else ~/.local/share/argus.
 func DataDir() string {
-	if d := os.Getenv("RECTOOL_DATA"); d != "" {
+	if d := os.Getenv("ARGUS_DATA"); d != "" {
 		return d
 	}
 	if x := os.Getenv("XDG_DATA_HOME"); x != "" {
-		return x + "/rectool"
+		return x + "/argus"
 	}
 	if h, err := os.UserHomeDir(); err == nil {
-		return h + "/.local/share/rectool"
+		return h + "/.local/share/argus"
 	}
 	return ""
 }

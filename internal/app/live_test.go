@@ -8,19 +8,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // TestLiveAudit runs the real engine against the live internet. It is skipped
-// unless RECTOOL_LIVE=1, and is meant for a manual coverage audit:
+// unless ARGUS_LIVE=1, and is meant for a manual coverage audit:
 //
-//	RECTOOL_LIVE=1 go test ./internal/app -run TestLiveAudit -v -timeout 15m
+//	ARGUS_LIVE=1 go test ./internal/app -run TestLiveAudit -v -timeout 15m
 //
-// Inputs come from RECTOOL_LIVE_USER / _EMAIL / _DOMAIN / _NAME (defaults are a
+// Inputs come from ARGUS_LIVE_USER / _EMAIL / _DOMAIN / _NAME (defaults are a
 // well-known public figure).
 func TestLiveAudit(t *testing.T) {
-	if os.Getenv("RECTOOL_LIVE") != "1" {
-		t.Skip("set RECTOOL_LIVE=1 to run the live audit")
+	if os.Getenv("ARGUS_LIVE") != "1" {
+		t.Skip("set ARGUS_LIVE=1 to run the live audit")
 	}
 	env := func(k, def string) string {
 		if v := os.Getenv(k); v != "" {
@@ -29,22 +29,22 @@ func TestLiveAudit(t *testing.T) {
 		return def
 	}
 	tg := models.Target{
-		Username: env("RECTOOL_LIVE_USER", "torvalds"), Email: env("RECTOOL_LIVE_EMAIL", "torvalds@linux-foundation.org"),
-		Domain: env("RECTOOL_LIVE_DOMAIN", ""), FullName: env("RECTOOL_LIVE_NAME", "Linus Torvalds"),
-		Company: env("RECTOOL_LIVE_COMPANY", ""), Location: env("RECTOOL_LIVE_LOCATION", ""),
+		Username: env("ARGUS_LIVE_USER", "torvalds"), Email: env("ARGUS_LIVE_EMAIL", "torvalds@linux-foundation.org"),
+		Domain: env("ARGUS_LIVE_DOMAIN", ""), FullName: env("ARGUS_LIVE_NAME", "Linus Torvalds"),
+		Company: env("ARGUS_LIVE_COMPANY", ""), Location: env("ARGUS_LIVE_LOCATION", ""),
 	}
-	if os.Getenv("RECTOOL_LIVE_BLANK") == "1" { // only what RECTOOL_LIVE_* explicitly sets
-		tg = models.Target{Username: os.Getenv("RECTOOL_LIVE_USER"), Email: os.Getenv("RECTOOL_LIVE_EMAIL"), Domain: os.Getenv("RECTOOL_LIVE_DOMAIN"),
-			FullName: os.Getenv("RECTOOL_LIVE_NAME"), Company: os.Getenv("RECTOOL_LIVE_COMPANY"), Location: os.Getenv("RECTOOL_LIVE_LOCATION")}
+	if os.Getenv("ARGUS_LIVE_BLANK") == "1" { // only what ARGUS_LIVE_* explicitly sets
+		tg = models.Target{Username: os.Getenv("ARGUS_LIVE_USER"), Email: os.Getenv("ARGUS_LIVE_EMAIL"), Domain: os.Getenv("ARGUS_LIVE_DOMAIN"),
+			FullName: os.Getenv("ARGUS_LIVE_NAME"), Company: os.Getenv("ARGUS_LIVE_COMPANY"), Location: os.Getenv("ARGUS_LIVE_LOCATION")}
 	}
-	if os.Getenv("RECTOOL_LIVE_NOUSER") == "1" {
+	if os.Getenv("ARGUS_LIVE_NOUSER") == "1" {
 		tg.Username, tg.Email = "", ""
 	}
 	opts := Defaults()
 	opts.NoWayback = true
 	opts.DorkDelay = time.Second
 	opts.MaxDorks = 10
-	opts.Modules = strings.Split(env("RECTOOL_LIVE_MODULES", "profiles,footprint,people,social"), ",")
+	opts.Modules = strings.Split(env("ARGUS_LIVE_MODULES", "profiles,footprint,people,social"), ",")
 	built, err := Build(opts)
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestLiveAudit(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	if os.Getenv("RECTOOL_LIVE_SOURCES") == "1" {
+	if os.Getenv("ARGUS_LIVE_SOURCES") == "1" {
 		for _, f := range rep.Findings {
 			if f.Module != "social" && f.Status != models.StatusNotFound {
 				t.Logf("SRC %s/%s [%s] %s", f.Module, f.Source, f.Status, f.Details["error"])

@@ -1,4 +1,4 @@
-# rectool
+# argus
 
 API-less OSINT reconnaissance in Go. Give it any combination of full name, username, email, phone, domain, IP address, company and location; it decides which modules apply, runs them concurrently on a shared worker pool, follows the strongest new leads it discovers, and exports JSON / CSV / TXT reports.
 
@@ -6,42 +6,42 @@ API-less OSINT reconnaissance in Go. Give it any combination of full name, usern
 
 ## Install (Linux)
 
-rectool targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). Copy this directory to the machine and run the installer:
+argus targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). Copy this directory to the machine and run the installer:
 
 ```bash
 chmod +x install.sh
-./install.sh            # system-wide: /usr/local/bin/rectool (uses sudo)
-./install.sh --user     # no root: ~/.local/bin/rectool
+./install.sh            # system-wide: /usr/local/bin/argus (uses sudo)
+./install.sh --user     # no root: ~/.local/bin/argus
 ./update.sh             # later: pull the latest version, rebuild, reinstall (--check only looks)
 ```
 
-The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/rectool/` (rectool finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
+The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/argus/` (argus finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
 
 If `~/.local/bin` is not in your `PATH` after a `--user` install, the script prints the line to add.
 
 Manual build instead (needs Go 1.26+):
 
 ```bash
-make build              # bin/rectool
+make build              # bin/argus
 make linux-arm64        # cross-compile, e.g. for a Raspberry Pi
 ```
 
 ## Usage
 
 ```bash
-rectool -u johndoe -verify -o reports
-rectool -n "Jane Doe" -e jane@example.com -p +15551234567 -derive -o reports
-rectool -d example.com -c "Example Inc" -l "Cairo, Egypt" -o reports
-rectool -ip 203.0.113.10
-rectool                 # on a terminal with no flags: interactive prompts
-rectool -list-modules
-rectool -version
+argus -u johndoe -verify -o reports
+argus -n "Jane Doe" -e jane@example.com -p +15551234567 -derive -o reports
+argus -d example.com -c "Example Inc" -l "Cairo, Egypt" -o reports
+argus -ip 203.0.113.10
+argus                 # on a terminal with no flags: interactive prompts
+argus -list-modules
+argus -version
 ```
 
 ### Web UI
 
 ```bash
-rectool -web 127.0.0.1:8080
+argus -web 127.0.0.1:8080
 ```
 
 It prints a URL containing a random access token; open it in your browser (the token is exchanged once for an HttpOnly, SameSite=Strict cookie).
@@ -72,7 +72,7 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 
 - **Coverage gaps are first-class.** Blocked, timed-out and offline checks are recorded per collector and shown in the UI and the TXT/JSON reports.
 - **Retry pass.** Username probes that fail at connection level (timeouts, DNS) are retried once, gently, before being reported, so a congested link does not silently lose coverage. `-inflight N` caps simultaneous requests (default 110; lower it on weak networks).
-- **Site self-test.** `rectool -selftest-sites` checks every platform against its known account and a random one, then disables the ones with stale signatures or that report everything as existing (sites merely blocked from your network stay enabled). The list is stored in `$RECTOOL_DATA` / `~/.local/share/rectool/sites-disabled.json`; `-all-sites` ignores it, deleting the file resets it. Run it occasionally: platforms change.
+- **Site self-test.** `argus -selftest-sites` checks every platform against its known account and a random one, then disables the ones with stale signatures or that report everything as existing (sites merely blocked from your network stay enabled). The list is stored in `$ARGUS_DATA` / `~/.local/share/argus/sites-disabled.json`; `-all-sites` ignores it, deleting the file resets it. Run it occasionally: platforms change.
 - **Attribution scoring** keeps unrelated people who share a handle out of the leads that get followed.
 - **Integrity digest** (SHA-256 of target, entities and findings) and recorded run settings make a report verifiable and reproducible.
 
@@ -80,7 +80,7 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 
 At least one identifier is required. Ctrl-C stops the run and still writes a partial report (exit code 130).
 
-Other flags worth knowing (`rectool -h` lists all):
+Other flags worth knowing (`argus -h` lists all):
 
 | Flag | Effect |
 |---|---|
@@ -127,7 +127,7 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 | `asn` | ASN | RIPEstat + RDAP: holder, announced prefixes, BGP neighbours, contacts. |
 | `profiles` | username | Real profile data from GitHub (profile, SSH keys, **commit e-mails**), Keybase (verified accounts), GitLab, npm (maintainer e-mail), Hacker News, DEV, Docker Hub, Mastodon, Stack Overflow, Lichess, Chess.com, Reddit. |
 | `domain` | domain | DNS records; SPF/DMARC/DKIM and mail provider; SaaS used (TXT tokens); RDAP registration and contacts; **subdomains** (crt.sh, certspotter, HackerTarget, TLS SANs) resolved and checked for wildcard DNS; website title/tech/security headers/cookies/tracking IDs; emails, phones and social links on the site; robots.txt, sitemap, security.txt; TLS certificate; Internet Archive URLs; stealer-log exposure counts. |
-| `ip` | IP | Reverse DNS, ASN (Team Cymru via DNS), RDAP, geolocation, ports/CVEs already indexed by Shodan InternetDB (no scanning by rectool), co-hosted domains, TLS certificate and web banner. |
+| `ip` | IP | Reverse DNS, ASN (Team Cymru via DNS), RDAP, geolocation, ports/CVEs already indexed by Shodan InternetDB (no scanning by argus), co-hosted domains, TLS certificate and web banner. |
 | `company` | company | Candidate domains (verified against the live page; only the best one is followed), Wikipedia, Wikidata, GitHub organisation. |
 | `mentions` | full name | Press articles (GDELT open news index, last ~year) whose headline names the person; headlines that also contain your company, place or e-mail domain are marked as context matches, the rest stay unverified. GDELT rate-limits shared IPs, so it can answer "try again later". |
 | `sitefiles` | domain | What a site publishes about itself and its people: humans.txt credits, ads.txt advertising accounts (link a site to its owner and sister sites), the public WordPress author list, RSS / Atom feed authors. |
@@ -147,7 +147,7 @@ Select modules with `-modules domain,ip`. Modules whose required input is missin
 
 ### Photos
 
-Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by rectool, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
+Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by argus, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
 
 ### What is covered, and what is not
 
@@ -164,9 +164,9 @@ Two different accounts on the same platform are never merged by soft evidence (i
 
 Sources for a name: ORCID (employments, education, keywords, links), Wikidata (occupation, employer, education, cross-platform IDs, photo), OpenAlex (institutions, research topics), GitHub profiles, personal sites (schema.org Person data) and CV/resume PDFs. A CV is accepted only if its *header* carries the person's name (a CV that merely mentions the name is rejected) and is checked against your e-mail, phone, employer, location and handle.
 
-**LinkedIn.** LinkedIn actively blocks automated access (HTTP 999). rectool can read the logged-out public view of a specific profile URL when LinkedIn allows it, slowly and without evading anything, and stops at the first refusal. When LinkedIn refuses, use the manual link, or open the profile yourself and paste its text (or a "Save to PDF" export) into the **Paste text** box (CLI: `-notes-file`); it is parsed into a record and takes part in identity matching. LinkedIn's terms restrict automated access; use this only where you are entitled to.
+**LinkedIn.** LinkedIn actively blocks automated access (HTTP 999). argus can read the logged-out public view of a specific profile URL when LinkedIn allows it, slowly and without evading anything, and stops at the first refusal. When LinkedIn refuses, use the manual link, or open the profile yourself and paste its text (or a "Save to PDF" export) into the **Paste text** box (CLI: `-notes-file`); it is parsed into a record and takes part in identity matching. LinkedIn's terms restrict automated access; use this only where you are entitled to.
 
-**`-browser` (opt-in).** If plain HTTP is refused, rectool can open the same logged-out public page with the Chrome / Chromium / Edge installed on your machine (headless, default settings, empty profile; set `RECTOOL_BROWSER` to pick one). It uses no stealth flags, no cookies and no login, and stops at a sign-in wall or CAPTCHA. Whether LinkedIn serves the page depends on your IP and its current rules; in our own test from a home connection it showed the sign-in wall, so treat this as best effort. The public view contains name, headline, location, roles, schools, about and photo; it never contains e-mail or CV, which LinkedIn shows only to logged-in connections. For those, paste your own logged-in view into the Notes box.
+**`-browser` (opt-in).** If plain HTTP is refused, argus can open the same logged-out public page with the Chrome / Chromium / Edge installed on your machine (headless, default settings, empty profile; set `ARGUS_BROWSER` to pick one). It uses no stealth flags, no cookies and no login, and stops at a sign-in wall or CAPTCHA. Whether LinkedIn serves the page depends on your IP and its current rules; in our own test from a home connection it showed the sign-in wall, so treat this as best effort. The public view contains name, headline, location, roles, schools, about and photo; it never contains e-mail or CV, which LinkedIn shows only to logged-in connections. For those, paste your own logged-in view into the Notes box.
 
 ## Report formats
 
@@ -182,7 +182,7 @@ The Identity tab opens with one hero card (photo, name, match score, sources, co
 
 ## Cases, comparison and source status
 
-Every finished scan in the web UI is saved as a case (`~/.config/rectool/cases`, or `$RECTOOL_CASES`, files mode 0600). **Saved cases** re-opens one and compares any two runs of a target to show what appeared or disappeared. **Source status** probes the ~23 public services rectool relies on, so a blocked source is not mistaken for "nothing found". On any candidate person, **Compare with best match** shows the two side by side. **📋 Copy page for rectool** is a bookmarklet: you open a profile yourself while logged in, click it, and paste the copied text into the Paste text box; rectool never logs in anywhere.
+Every finished scan in the web UI is saved as a case (`~/.config/argus/cases`, or `$ARGUS_CASES`, files mode 0600). **Saved cases** re-opens one and compares any two runs of a target to show what appeared or disappeared. **Source status** probes the ~23 public services argus relies on, so a blocked source is not mistaken for "nothing found". On any candidate person, **Compare with best match** shows the two side by side. **📋 Copy page for argus** is a bookmarklet: you open a profile yourself while logged in, click it, and paste the copied text into the Paste text box; argus never logs in anywhere.
 
 ### Pivoting: findings feed each other
 
@@ -198,7 +198,7 @@ No API keys or accounts are used anywhere. Besides scraping and DNS, the tool re
 
 ### More social sites
 
-The binary embeds a small seed list (about 84 sites). `install.sh` downloads the community [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) list (600+ sites) to `/usr/local/share/rectool/wmn-data.json` (or `~/.local/share/rectool/` for `--user`), and rectool uses it automatically. Lookup order: `-sites`, `$RECTOOL_DATA`, `$XDG_DATA_HOME/rectool`, `~/.local/share/rectool`, `/usr/local/share/rectool`, `/usr/share/rectool`, then the embedded list. To refresh it: `sh scripts/update-sites.sh /usr/local/share/rectool/wmn-data.json`.
+The binary embeds a small seed list (about 84 sites). `install.sh` downloads the community [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) list (600+ sites) to `/usr/local/share/argus/wmn-data.json` (or `~/.local/share/argus/` for `--user`), and argus uses it automatically. Lookup order: `-sites`, `$ARGUS_DATA`, `$XDG_DATA_HOME/argus`, `~/.local/share/argus`, `/usr/local/share/argus`, `/usr/share/argus`, then the embedded list. To refresh it: `sh scripts/update-sites.sh /usr/local/share/argus/wmn-data.json`.
 
 Site signatures drift as platforms change. Use `-verify` and treat results as leads.
 
@@ -220,7 +220,7 @@ Site signatures drift as platforms change. Use `-verify` and treat results as le
 ## Architecture
 
 ```
-cmd/rectool/            CLI: flags, wiring, signal handling, export
+cmd/argus/            CLI: flags, wiring, signal handling, export
 internal/
   models/               Target, Finding, Report (shared data types)
   scanner/              Scanner interface + Deps handed to every module
@@ -290,7 +290,7 @@ go vet ./... && go test -race ./...
 
 - **Search engines.** Google and DuckDuckGo usually challenge plain-HTTP scrapers, and Bing may return unrelated pages; Brave works best. Blocked engines are skipped for the rest of the run. The dorks module reports this as errors, and footprint only keeps pages it could fetch and verify. A proxy via `-proxy` may help, but results are never guaranteed.
 - **Site signatures.** Social checks depend on each platform's current responses and can produce false positives or negatives.
-- **Breach data is names only.** The `breach` module queries the public XposedOrNot index and reports which breaches an e-mail appears in (names, dates, data types). `footprint` and rectool never download or store breach contents or credentials.
+- **Breach data is names only.** The `breach` module queries the public XposedOrNot index and reports which breaches an e-mail appears in (names, dates, data types). `footprint` and argus never download or store breach contents or credentials.
 - **Offline phone analysis.** The calling-code table is partial and does not look up carriers or owners.
 
 ## Credits

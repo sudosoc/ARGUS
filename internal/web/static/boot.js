@@ -14,6 +14,6 @@
   RT.bindForm();
   RT.refreshHistory();
   setInterval(RT.refreshHistory, 4000);
-  const last = sessionStorage.getItem("rectool_last");
+  const last = sessionStorage.getItem("argus_last");
   if (last) RT.openScan(last);
 })();

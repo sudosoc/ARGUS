@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func githubProfile(ctx context.Context, c *httpx.Client, user string, emit func(models.Finding)) {

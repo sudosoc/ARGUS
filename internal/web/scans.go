@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/output"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/output"
 )
 
 const (
@@ -321,7 +321,7 @@ func (m *manager) saveReportFiles(rep *models.Report) {
 	if m.reportDir == "" {
 		return
 	}
-	base := fmt.Sprintf("rectool_%s", rep.StartedAt.Format("20060102_150405"))
+	base := fmt.Sprintf("argus_%s", rep.StartedAt.Format("20060102_150405"))
 	if _, err := output.Export(rep, m.reportDir, base, []string{"json", "csv", "txt"}); err != nil {
 		fmt.Fprintln(os.Stderr, "[!] saving report:", err)
 	}
