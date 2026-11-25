@@ -1,7 +1,7 @@
 // Package crypto looks up a Bitcoin or Ethereum/EVM wallet address on public
 // block explorers (no keys): balance, activity window, transaction counts,
 // contract status and ENS name. Everything on a public blockchain is public
-// by design; rectool only reads it.
+// by design; argus only reads it.
 package crypto
 
 import (
@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Scanner is the wallet module.

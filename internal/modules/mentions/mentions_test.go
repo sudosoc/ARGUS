@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func TestIsoDate(t *testing.T) {

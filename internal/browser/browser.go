@@ -23,11 +23,11 @@ import (
 var ErrBlocked = errors.New("the site served a sign-in wall or CAPTCHA instead of the public page")
 
 // ErrNoBrowser means no Chrome / Chromium / Edge was found.
-var ErrNoBrowser = errors.New("no Chrome, Chromium or Edge found (install one or set RECTOOL_BROWSER=/path/to/browser)")
+var ErrNoBrowser = errors.New("no Chrome, Chromium or Edge found (install one or set ARGUS_BROWSER=/path/to/browser)")
 
 // Find locates an installed Chromium-family browser.
 func Find() (string, error) {
-	if p := os.Getenv("RECTOOL_BROWSER"); p != "" {
+	if p := os.Getenv("ARGUS_BROWSER"); p != "" {
 		if _, err := os.Stat(p); err == nil {
 			return p, nil
 		}
@@ -67,7 +67,7 @@ func DumpDOM(ctx context.Context, bin, rawURL string) (string, error) {
 	if !strings.HasPrefix(rawURL, "https://") {
 		return "", errors.New("browser: only https URLs are rendered")
 	}
-	profile, err := os.MkdirTemp("", "rectool-browser-*")
+	profile, err := os.MkdirTemp("", "argus-browser-*")
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +104,7 @@ func Blocked(dom string) bool {
 
 // PrintPDF renders a local HTML file to a PDF with the same headless browser.
 func PrintPDF(ctx context.Context, bin, htmlPath, pdfPath string) error {
-	profile, err := os.MkdirTemp("", "rectool-browser-*")
+	profile, err := os.MkdirTemp("", "argus-browser-*")
 	if err != nil {
 		return err
 	}

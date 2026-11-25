@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // jdig walks nested JSON objects: jdig(v, "a", "b") == v["a"]["b"].

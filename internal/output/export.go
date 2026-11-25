@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Export writes the report in each requested format ("json", "csv", "txt")

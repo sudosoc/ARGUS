@@ -1,5 +1,5 @@
 // Package leads lists, for each identifier, the sources that matter but cannot
-// be queried automatically without an account, a CAPTCHA, or payment. rectool
+// be queried automatically without an account, a CAPTCHA, or payment. argus
 // never works around those barriers; instead it hands the operator ready-made
 // links so nothing is silently skipped.
 package leads
@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func q(s string) string { return url.QueryEscape(s) }

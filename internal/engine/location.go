@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/geo"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/geo"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 const maxGeocodes = 16

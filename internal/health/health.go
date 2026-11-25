@@ -1,4 +1,4 @@
-// Package health probes the public services rectool depends on, so an empty
+// Package health probes the public services argus depends on, so an empty
 // result can be told apart from a source that is down or blocking.
 package health
 
@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // Source is one service and a cheap request that shows it is working.
@@ -66,7 +66,7 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 			start := time.Now()
 			r := Result{Name: s.Name, Used: s.Used}
 			resp, err := c.Do(ctx, httpx.Request{URL: s.URL, Timeout: 15 * time.Second, MaxBody: 64 << 10,
-				Headers: map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)"}})
+				Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)"}})
 			r.MS = time.Since(start).Milliseconds()
 			switch {
 			case err != nil:

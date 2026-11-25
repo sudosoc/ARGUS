@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // openAlex returns researcher profiles with institutions and research topics

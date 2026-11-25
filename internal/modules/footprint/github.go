@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func ghJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {

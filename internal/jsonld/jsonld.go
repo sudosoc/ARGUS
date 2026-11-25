@@ -21,7 +21,7 @@ type Org struct {
 	School   bool // EducationalOrganization
 }
 
-// Person is the subset of schema.org/Person rectool cares about.
+// Person is the subset of schema.org/Person argus cares about.
 type Person struct {
 	Name        string
 	URL         string

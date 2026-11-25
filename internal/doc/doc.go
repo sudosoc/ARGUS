@@ -12,9 +12,9 @@ import (
 
 	"github.com/ledongthuc/pdf"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/media"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/media"
 )
 
 const (

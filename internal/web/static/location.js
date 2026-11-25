@@ -177,9 +177,9 @@
       dot.style.background = c;
       legend.append(el("span", { class: "chip" }, dot, el("span", { text: label })));
     });
-    const mapBtn = el("button", { type: "button", class: "ghost small", text: "Load street map (OpenStreetMap tiles via rectool)" });
+    const mapBtn = el("button", { type: "button", class: "ghost small", text: "Load street map (OpenStreetMap tiles via argus)" });
     const mapStatus = el("span", { class: "hint-line" });
-    mapBtn.title = "The map tiles are downloaded by rectool from tile.openstreetmap.org (they reveal which area you are viewing to OpenStreetMap, nothing about the subject). Zoom stops at city level.";
+    mapBtn.title = "The map tiles are downloaded by argus from tile.openstreetmap.org (they reveal which area you are viewing to OpenStreetMap, nothing about the subject). Zoom stops at city level.";
     mapBtn.addEventListener("click", () => { mapBtn.disabled = true; mapStatus.textContent = " loading tiles…"; drawTiles(canvas, geo, mapStatus); mapStatus.textContent = ""; });
     mapPanel.append(el("div", { style: "margin-top:8px" }, mapBtn, mapStatus));
     mapPanel.append(legend, el("p", { class: "hint-line", text: "Dot size = how much that evidence is trusted. Green ring = best-supported place. Shaded strip = the timezone estimated from activity hours. Outlines are schematic." }));
@@ -226,7 +226,7 @@
         el("p", { class: "hint-line", text: "Bars = events per hour (UTC). Highlighted bars = the quiet window assumed to be local night (00:00–07:00). Shift work, automation, bots and travel weaken this signal." }));
       root.append(p);
     }
-    root.append(el("p", { class: "hint-line", text: "Location here comes from what is publicly stated or technically visible, and is shown at city / region precision. IP and phone data describe an ISP or number range, not a person's home. rectool does not search for street addresses." }));
+    root.append(el("p", { class: "hint-line", text: "Location here comes from what is publicly stated or technically visible, and is shown at city / region precision. IP and phone data describe an ISP or number range, not a person's home. argus does not search for street addresses." }));
   }
 
   RT.timelinePanel = function timelinePanel(tl) {

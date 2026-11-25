@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/browser"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/browser"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // writePDF prints the HTML report with the local Chrome / Chromium / Edge.
@@ -21,7 +21,7 @@ func writePDF(w io.Writer, r *models.Report) error {
 	if err != nil {
 		return fmt.Errorf("pdf needs a local browser: %w (the html format can be printed to PDF by hand)", err)
 	}
-	dir, err := os.MkdirTemp("", "rectool-pdf-*")
+	dir, err := os.MkdirTemp("", "argus-pdf-*")
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func writeMISP(w io.Writer, r *models.Report) error {
 	}
 	var attrs []attr
 	for _, e := range flatEntities(r) {
-		a := attr{Value: e.val, Comment: "rectool: " + e.source, Category: "Other", Type: "text"}
+		a := attr{Value: e.val, Comment: "argus: " + e.source, Category: "Other", Type: "text"}
 		switch e.typ {
 		case models.EntEmail:
 			a.Type, a.Category = "email", "Social network"
@@ -116,7 +116,7 @@ func writeMISP(w io.Writer, r *models.Report) error {
 		attrs = append(attrs, a)
 	}
 	ev := map[string]any{"Event": map[string]any{
-		"info": "rectool: " + strings.TrimSpace(r.Target.FullName+" "+r.Target.Username+" "+r.Target.Email+" "+r.Target.Domain),
+		"info": "argus: " + strings.TrimSpace(r.Target.FullName+" "+r.Target.Username+" "+r.Target.Email+" "+r.Target.Domain),
 		"date": r.StartedAt.Format("2006-01-02"), "threat_level_id": "4", "analysis": "0", "distribution": "0", "Attribute": attrs}}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
@@ -136,7 +136,7 @@ func writeSpiderFoot(w io.Writer, r *models.Report) error {
 		if t == "" {
 			continue
 		}
-		_ = cw.Write([]string{now, t, "rectool", csvSafe(e.source), "0", csvSafe(e.val)})
+		_ = cw.Write([]string{now, t, "argus", csvSafe(e.source), "0", csvSafe(e.val)})
 	}
 	cw.Flush()
 	return cw.Error()

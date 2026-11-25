@@ -5,12 +5,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/cvparse"
-	"github.com/sudosoc/rectool/internal/doc"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/jsonld"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
+	"github.com/sudosoc/argus/internal/cvparse"
+	"github.com/sudosoc/argus/internal/doc"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/jsonld"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
 )
 
 // personData reads a personal or portfolio site as a *profile of the person

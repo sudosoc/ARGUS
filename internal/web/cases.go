@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Saved cases: every finished scan is stored as a JSON report (0600) so a
@@ -25,11 +25,11 @@ type caseStore struct{ dir string }
 
 // DefaultCaseDir picks the per-user data directory for saved cases.
 func DefaultCaseDir() string {
-	if d := os.Getenv("RECTOOL_CASES"); d != "" {
+	if d := os.Getenv("ARGUS_CASES"); d != "" {
 		return d
 	}
 	if d, err := os.UserConfigDir(); err == nil {
-		return filepath.Join(d, "rectool", "cases")
+		return filepath.Join(d, "argus", "cases")
 	}
 	return ""
 }

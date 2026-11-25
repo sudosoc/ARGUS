@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 type acc struct {

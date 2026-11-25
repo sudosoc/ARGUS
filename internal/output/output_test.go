@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func sample() *models.Report {
 	return &models.Report{
-		Tool: "rectool", Version: "t", StartedAt: time.Now(), FinishedAt: time.Now(),
+		Tool: "argus", Version: "t", StartedAt: time.Now(), FinishedAt: time.Now(),
 		Target: models.Target{FullName: "Jane Roe", Email: "jane@example.com"},
 		Entities: []models.Entity{{Type: models.EntEmail, Value: "jane@example.com", Strong: true, Source: "x"},
 			{Type: models.EntDomain, Value: "example.com"}, {Type: models.EntUsername, Value: "jroe"}},
@@ -63,7 +63,7 @@ func TestAllFormats(t *testing.T) {
 }
 
 func TestLivePDF(t *testing.T) {
-	if os.Getenv("RECTOOL_LIVE") == "" {
+	if os.Getenv("ARGUS_LIVE") == "" {
 		t.Skip("live")
 	}
 	var b bytes.Buffer

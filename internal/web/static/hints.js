@@ -31,7 +31,7 @@ RT.HINTS = {
     ar: "دومين أو رابط موقع أو رابط بروفايل. الدومين بيتفحص DNS وأمان الإيميل وWHOIS/RDAP والـsubdomains والتقنيات وبيانات التواصل في الموقع وشهادة TLS والأرشيف والتسريبات واحتمالات الاستيلاء. رابط البروفايل (x.com/handle) بيتحوّل ليوزرنيم.",
   },
   ip: {
-    en: "An IPv4/IPv6 address. Reverse DNS, ASN, registration owner, approximate location, ports/CVEs already indexed by Shodan (no scanning by rectool), reputation, co-hosted domains and the TLS/web banner.",
+    en: "An IPv4/IPv6 address. Reverse DNS, ASN, registration owner, approximate location, ports/CVEs already indexed by Shodan (no scanning by argus), reputation, co-hosted domains and the TLS/web banner.",
     ar: "عنوان IP. بيطلّع الـreverse DNS والـASN وصاحب التسجيل والموقع التقريبي والبورتات والثغرات اللي مفهرسة عند Shodan (الأداة مش بتعمل scan)، والسمعة، والدومينات المشتركة، وبانر TLS والويب.",
   },
   asn: {
@@ -52,7 +52,7 @@ RT.HINTS = {
   },
 
   notes: {
-    en: "Paste any text you can see but rectool cannot fetch: a LinkedIn page copied from your own logged-in browser, a LinkedIn 'Save to PDF' export, a CV, a bio. It is parsed into a profile (employers, education, location, e-mail, skills) and joins the identity matching. Nothing is sent anywhere.",
+    en: "Paste any text you can see but argus cannot fetch: a LinkedIn page copied from your own logged-in browser, a LinkedIn 'Save to PDF' export, a CV, a bio. It is parsed into a profile (employers, education, location, e-mail, skills) and joins the identity matching. Nothing is sent anywhere.",
     ar: "الصق أي نص تقدر تشوفه إنت لكن الأداة مش قادرة تجيبه: صفحة LinkedIn منسوخة من متصفحك وإنت عامل login، أو ملف 'Save to PDF' من LinkedIn، أو CV، أو نبذة. بيتحلل لبروفايل (شغل وتعليم ومكان وإيميل ومهارات) وبيدخل في مطابقة الهوية. مفيش حاجة بتتبعت لأي مكان.",
   },
 
@@ -70,7 +70,7 @@ RT.HINTS = {
     ar: "بيولّد يوزرنيمات محتملة من الاسم الكامل (jdoe وjohn.doe…) ويفحصها. بيزوّد طلبات كتير وممكن نتايج غلط إلا لو 'Verify' شغّال.",
   },
   browser: {
-    en: "When LinkedIn refuses rectool's own HTTP client, open the same public profile page with the Chrome / Chromium / Edge installed on this machine (headless, logged out, default settings, no stealth). If LinkedIn shows a sign-in wall or CAPTCHA it stops. The public view has name, headline, location, roles, schools, about and photo, but NOT e-mail or CV; for those paste your own logged-in view into the Notes box.",
+    en: "When LinkedIn refuses argus's own HTTP client, open the same public profile page with the Chrome / Chromium / Edge installed on this machine (headless, logged out, default settings, no stealth). If LinkedIn shows a sign-in wall or CAPTCHA it stops. The public view has name, headline, location, roles, schools, about and photo, but NOT e-mail or CV; for those paste your own logged-in view into the Notes box.",
     ar: "لو LinkedIn رفض الـHTTP بتاع الأداة، بيفتح نفس صفحة البروفايل العامة بالـChrome/Chromium/Edge المثبت عندك (headless، من غير login، إعدادات عادية، من غير تخفّي). لو ظهر جدار تسجيل دخول أو CAPTCHA بيقف. الصفحة العامة فيها الاسم والعنوان والمكان والوظائف والتعليم والنبذة والصورة، لكن مفيهاش الإيميل ولا الـCV؛ دول الصقهم في خانة Notes من صفحتك وإنت عامل login.",
   },
   no_pivot: {

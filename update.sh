@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rectool updater: pulls the latest source, rebuilds and reinstalls.
+# argus updater: pulls the latest source, rebuilds and reinstalls.
 #
 #   ./update.sh                  update using the same install mode as before
 #   ./update.sh --user           (any other option is passed on to install.sh)
@@ -18,7 +18,7 @@ warn() { printf '%s[!]%s %s\n' "$Y" "$N" "$*" >&2; }
 die()  { printf '%s[x]%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 
 command -v git >/dev/null 2>&1 || die "git is required (apt install git / dnf install git / pacman -S git)"
-[[ -d .git ]] || die "$SRC_DIR is not a git checkout. Re-clone with: git clone https://github.com/sudosoc/rectool"
+[[ -d .git ]] || die "$SRC_DIR is not a git checkout. Re-clone with: git clone https://github.com/sudosoc/argus"
 
 CHECK=0
 ARGS=()
@@ -47,7 +47,7 @@ else
   [[ $CHECK -eq 1 ]] && exit 0
   if ! git diff --quiet || ! git diff --cached --quiet; then
     warn "you have local changes; stashing them for the update"
-    git stash push --quiet -m "rectool update $(date +%F-%H%M)"
+    git stash push --quiet -m "argus update $(date +%F-%H%M)"
     STASHED=1
   fi
   git pull --ff-only --quiet origin "$branch" || die "cannot fast-forward; resolve manually with: git pull"

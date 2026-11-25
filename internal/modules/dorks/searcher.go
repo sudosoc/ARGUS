@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // Result is one scraped search hit.

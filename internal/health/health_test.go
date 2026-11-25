@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 func TestLiveHealth(t *testing.T) {
-	if os.Getenv("RECTOOL_LIVE") == "" {
+	if os.Getenv("ARGUS_LIVE") == "" {
 		t.Skip("live")
 	}
 	c, _ := httpx.New(httpx.Options{Timeout: 20 * time.Second})

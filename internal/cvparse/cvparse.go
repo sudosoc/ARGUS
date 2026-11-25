@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sudosoc/rectool/internal/extract"
+	"github.com/sudosoc/argus/internal/extract"
 )
 
 // CV is the structured view of a resume.

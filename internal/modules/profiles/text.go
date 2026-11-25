@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/extract"
+	"github.com/sudosoc/argus/internal/extract"
 )
 
 var tagStrip = regexp.MustCompile(`(?s)<[^>]*>`)

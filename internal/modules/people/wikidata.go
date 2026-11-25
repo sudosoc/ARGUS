@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // wikidata reads structured facts about notable people: occupation,

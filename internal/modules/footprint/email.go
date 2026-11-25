@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func setOf(items ...string) map[string]bool {

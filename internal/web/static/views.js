@@ -389,7 +389,7 @@
     const leads = rep.manual_leads || [];
     if (leads.length) {
       const lp = el("div", { class: "panel" }, el("h3", { text: `Manual leads (${leads.length}): worth opening by hand` }),
-        el("p", { class: "hint-line", text: "These sources need a login, CAPTCHA or payment, so rectool does not (and will not try to) automate them. The links are pre-filled with what you gave it." }));
+        el("p", { class: "hint-line", text: "These sources need a login, CAPTCHA or payment, so argus does not (and will not try to) automate them. The links are pre-filled with what you gave it." }));
       const byGroup = {};
       for (const l of leads) (byGroup[l.group] = byGroup[l.group] || []).push(l);
       for (const [g, list] of Object.entries(byGroup)) {
@@ -424,7 +424,7 @@
     const root = $("tab-photos");
     root.replaceChildren();
     const list = RT.photoList();
-    root.append(el("p", { class: "photo-note", text: "Profile pictures found on the discovered accounts. Pictures are downloaded by rectool (not your browser) and compared: a green border means the same picture is used by more than one source, which is strong evidence the accounts belong together. Always open the picture to confirm it shows a real person; default avatars, logos and stock images also repeat." }));
+    root.append(el("p", { class: "photo-note", text: "Profile pictures found on the discovered accounts. Pictures are downloaded by argus (not your browser) and compared: a green border means the same picture is used by more than one source, which is strong evidence the accounts belong together. Always open the picture to confirm it shows a real person; default avatars, logos and stock images also repeat." }));
     if (!list.length) {
       root.append(el("div", { class: "panel muted", text: RT.S.state === "running" ? "No pictures yet…" : "No profile pictures were found. Platforms that need a login (Instagram, Facebook, X, LinkedIn) are listed under Coverage → manual leads." }));
       return;

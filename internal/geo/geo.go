@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Place is a geocoded location.
@@ -97,7 +97,7 @@ func (g *Geocoder) Geocode(ctx context.Context, q string) (*Place, bool) {
 		u = "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&accept-language=en&q=" + url.QueryEscape(q)
 	}
 	resp, err := g.c.Do(ctx, httpx.Request{URL: u, Timeout: 20 * time.Second,
-		Headers: map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)", "Accept": "application/json"}})
+		Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)", "Accept": "application/json"}})
 	var p *Place
 	if err == nil && resp.StatusCode == 200 {
 		p = parseNominatim(resp.Body)

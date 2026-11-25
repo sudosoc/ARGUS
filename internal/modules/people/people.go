@@ -17,11 +17,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Config tunes the module.

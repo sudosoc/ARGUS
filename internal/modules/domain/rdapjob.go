@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/rdap"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/rdap"
 )
 
 func rdapJob(ctx context.Context, c *httpx.Client, domain string, emit func(models.Finding)) {

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // identityStage resolves the collected person records into distinct people and

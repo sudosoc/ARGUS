@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>rectool — recon workbench</title>
+<title>argus — recon workbench</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header class="top">
   <div class="brand">
     <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <span class="name">rectool</span><span class="sub">recon workbench</span><small id="ver"></small>
+    <span class="name">argus</span><span class="sub">recon workbench</span><small id="ver"></small>
   </div>
   <div class="top-right">
-    <span id="conn" class="led ok" title="Connection to the local rectool server"></span>
+    <span id="conn" class="led ok" title="Connection to the local argus server"></span>
     <span class="note">Authorised, lawful investigations only · results are leads, verify before acting</span>
   </div>
 </header>
@@ -63,7 +63,7 @@
   <section class="main">
     <div id="empty" class="panel welcome">
       <h2>Start from any single clue</h2>
-      <p>A username, a nickname, a phone number, an e-mail, a domain, an IP, a wallet, a company name or a pasted profile link. rectool collects everything that clue exposes, then follows the strongest new leads it finds.</p>
+      <p>A username, a nickname, a phone number, an e-mail, a domain, an IP, a wallet, a company name or a pasted profile link. argus collects everything that clue exposes, then follows the strongest new leads it finds.</p>
       <ol class="steps">
         <li><b>Collect</b> — dozens of public sources in parallel.</li>
         <li><b>Attribute</b> — profiles are scored so people who merely share a handle are not mixed in.</li>
@@ -88,7 +88,7 @@
             <a class="btn" id="expGraphml" download title="Entity graph for Gephi / yEd / Maltego">GraphML</a>
             <a class="btn" id="expStix" download title="STIX 2.1 bundle for threat-intel platforms">STIX</a>
             <a class="btn" id="expEntities" download title="Every discovered entity (e-mail, domain, username...) as CSV">Entities</a>
-            <a class="btn" id="expPdf" download title="PDF report (needs Chrome, Chromium or Edge on the machine running rectool)">PDF</a>
+            <a class="btn" id="expPdf" download title="PDF report (needs Chrome, Chromium or Edge on the machine running argus)">PDF</a>
             <a class="btn" id="expMisp" download title="MISP event JSON">MISP</a>
             <a class="btn" id="expSf" download title="SpiderFoot CSV layout">SpiderFoot</a>
             <a class="btn" id="expMaltego" download title="CSV for Maltego's Import Graph from Table">Maltego</a>

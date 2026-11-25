@@ -1,8 +1,8 @@
 #!/bin/sh
 # Download the community WhatsMyName list (600+ sites).
 # Usage: scripts/update-sites.sh [output-file]   (default: data/wmn-data.json)
-# rectool uses it via: rectool -sites data/wmn-data.json
-# install.sh already places a copy where rectool finds it automatically.
+# argus uses it via: argus -sites data/wmn-data.json
+# install.sh already places a copy where argus finds it automatically.
 set -eu
 out="${1:-data/wmn-data.json}"
 mkdir -p "$(dirname "$out")"

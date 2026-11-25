@@ -4,16 +4,16 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/cvparse"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/cvparse"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
-// pastedProfile reads text the operator copied from a source rectool cannot
+// pastedProfile reads text the operator copied from a source argus cannot
 // open itself (a LinkedIn page they can see while logged in, a "Save to PDF"
 // export, a CV, a bio). It is parsed like a CV and added as a record, so
 // anything an account holder can legitimately see joins the identity
-// resolution without rectool touching a login-walled site.
+// resolution without argus touching a login-walled site.
 func pastedProfile(_ context.Context, _ *httpx.Client, t models.Target, emit func(models.Finding)) {
 	text := strings.TrimSpace(t.Notes)
 	if text == "" {

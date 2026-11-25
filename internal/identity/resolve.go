@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Input is one record plus where it came from.

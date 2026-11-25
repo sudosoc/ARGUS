@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // tileProxy serves OpenStreetMap raster tiles to the Location tab through
@@ -41,7 +41,7 @@ func (t *tileProxy) handle(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 		defer cancel()
 		resp, err := t.c.Do(ctx, httpx.Request{URL: "https://tile.openstreetmap.org/" + key + ".png", Timeout: 15 * time.Second, MaxBody: 1 << 20,
-			Headers: map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)", "Accept": "image/png"}})
+			Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)", "Accept": "image/png"}})
 		if err != nil || resp.StatusCode != 200 {
 			writeErr(w, http.StatusBadGateway, "tile unavailable")
 			return

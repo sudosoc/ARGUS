@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // A username is not an identity: "torvalds" on npm or Docker Hub is usually a
