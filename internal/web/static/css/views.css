@@ -346,3 +346,4 @@ tr.detail > td { background: var(--well); padding: var(--sp-3) var(--sp-4) var(-
 .revrow { display: flex; gap: var(--sp-3); align-items: center; }
 .revthumb { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--well); }
 .revmain { display: grid; gap: 4px; min-width: 0; }
+.ph-off { display: grid; place-items: center; color: var(--text-3); } .ph-off .ic { width: 44px; height: 44px; opacity: .55; }
