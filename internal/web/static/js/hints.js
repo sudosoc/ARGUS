@@ -11,8 +11,8 @@ UI.HINTS = {
     ar: "الاسم الكامل للشخص. بيشغّل بحث بالاسم (Wikidata وORCID وOpenAlex وGitHub) وبحث dorks في محركات البحث (بروفايلات ومستندات وسير ذاتية)، وبيرفع ثقة أي بروفايل اسمه مطابق.",
   },
   username: {
-    en: "A handle the person uses online. Probes 630+ platforms, pulls real profile data (GitHub, Keybase, npm, Telegram, Steam…), reads commit e-mails, and follows verified cross-links to other accounts.",
-    ar: "اسم مستخدم بيستعمله الشخص. بيفحص أكتر من 630 منصة، وبيسحب بيانات البروفايل الحقيقية (GitHub وKeybase وnpm وTelegram وSteam…)، وبيقرأ إيميلات الـcommits، وبيتابع الروابط الموثّقة لحسابات تانية.",
+    en: "A handle the person uses online. Probes 3,200+ platforms (up to 10,600 with the all depth), pulls real profile data (GitHub, Keybase, npm, Telegram, Steam…), reads commit e-mails, and follows verified cross-links to other accounts.",
+    ar: "اسم مستخدم بيستعمله الشخص. بيفحص أكتر من 3,200 منصة (لحد 10,600 بعمق all)، وبيسحب بيانات البروفايل الحقيقية (GitHub وKeybase وnpm وTelegram وSteam…)، وبيقرأ إيميلات الـcommits، وبيتابع الروابط الموثّقة لحسابات تانية.",
   },
   alias: {
     en: "A nickname or 'known as' name. Generates handle variants (dark.knight, darkknight, dark_knight…), probes each everywhere, and searches the exact phrase on the web.",
@@ -116,8 +116,8 @@ UI.HINTS = {
     ar: "محتاج يوزرنيم أو إيميل أو دومين. بيدوّر في مستودعات الكود العامة عن المعرّف (ملفات إعدادات وcommits وإشارات مسرّبة).",
   },
   "mod:social": {
-    en: "Needs a username/alias. Checks 630+ platforms by status code and page content, and adds title/bio/avatar when the page has them. Sends one request per site.",
-    ar: "محتاج يوزرنيم/لقب. بيفحص أكتر من 630 منصة بكود الاستجابة ومحتوى الصفحة، وبيضيف العنوان والبايو والصورة لو موجودين. طلب واحد لكل موقع.",
+    en: "Needs a username/alias. Checks 3,200+ platforms (up to 10,600 with the all depth) by status code and page content, and adds title/bio/avatar when the page has them. Sends one request per site.",
+    ar: "محتاج يوزرنيم/لقب. بيفحص أكتر من 3,200 منصة (لحد 10,600 بعمق all) بكود الاستجابة ومحتوى الصفحة، وبيضيف العنوان والبايو والصورة لو موجودين. طلب واحد لكل موقع.",
   },
   "mod:profiles": {
     en: "Needs a username. Pulls structured profile data (real name, location, company, websites, e-mails, linked accounts) from ~20 platforms and scores each profile so unrelated people with the same handle are not mixed in.",
