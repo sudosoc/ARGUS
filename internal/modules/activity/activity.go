@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,7 +29,7 @@ func New() *Scanner { return &Scanner{} }
 
 func (s *Scanner) Name() string { return "activity" }
 func (s *Scanner) Description() string {
-	return "timezone estimate from the hours a username is active on GitHub, Hacker News, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess"
+	return "timezone estimate from the hours a username is active on GitHub, Hacker News, Reddit, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess"
 }
 func (s *Scanner) CanRun(t models.Target) bool {
 	return strings.TrimSpace(t.Username) != "" || strings.TrimSpace(t.Alias) != ""
@@ -71,6 +72,8 @@ func finding(source, handle string, ts []time.Time) (models.Finding, bool) {
 	if len(ts) < 10 {
 		return models.Finding{}, false
 	}
+	ts = append([]time.Time(nil), ts...)
+	sort.Slice(ts, func(i, j int) bool { return ts[i].After(ts[j]) }) // newest first, whatever order the source used
 	var hours [24]int
 	var week [168]int
 	for _, t := range ts {
@@ -140,6 +143,7 @@ func hnTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 var sources = map[string]func(context.Context, *httpx.Client, string) []time.Time{
 	"GitHub":      githubTimes,
 	"Hacker News": hnTimes,
+	"Reddit":      redditTimes,
 	"Wikipedia":   wikipediaTimes,
 	"Codeforces":  codeforcesTimes,
 	"Bluesky":     blueskyTimes,
@@ -245,6 +249,31 @@ func lichessTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 		}
 		if json.Unmarshal([]byte(line), &g) == nil && g.At > 0 {
 			out = append(out, time.UnixMilli(g.At))
+		}
+	}
+	return out
+}
+
+// redditTimes reads the timestamps of a user's recent public comments and posts.
+func redditTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
+	var out []time.Time
+	for _, kind := range []string{"comments", "submitted"} {
+		var r struct {
+			Data struct {
+				Children []struct {
+					Data struct {
+						Created float64 `json:"created_utc"`
+					} `json:"data"`
+				} `json:"children"`
+			} `json:"data"`
+		}
+		if !util.GetJSON(ctx, c, "https://www.reddit.com/user/"+url.PathEscape(h)+"/"+kind+".json?limit=100&raw_json=1", &r) {
+			continue
+		}
+		for _, ch := range r.Data.Children {
+			if ch.Data.Created > 0 {
+				out = append(out, time.Unix(int64(ch.Data.Created), 0))
+			}
 		}
 	}
 	return out

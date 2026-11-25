@@ -56,3 +56,16 @@ func splitCSV(s string) []string {
 	}
 	return append(out, cur)
 }
+
+func TestFindingIsOrderIndependent(t *testing.T) {
+	ts := stamps(30, 10)
+	rev := make([]time.Time, len(ts))
+	for i := range ts {
+		rev[len(ts)-1-i] = ts[i] // oldest first, as some APIs return
+	}
+	a, _ := finding("X", "bob", ts)
+	b, _ := finding("X", "bob", rev)
+	if a.Details["first event"] != b.Details["first event"] || a.Details["last event"] != b.Details["last event"] || a.Details["last event"] != "2026-03-20" {
+		t.Errorf("event range depends on input order: %v vs %v", a.Details, b.Details)
+	}
+}
