@@ -118,6 +118,7 @@
     add("New investigation", "plus", () => { UI.showPanel(true); UI.panelTab("new"); setTimeout(() => $("f_full_name") && $("f_full_name").focus(), 30); }, "n", "Commands", "start form");
     add("Saved cases", "folder", () => UI.showCases(), "", "Commands", "open compare history");
     add("Source status", "pulse", () => UI.showHealth(), "", "Commands", "health reachable services");
+    add("API settings", "key", () => UI.showSettings(), "", "Commands", "keys model openai claude gemini local api");
     add("Toggle case panel", "panel", () => UI.showPanel(!UI.panelOpen()), "[", "Commands", "sidebar left");
     add("Switch theme (dark / light)", "moon", () => UI.toggleTheme(), "t", "Commands", "dark light colour");
     add("Switch density (compact / comfortable)", "rows", () => UI.toggleDensity(), "d", "Commands", "rows spacing");

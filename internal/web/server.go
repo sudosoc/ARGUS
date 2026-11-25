@@ -34,6 +34,7 @@ import (
 	"github.com/sudosoc/argus/internal/modules/dorks"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/settings"
 )
 
 //go:embed static
@@ -43,12 +44,13 @@ const cookieName = "argus_session"
 
 // Config configures the server.
 type Config struct {
-	Addr       string      // listen address, default 127.0.0.1:8080
-	Token      string      // access token; generated when empty
-	Base       app.Options // defaults for every scan (proxies, workers, sites, ...)
-	MaxRunning int         // concurrent scans (default 2)
-	ReportDir  string      // when set, finished reports are also saved here
-	CaseDir    string      // when set, finished scans are kept as re-openable cases here
+	Addr        string      // listen address, default 127.0.0.1:8080
+	Token       string      // access token; generated when empty
+	Base        app.Options // defaults for every scan (proxies, workers, sites, ...)
+	MaxRunning  int         // concurrent scans (default 2)
+	ReportDir   string      // when set, finished reports are also saved here
+	CaseDir     string      // when set, finished scans are kept as re-openable cases here
+	SettingsDir string      // encrypted API settings; default <user config dir>/argus; "-" keeps them in memory only
 }
 
 // Server is the web UI server.
@@ -63,6 +65,7 @@ type Server struct {
 	loopback bool
 	handler  http.Handler
 	img      *httpx.Client // fetches profile pictures for the image proxy
+	settings *settings.Store
 }
 
 type moduleInfo struct {
@@ -95,6 +98,20 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	}
 	ip := net.ParseIP(host)
 	s.loopback = host == "localhost" || (ip != nil && ip.IsLoopback())
+
+	dir := cfg.SettingsDir
+	switch dir {
+	case "":
+		dir = settings.DefaultDir()
+	case "-":
+		dir = ""
+	}
+	st, err := settings.Open(dir)
+	if err != nil {
+		return nil, fmt.Errorf("settings: %w", err)
+	}
+	s.settings = st
+	cfg.Base.Keys = st.Resolve
 
 	// All scans share one Searcher so search-engine rate limits and "blocked"
 	// state hold across scans, not per scan.
@@ -136,6 +153,10 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	mux.HandleFunc("GET /api/scans/{id}/export", s.handleExport)
 	mux.HandleFunc("POST /api/scans/{id}/notes", s.handleNotes)
 	mux.HandleFunc("GET /api/health", s.handleHealth)
+	mux.HandleFunc("GET /api/settings", s.handleSettings)
+	mux.HandleFunc("PUT /api/settings/llm", s.handleSettingsLLM)
+	mux.HandleFunc("PUT /api/settings/{id}", s.handleSettingsUpdate)
+	mux.HandleFunc("POST /api/settings/{id}/test", s.handleSettingsTest)
 	mux.HandleFunc("GET /api/cases", s.handleCases)
 	mux.HandleFunc("GET /api/cases/{id}", s.handleCaseGet)
 	mux.HandleFunc("POST /api/cases/{id}/open", s.handleCaseOpen)

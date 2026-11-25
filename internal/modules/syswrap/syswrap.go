@@ -16,6 +16,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/settings"
 )
 
 // Config tunes the module.
@@ -25,6 +26,8 @@ type Config struct {
 	MaxProcs   int           // concurrent child processes (default 4)
 	MaxOutput  int           // bytes of stdout kept per run (default 64 MiB); anything beyond is flagged as truncated
 	TimeoutCap time.Duration // upper bound for any tool's timeout; 0 = tool default
+	// Keys resolves a settings provider to its API key and whether it is enabled. Nil means no keys.
+	Keys func(provider string) (key string, enabled bool)
 }
 
 // Scanner is the system-wrapper module.
@@ -43,7 +46,7 @@ func New(cfg Config) (*Scanner, error) {
 	if cfg.MaxOutput <= 0 {
 		cfg.MaxOutput = 64 << 20
 	}
-	tools := append(builtinTools(), extraTools()...)
+	tools := append(append(builtinTools(), extraTools()...), socialTools()...)
 	if cfg.ToolsFile != "" {
 		custom, err := loadCustomTools(cfg.ToolsFile)
 		if err != nil {
@@ -101,10 +104,25 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		if !tool.applicable(in) {
 			continue
 		}
-		bin, err := exec.LookPath(tool.Binary)
+		if tool.APIProvider != "" {
+			key, on := "", false
+			if s.cfg.Keys != nil {
+				key, on = s.cfg.Keys(tool.APIProvider)
+			}
+			if !on || key == "" {
+				why := "API key not set"
+				if key != "" {
+					why = "API access is switched off"
+				}
+				emit(models.Finding{Source: tool.Name, Category: "tooling", Status: models.StatusNotFound,
+					Details: map[string]string{"skipped": why + " in Settings (provider: " + tool.APIProvider + ")"}})
+				continue
+			}
+		}
+		bin, err := exec.LookPath(tool.binary())
 		if err != nil {
 			emit(models.Finding{Source: tool.Name, Category: "tooling", Status: models.StatusError,
-				Details: map[string]string{"error": tool.Binary + " not installed or not in PATH"}})
+				Details: map[string]string{"error": tool.binary() + " not installed or not in PATH"}})
 			continue
 		}
 		if tool.ArgsDir != nil {
@@ -173,7 +191,15 @@ func (s *Scanner) run(ctx context.Context, in Inputs, j job, emit func(models.Fi
 			args[i] = strings.ReplaceAll(a, dirPlaceholder, dir)
 		}
 	}
-	res := runCmdFull(ctx, j.bin, args, timeout, s.cfg.MaxOutput)
+	var env []string
+	if j.tool.APIProvider != "" && s.cfg.Keys != nil {
+		if p, ok := settings.ProviderByID(j.tool.APIProvider); ok && p.EnvVar != "" {
+			if key, on := s.cfg.Keys(p.ID); on && key != "" {
+				env = []string{p.EnvVar + "=" + key}
+			}
+		}
+	}
+	res := runCmdEnv(ctx, j.bin, args, env, timeout, s.cfg.MaxOutput)
 	if ctx.Err() != nil {
 		return
 	}
