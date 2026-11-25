@@ -1,8 +1,10 @@
 package social
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/sudosoc/argus/internal/httpx"
@@ -199,5 +201,34 @@ func TestRandomCanary(t *testing.T) {
 	a, b := randomCanary(), randomCanary()
 	if a == b || len(a) < 8 {
 		t.Errorf("canaries must be unique and long: %q %q", a, b)
+	}
+}
+
+func TestEmbeddedSitesAreWellFormed(t *testing.T) {
+	sites, err := LoadSites("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bad := 0
+	for _, s := range sites {
+		u := strings.ReplaceAll(s.URICheck, "{account}", "someone")
+		pu, err := url.Parse(u)
+		if err != nil || (pu.Scheme != "http" && pu.Scheme != "https") || pu.Hostname() == "" || strings.ContainsAny(u, " \t\n") {
+			t.Errorf("%s: bad URL %q", s.Name, s.URICheck)
+			bad++
+		}
+		if s.Regex != "" && s.re == nil {
+			t.Errorf("%s: username pattern %q did not compile", s.Name, s.Regex)
+		}
+		hasSignal := s.MString != "" || len(s.MStrings) > 0 || s.EString != "" || len(s.EStrings) > 0 || s.MCode != 0 || s.Check == checkRedirect || s.ECode != 0
+		if !hasSignal {
+			t.Errorf("%s: no signature at all", s.Name)
+		}
+		if s.PostBody != "" && !strings.Contains(s.PostBody, "{account}") && !strings.Contains(s.URICheck, "{account}") {
+			t.Errorf("%s: POST body without a username placeholder", s.Name)
+		}
+		if bad > 20 {
+			t.Fatal("too many malformed sites")
+		}
 	}
 }
