@@ -1,12 +1,14 @@
-# argus
+# SUDOSOC ARGUS
 
-API-less OSINT reconnaissance in Go. Give it any combination of full name, username, email, phone, domain, IP address, company and location; it decides which modules apply, runs them concurrently on a shared worker pool, follows the strongest new leads it discovers, and exports JSON / CSV / TXT reports.
+API-less OSINT reconnaissance in Go. Give it any combination of full name, username, email, phone, domain, IP address, company, ASN, crypto wallet and location; it decides which modules apply, runs them concurrently on a shared worker pool, follows the strongest new leads it discovers, resolves everything it finds into separate people (never blending two people who share a name), and exports reports in 13 formats.
+
+At a glance: **10,600+ username sites** (WhatsMyName + Sherlock + Maigret, in three depth tiers) · **28 modules** · **identity resolution with reliability scores** · **location and time-zone analysis** · **sanctions screening, OpenPGP key lookup, look-alike domains, tracking-ID history, platform-ID timestamps, Bluesky social circle, public code search** · **saved cases with comparison** · **SQL / Markdown / STIX / MISP / Maltego / GraphML exports**.
 
 > Use only on subjects you are lawfully permitted to investigate. Results are leads, not proof of identity.
 
 ## Install (Linux)
 
-argus targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). Copy this directory to the machine and run the installer:
+SUDOSOC ARGUS targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). Copy this directory to the machine and run the installer:
 
 ```bash
 chmod +x install.sh
@@ -15,7 +17,7 @@ chmod +x install.sh
 ./update.sh             # later: pull the latest version, rebuild, reinstall (--check only looks)
 ```
 
-The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/argus/` (argus finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
+The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/argus/` (ARGUS finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
 
 If `~/.local/bin` is not in your `PATH` after a `--user` install, the script prints the line to add.
 
@@ -93,6 +95,7 @@ Other flags worth knowing (`argus -h` lists all):
 | `-insecure` | skip TLS verification (use only for broken targets you are allowed to test) |
 | `-no-wayback` | skip the Internet Archive query in the domain module |
 | `-dork-engines`, `-dork-delay`, `-max-dorks` | dorking engines in order (default `brave,bing,duckduckgo,google`), per-engine delay (3s), dork cap (60) |
+| `-site-tier core\|extended\|all` | how deep into the username-site list to go (default `extended`) |
 | `-selftest-sites` | validate every site signature, see *Reliability* |
 
 ## Inputs
@@ -121,13 +124,13 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 
 | Module | Needs | What it does |
 |---|---|---|
-| `social` | username / alias | Probes **692 platforms** (the WhatsMyName list, embedded; adult sites opt-in with `-categories nsfw`) by status code and page content; adds page title/bio/avatar when present. |
+| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,300, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
 | `phone` | phone | libphonenumber analysis: validity, country, region/area, line type (mobile / landline / VoIP), original carrier, time zones, all formats. |
 | `crypto` | wallet | Bitcoin (mempool.space) and Ethereum/EVM (Blockscout): balance, tx counts, activity window, contract status, ENS name. |
 | `asn` | ASN | RIPEstat + RDAP: holder, announced prefixes, BGP neighbours, contacts. |
 | `profiles` | username | Real profile data from GitHub (profile, SSH keys, **commit e-mails**), Keybase (verified accounts), GitLab, npm (maintainer e-mail), Hacker News, DEV, Docker Hub, Mastodon, Stack Overflow, Lichess, Chess.com, Reddit. |
 | `domain` | domain | DNS records; SPF/DMARC/DKIM and mail provider; SaaS used (TXT tokens); RDAP registration and contacts; **subdomains** (crt.sh, certspotter, HackerTarget, TLS SANs) resolved and checked for wildcard DNS; website title/tech/security headers/cookies/tracking IDs; emails, phones and social links on the site; robots.txt, sitemap, security.txt; TLS certificate; Internet Archive URLs; stealer-log exposure counts. |
-| `ip` | IP | Reverse DNS, ASN (Team Cymru via DNS), RDAP, geolocation, ports/CVEs already indexed by Shodan InternetDB (no scanning by argus), co-hosted domains, TLS certificate and web banner. |
+| `ip` | IP | Reverse DNS, ASN (Team Cymru via DNS), RDAP, geolocation, ports/CVEs already indexed by Shodan InternetDB (no scanning by ARGUS), co-hosted domains, TLS certificate and web banner. |
 | `company` | company | Candidate domains (verified against the live page; only the best one is followed), Wikipedia, Wikidata, GitHub organisation. |
 | `mentions` | full name | Press articles (GDELT open news index, last ~year) whose headline names the person; headlines that also contain your company, place or e-mail domain are marked as context matches, the rest stay unverified. GDELT rate-limits shared IPs, so it can answer "try again later". |
 | `sitefiles` | domain | What a site publishes about itself and its people: humans.txt credits, ads.txt advertising accounts (link a site to its owner and sister sites), the public WordPress author list, RSS / Atom feed authors. |
@@ -141,13 +144,20 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 | `activity` | username | Estimates the owner's time zone from the hours the handle is active on GitHub, Hacker News, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess; shown in the Location tab. |
 | `footprint` | email or phone | MX, Gravatar profile (name, linked accounts, sites), infostealer exposure (counts/dates only), phone analysis, and web mentions that are verified by fetching each page. |
 | `dorks` | any identifier | Generates dorks from every identifier (site:, filetype:, inurl:, leaks, code, people…) and scrapes Brave / Bing / DuckDuckGo / Google. |
-| `syswrap` | domain, username | Runs `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, `sherlock`, `maigret`, `holehe`, `phoneinfoga` and your custom tools through `os/exec` (those installed). |
+| `iddecode` | pasted profile / post links | Creation time hidden in the IDs of X/Twitter, Discord, TikTok, Instagram, Bluesky, LinkedIn and Mastodon links (offline arithmetic, no request): dates a post, video or account. |
+| `keys` | e-mail | The OpenPGP public key published for the address (Web Key Directory, keys.openpgp.org, Proton): fingerprint, algorithm, creation date and the names and other e-mail addresses on its user IDs. |
+| `lookalike` | domain | Registered look-alike domains of the target's domain: typos, keyboard neighbours, bit flips, IDN homographs and phishing-style keywords, with addresses and whether they can receive mail. |
+| `webhistory` | domain | Analytics, advertising and pixel IDs in archived copies of the site across the years (Internet Archive); an ID that appears on old and new sites ties them to one operator, one that vanishes marks a change of owner. |
+| `sanctions` | full name, company | Name screening against the OFAC SDN and UN Security Council consolidated lists (no account). A match is a lead: compare date of birth, nationality and programme. |
+| `bskygraph` | username | Bluesky social circle from public follow lists: mutual follows and accounts that many of the subject's follows follow but the subject does not. |
+| `codesearch` | e-mail | Public source code that contains the exact address (package metadata, configs, docs, scripts) through grep.app's public endpoint; repository owners become weak leads. |
+| `syswrap` | domain, username | Runs `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, `sherlock`, `maigret`, `holehe`, `phoneinfoga` and your custom tools through `os/exec` (those installed). Maigret is read from its own JSON report (names, bios, pictures, linked usernames). |
 
 Select modules with `-modules domain,ip`. Modules whose required input is missing are skipped and listed in the summary.
 
 ### Photos
 
-Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by argus, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
+Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARGUS, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
 
 ### What is covered, and what is not
 
@@ -164,13 +174,13 @@ Two different accounts on the same platform are never merged by soft evidence (i
 
 Sources for a name: ORCID (employments, education, keywords, links), Wikidata (occupation, employer, education, cross-platform IDs, photo), OpenAlex (institutions, research topics), GitHub profiles, personal sites (schema.org Person data) and CV/resume PDFs. A CV is accepted only if its *header* carries the person's name (a CV that merely mentions the name is rejected) and is checked against your e-mail, phone, employer, location and handle.
 
-**LinkedIn.** LinkedIn actively blocks automated access (HTTP 999). argus can read the logged-out public view of a specific profile URL when LinkedIn allows it, slowly and without evading anything, and stops at the first refusal. When LinkedIn refuses, use the manual link, or open the profile yourself and paste its text (or a "Save to PDF" export) into the **Paste text** box (CLI: `-notes-file`); it is parsed into a record and takes part in identity matching. LinkedIn's terms restrict automated access; use this only where you are entitled to.
+**LinkedIn.** LinkedIn actively blocks automated access (HTTP 999). ARGUS can read the logged-out public view of a specific profile URL when LinkedIn allows it, slowly and without evading anything, and stops at the first refusal. When LinkedIn refuses, use the manual link, or open the profile yourself and paste its text (or a "Save to PDF" export) into the **Paste text** box (CLI: `-notes-file`); it is parsed into a record and takes part in identity matching. LinkedIn's terms restrict automated access; use this only where you are entitled to.
 
-**`-browser` (opt-in).** If plain HTTP is refused, argus can open the same logged-out public page with the Chrome / Chromium / Edge installed on your machine (headless, default settings, empty profile; set `ARGUS_BROWSER` to pick one). It uses no stealth flags, no cookies and no login, and stops at a sign-in wall or CAPTCHA. Whether LinkedIn serves the page depends on your IP and its current rules; in our own test from a home connection it showed the sign-in wall, so treat this as best effort. The public view contains name, headline, location, roles, schools, about and photo; it never contains e-mail or CV, which LinkedIn shows only to logged-in connections. For those, paste your own logged-in view into the Notes box.
+**`-browser` (opt-in).** If plain HTTP is refused, ARGUS can open the same logged-out public page with the Chrome / Chromium / Edge installed on your machine (headless, default settings, empty profile; set `ARGUS_BROWSER` to pick one). It uses no stealth flags, no cookies and no login, and stops at a sign-in wall or CAPTCHA. Whether LinkedIn serves the page depends on your IP and its current rules; in our own test from a home connection it showed the sign-in wall, so treat this as best effort. The public view contains name, headline, location, roles, schools, about and photo; it never contains e-mail or CV, which LinkedIn shows only to logged-in connections. For those, paste your own logged-in view into the Notes box.
 
 ## Report formats
 
-`-formats json,csv,txt,html,pdf,graphml,stix,entities,misp,spiderfoot,maltego` (web UI: export buttons). `html` is a single self-contained file with the identity dossier and embedded photos; open it and print to PDF. `graphml` opens in Gephi, yEd and Maltego; `stix` is a STIX 2.1 bundle; `entities` is a CSV of every discovered entity. `pdf` needs Chrome, Chromium or Edge on the machine. `misp`, `spiderfoot` and `maltego` are import files for those tools.
+`-formats json,csv,txt,html,pdf,graphml,stix,entities,misp,spiderfoot,maltego,md,sql` (web UI: export buttons). `md` is one Markdown note with front matter and `[[wikilinks]]` for Obsidian / Logseq; `sql` is a SQLite script (`sqlite3 case.db < case.sql`, then `datasette case.db` to browse and query every finding). `html` is a single self-contained file with the identity dossier and embedded photos; open it and print to PDF. `graphml` opens in Gephi, yEd and Maltego; `stix` is a STIX 2.1 bundle; `entities` is a CSV of every discovered entity. `pdf` needs Chrome, Chromium or Edge on the machine. `misp`, `spiderfoot` and `maltego` are import files for those tools.
 
 ## Which sites know an e-mail address
 
@@ -182,7 +192,7 @@ The Identity tab opens with one hero card (photo, name, match score, sources, co
 
 ## Cases, comparison and source status
 
-Every finished scan in the web UI is saved as a case (`~/.config/argus/cases`, or `$ARGUS_CASES`, files mode 0600). **Saved cases** re-opens one and compares any two runs of a target to show what appeared or disappeared. **Source status** probes the ~23 public services argus relies on, so a blocked source is not mistaken for "nothing found". On any candidate person, **Compare with best match** shows the two side by side. **📋 Copy page for argus** is a bookmarklet: you open a profile yourself while logged in, click it, and paste the copied text into the Paste text box; argus never logs in anywhere.
+Every finished scan in the web UI is saved as a case (`~/.config/argus/cases`, or `$ARGUS_CASES`, files mode 0600). **Saved cases** re-opens one and compares any two runs of a target to show what appeared or disappeared. **Source status** probes the ~23 public services ARGUS relies on, so a blocked source is not mistaken for "nothing found". On any candidate person, **Compare with best match** shows the two side by side. **📋 Copy page for ARGUS** is a bookmarklet: you open a profile yourself while logged in, click it, and paste the copied text into the Paste text box; ARGUS never logs in anywhere.
 
 ### Pivoting: findings feed each other
 
@@ -196,9 +206,19 @@ Modules report **entities** (emails, domains, IPs, usernames, names, phones) the
 
 No API keys or accounts are used anywhere. Besides scraping and DNS, the tool reads a handful of **public, unauthenticated web endpoints** that sites serve to anyone: RDAP, crt.sh / certspotter / HackerTarget (subdomains, reverse IP), Internet Archive CDX, Gravatar, GitHub / GitLab / Keybase / npm / Hacker News / Mastodon / Lichess / Chess.com / DEV / Docker Hub / Stack Exchange public profile data, Wikipedia / Wikidata / ORCID / OpenAlex, Shodan InternetDB, ipwho.is, Team Cymru (DNS) and Hudson Rock's free stealer-index counts. Several are rate-limited per IP or go offline at times; failures are reported as errors and never stop a run.
 
-### More social sites
+### Username sites: sources, tiers and refreshing
 
-The binary embeds a small seed list (about 84 sites). `install.sh` downloads the community [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) list (600+ sites) to `/usr/local/share/argus/wmn-data.json` (or `~/.local/share/argus/` for `--user`), and argus uses it automatically. Lookup order: `-sites`, `$ARGUS_DATA`, `$XDG_DATA_HOME/argus`, `~/.local/share/argus`, `/usr/local/share/argus`, `/usr/share/argus`, then the embedded list. To refresh it: `sh scripts/update-sites.sh /usr/local/share/argus/wmn-data.json`.
+The binary embeds one merged list of 10,600+ sites built from [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) (CC BY-SA 4.0), [Sherlock](https://github.com/sherlock-project/sherlock) (MIT) and [Maigret](https://github.com/soxoj/maigret) (MIT) by `cmd/sitesync`. Where two lists describe the same check the better-maintained signature wins and the other list contributes its popularity rank and known accounts. Sites behind anti-bot systems a plain client cannot pass (JavaScript challenges, TLS fingerprinting, logins) are left out: ARGUS does not evade protections.
+
+| `-site-tier` | Sites | Use |
+|---|---|---|
+| `core` | about 1,100 | quick checks; popular, well-maintained platforms |
+| `extended` (default) | about 3,300 | normal investigations |
+| `all` | about 10,600 | adds thousands of template-based forums and small communities; slow, more noise |
+
+`-categories` accepts the platform categories and Maigret's tags (`coding`, `gaming`, `forum`, `ru`…). `-sites FILE` loads your own list (WhatsMyName JSON, a bare array, or `.gz`); a `sites.json` in the data directory (`$ARGUS_DATA`, `$XDG_DATA_HOME/argus`, `~/.local/share/argus`, `/usr/local/share/argus`) overrides the embedded list.
+
+WhatsMyName stopped maintenance on 2026-11-09 and platforms keep changing, so run `argus -selftest-sites` regularly: it disables sites whose signature is stale or that report everything as existing (CI runs it weekly). To rebuild the embedded list: `sh scripts/update-sites.sh` (runs `go run ./cmd/sitesync -fetch`, records source hashes in `data/sites/sources.lock.json`).
 
 Site signatures drift as platforms change. Use `-verify` and treat results as leads.
 
@@ -231,7 +251,9 @@ internal/
   httpx/                HTTP client: UA rotation, header spoofing, proxies, retry
   output/               Coloured console, JSON / CSV / TXT export
   modules/
-    social/             Username enumeration (+ embedded sites_default.json)
+    social/             Username enumeration (+ embedded sites_default.json.gz, 10,600+ sites in tiers)
+    iddecode/ keys/ lookalike/ webhistory/   Platform-ID timestamps, OpenPGP keys, look-alike domains, tracking-ID history
+    sanctions/ bskygraph/ codesearch/        Sanctions screening, Bluesky social circle, public code search
     profiles/           Deep profile data + attribution scoring
     domain/             DNS, RDAP, subdomains, website, TLS, archive, exposure
     ip/                 rDNS, ASN, RDAP, geo, passive ports/CVEs, banner
@@ -245,8 +267,11 @@ internal/
   browser/              Opt-in headless Chrome/Chromium fetch of public pages (-browser)
   cvparse/ jsonld/      CV text parsing; schema.org Person extraction
   leads/ health/        Manual-lead links per identifier; liveness probes of the public services used
+  util/ openpgp/        Shared helpers (JSON fetch, clipping, cleaning); OpenPGP public-key reader and WKD hashing
+  sitesync/             Converters + merge for the WhatsMyName / Sherlock / Maigret site lists (cmd/sitesync)
   extract/ probe/ rdap/ intel/   Shared helpers: HTML extraction, web/TLS probes, RDAP client, normalisation
-configs/  data/  scripts/
+cmd/sitesync/           Builds the embedded site list
+configs/  data/  scripts/  .github/workflows/ (CI: gofmt, vet, race tests, arm64 build, weekly site self-test)
 ```
 
 **Run flow**
@@ -283,16 +308,19 @@ To share rate-limited resources between modules, pass one instance to both. `dor
 ## Development
 
 ```bash
-go vet ./... && go test -race ./...
+go vet ./... && go test -race ./...     # also what CI runs
+sh scripts/update-sites.sh               # rebuild the embedded username-site list
 ```
+
+Shared helpers (`util.GetJSON`, `util.Clip`, `util.Put`…) live in `internal/util`; use them instead of private copies. Give a new module a package-level base URL variable so its tests can point it at an `httptest` server.
 
 ## Limitations
 
 - **Search engines.** Google and DuckDuckGo usually challenge plain-HTTP scrapers, and Bing may return unrelated pages; Brave works best. Blocked engines are skipped for the rest of the run. The dorks module reports this as errors, and footprint only keeps pages it could fetch and verify. A proxy via `-proxy` may help, but results are never guaranteed.
 - **Site signatures.** Social checks depend on each platform's current responses and can produce false positives or negatives.
-- **Breach data is names only.** The `breach` module queries the public XposedOrNot index and reports which breaches an e-mail appears in (names, dates, data types). `footprint` and argus never download or store breach contents or credentials.
+- **Breach data is names only.** The `breach` module queries the public XposedOrNot index and reports which breaches an e-mail appears in (names, dates, data types). `footprint` and ARGUS never download or store breach contents or credentials.
 - **Offline phone analysis.** The calling-code table is partial and does not look up carriers or owners.
 
 ## Credits
 
-The username site list is [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) (CC BY-SA 4.0), see [NOTICE.md](NOTICE.md). Phone metadata comes from Google's libphonenumber via [nyaruka/phonenumbers](https://github.com/nyaruka/phonenumbers).
+The username site list merges [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) (CC BY-SA 4.0), [Sherlock](https://github.com/sherlock-project/sherlock) (MIT) and [Maigret](https://github.com/soxoj/maigret) (MIT), see [NOTICE.md](NOTICE.md). Phone metadata comes from Google's libphonenumber via [nyaruka/phonenumbers](https://github.com/nyaruka/phonenumbers).
