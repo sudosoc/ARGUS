@@ -31,7 +31,7 @@ var Tools = []Tool{
 	{"sherlock", []string{"sherlock"}, "second opinion on username presence", "./install.sh (or: pipx install sherlock-project)"},
 	{"holehe", []string{"holehe"}, "which sites have an account registered with an e-mail address", "./install.sh (or: pipx install holehe)"},
 	{"phoneinfoga", []string{"phoneinfoga"}, "extra phone-number scanners", "./install.sh (release binary from github.com/sundowndev/phoneinfoga)"},
-	{"theHarvester", []string{"theHarvester", "theharvester"}, "e-mails and hosts of a domain from public sources", "apt install theharvester (Debian/Kali); the pip build needs Python >= 3.14"},
+	{"theHarvester", []string{"theHarvester", "theharvester"}, "e-mails and hosts of a domain from public sources", "apt install theharvester (Debian/Kali); the pip build needs Python >= 3.12"},
 	{"subfinder", []string{"subfinder"}, "passive subdomain discovery", "go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"},
 	{"whatweb", []string{"whatweb"}, "web technology fingerprint", "apt install whatweb"},
 	{"whois", []string{"whois"}, "registration records for domains", "apt install whois"},
