@@ -225,3 +225,20 @@
 :root[data-theme="light"] .welcome-logo img { border-radius: 50%; background: radial-gradient(circle, #0a0a0b 0 66%, transparent 71%); }
 :root[data-theme="light"] .brand-emblem img { border-radius: 50%; background: radial-gradient(ellipse at center, #0a0a0b 0 58%, transparent 72%); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]):not([data-theme="light"]) .welcome-logo img { border-radius: 50%; background: radial-gradient(circle, #0a0a0b 0 66%, transparent 71%); } }
+
+/* ------------------------------------------------------------ right-to-left (Arabic) */
+:root[dir="rtl"] body { font-family: system-ui, "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, Arial, sans-serif; }
+/* values that are data (addresses, hashes, handles, numbers) keep their own direction */
+:root[dir="rtl"] .mono, :root[dir="rtl"] .mono-in, :root[dir="rtl"] input[type="date"], :root[dir="rtl"] .num, :root[dir="rtl"] .chip-v,
+:root[dir="rtl"] .fr-kv, :root[dir="rtl"] code, :root[dir="rtl"] .kbd, :root[dir="rtl"] kbd, :root[dir="rtl"] .scorefig, :root[dir="rtl"] .sf-n { direction: ltr; unicode-bidi: isolate; }
+:root[dir="rtl"] .chip .k, :root[dir="rtl"] .tag { unicode-bidi: isolate; }
+:root[dir="rtl"] .mono-in { text-align: right; }
+:root[dir="rtl"] .graph-wrap, :root[dir="rtl"] .graph-wrap canvas { direction: ltr; }
+:root[dir="rtl"] .tipbox .en { display: none; }
+:root[dir="rtl"] .tipbox .ar { display: block; text-align: right; }
+:root[dir="rtl"] .ic.caret, :root[dir="rtl"] summary > .ic:first-child { transform: scaleX(-1); }
+:root[dir="rtl"] details[open] > summary > .ic:first-child { transform: none; }
+/* Arabic letters join: no letter-spacing or capitals (they break the script) */
+:root[dir="rtl"], :root[dir="rtl"] * { letter-spacing: 0 !important; text-transform: none !important; }
+/* elements whose text was translated use an Arabic-capable proportional font (monospace fonts do not join Arabic letters) */
+:root[dir="rtl"] .ar { font-family: system-ui, "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, Arial, sans-serif; direction: rtl; unicode-bidi: plaintext; }
