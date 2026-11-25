@@ -357,24 +357,59 @@ write_conf() {
 # Each tool lives in its own virtualenv under $DATA_DIR/tools, with a symlink in
 # $BIN_DIR: nothing touches the system Python (PEP 668 safe) and update.sh can
 # upgrade them. A tool the user already has (pipx, apt, …) is left alone.
-python_ok() { have python3 && python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; }
+PYBIN=""
+# venv_ok PY: this interpreter can create a virtualenv with pip (Debian/Ubuntu ship that in a separate package).
+venv_ok() { "$1" -c 'import ensurepip, venv' >/dev/null 2>&1; }
+py_ver() { "$1" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null; }
+py_minor_ok() { "$1" -c "import sys; sys.exit(0 if sys.version_info >= (3, $2) else 1)" >/dev/null 2>&1; }
+
+# pick_python: choose the interpreter for the helper tools. Older, widely tested versions first (the tools' dependencies
+# often lag behind the newest Python), then whatever python3 is. Installs python3-venv when that is what is missing.
+pick_python() {
+  [[ -n "$PYBIN" ]] && return 0
+  local c cand=""
+  if [[ -n "${ARGUS_PYTHON:-}" ]] && have "$ARGUS_PYTHON"; then cand="$ARGUS_PYTHON"
+  else
+    for c in python3.12 python3.11 python3.13 python3.10 python3; do
+      have "$c" && py_minor_ok "$c" 10 && { cand="$c"; break; }
+    done
+  fi
+  [[ -n "$cand" ]] || return 1
+  if ! venv_ok "$cand"; then
+    info "python venv support is missing for $cand: installing it"
+    local mm; mm="$(py_ver "$cand")"
+    install_roles optional python >/dev/null 2>&1 || true            # python3 python3-venv python3-pip (apt)
+    venv_ok "$cand" || { [[ "$PM" == apt-get ]] && pm_install "python${mm}-venv" >/dev/null 2>&1 || true; }
+    venv_ok "$cand" || { [[ "$PM" == dnf || "$PM" == yum ]] && pm_install python3-pip >/dev/null 2>&1 || true; }
+    if ! venv_ok "$cand"; then
+      warn "$cand cannot create virtual environments. Fix: sudo apt install python${mm}-venv   (or python3-venv), then run install.sh again"
+      return 1
+    fi
+  fi
+  PYBIN="$(command -v "$cand")"
+  info "helper tools will use $PYBIN (Python $(py_ver "$PYBIN"))"
+}
+python_ok() { pick_python; }
 
 py_install() { # py_install TOOL PIP-PACKAGE
-  local tool="$1" pkg="$2" venv="$TOOLS_DIR/$1"
+  local tool="$1" pkg="$2" venv="$TOOLS_DIR/$1" log="$TMP/pip-$1.log"
   if have "$tool" && [[ ! -d "$venv" ]]; then ok "$tool already installed ($(command -v "$tool"))"; return 0; fi
+  pick_python || return 1
   $PRIV mkdir -p "$TOOLS_DIR"
   if [[ ! -x "$venv/bin/python" ]]; then
     safe_rm "$venv"
-    $PRIV python3 -m venv "$venv" 2>/dev/null || { warn "cannot create a virtualenv for $tool (python3-venv missing?)"; return 1; }
+    $PRIV "$PYBIN" -m venv "$venv" >"$log" 2>&1 || { warn "cannot create a virtualenv for $tool: $(tail -n 2 "$log" | tr '\n' ' ')"; return 1; }
   fi
-  if retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade pip wheel >/dev/null 2>&1 \
-     && retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade "$pkg" >/dev/null 2>&1 \
+  if retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade pip wheel >"$log" 2>&1 \
+     && retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade "$pkg" >>"$log" 2>&1 \
      && [[ -x "$venv/bin/$tool" ]]; then
     $PRIV ln -sf "$venv/bin/$tool" "$BIN_DIR/$tool"
     ok "installed $tool"
   else
+    warn "could not install $tool with Python $(py_ver "$PYBIN"). Last lines of pip's output:"
+    tail -n 6 "$log" 2>/dev/null | sed 's/^/      /' >&2
     safe_rm "$venv"
-    warn "could not install $tool (try: python3 -m venv v && v/bin/pip install $pkg)"
+    warn "  (try another Python: ARGUS_PYTHON=python3.12 ./install.sh, or: $PYBIN -m venv v && v/bin/pip install $pkg)"
     return 1
   fi
 }
@@ -414,16 +449,16 @@ install_extras() {
     py_install holehe holehe || true
     py_install h8mail h8mail || true   # breach lookup (source names only are shown, never credentials)
   else
-    warn "Python >= 3.10 is not available: skipping maigret, sherlock and holehe"
+    warn "no usable Python >= 3.10 with venv support: skipping maigret, sherlock, holehe and h8mail"
   fi
 
   install_phoneinfoga
 
   if have theHarvester || have theharvester; then ok "theHarvester already installed"
   elif [[ "$PM" == apt-get ]] && pm_install theharvester 2>/dev/null; then ok "installed theHarvester"
-  elif python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 14) else 1)' 2>/dev/null \
+  elif [[ -n "$PYBIN" ]] && py_minor_ok "$PYBIN" 12 \
        && py_install theHarvester "git+https://github.com/laramies/theHarvester.git" 2>/dev/null; then :
-  else warn "theHarvester not installed: it is packaged for Debian/Kali (apt install theharvester) and its pip build needs Python >= 3.14 (optional)"; fi
+  else warn "theHarvester not installed: it is packaged for Debian/Kali (apt install theharvester) and its pip build needs Python >= 3.12 (optional)"; fi
 
   if have whatweb; then ok "whatweb already installed"
   elif pm_install whatweb 2>/dev/null; then ok "installed whatweb"
