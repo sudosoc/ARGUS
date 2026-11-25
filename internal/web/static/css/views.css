@@ -304,6 +304,7 @@ tr.detail > td { background: var(--well); padding: var(--sp-3) var(--sp-4) var(-
   .graph-mini { width: 120px; height: 82px; }
   .graph-bar .searchbox { flex: 1 1 100%; }
   .graph-bar { gap: var(--sp-2); }
+  .graph-bar .lbl-hide span { display: none; }
   .graph-bar select { flex: 1 1 40%; min-width: 0; }
   .graph-bar .btn-group { flex-wrap: wrap; }
   .graph-shell .legend { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
