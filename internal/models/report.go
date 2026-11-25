@@ -123,19 +123,20 @@ func (r *Report) Hits() []Finding {
 // perceptual hashes match share a Group number (> 0): the same picture is used
 // in several places, which is strong evidence that the accounts belong together.
 type Photo struct {
-	URL         string   `json:"url"`
-	Sources     []string `json:"sources"`
-	ContentType string   `json:"content_type,omitempty"`
-	Bytes       int      `json:"bytes"`
-	Width       int      `json:"width"`
-	Height      int      `json:"height"`
-	SHA256      string   `json:"sha256"`
-	DHash       string   `json:"dhash,omitempty"`
-	GPS         string   `json:"gps,omitempty"`    // "lat,lon" read from the file's EXIF
-	Taken       string   `json:"taken,omitempty"`  // EXIF capture time
-	Camera      string   `json:"camera,omitempty"` // EXIF make and model
-	Group       int      `json:"group,omitempty"`
-	Error       string   `json:"error,omitempty"`
+	URL         string            `json:"url"`
+	Sources     []string          `json:"sources"`
+	ContentType string            `json:"content_type,omitempty"`
+	Bytes       int               `json:"bytes"`
+	Width       int               `json:"width"`
+	Height      int               `json:"height"`
+	SHA256      string            `json:"sha256"`
+	DHash       string            `json:"dhash,omitempty"`
+	GPS         string            `json:"gps,omitempty"`    // "lat,lon" read from the file's EXIF
+	Taken       string            `json:"taken,omitempty"`  // EXIF capture time
+	Camera      string            `json:"camera,omitempty"` // EXIF make and model
+	Meta        map[string]string `json:"meta,omitempty"`   // extra tags read with exiftool (software, author, serial numbers…)
+	Group       int               `json:"group,omitempty"`
+	Error       string            `json:"error,omitempty"`
 }
 
 // Lead is a manual follow-up: a source that cannot be queried automatically
