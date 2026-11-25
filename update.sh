@@ -188,7 +188,7 @@ behind="$(git rev-list --count "HEAD..origin/$branch" 2>/dev/null || echo 0)"
 dirty=0; if ! git diff --quiet || ! git diff --cached --quiet; then dirty=1; fi
 
 installed_commit=""
-if [[ -x "$BIN_DIR/argus" ]]; then installed_commit="$("$BIN_DIR/argus" -version 2>/dev/null | sed -n 's/.*(\([0-9a-f]\{7,\})[,)].*/\1/p')"; fi
+if [[ -x "$BIN_DIR/argus" ]]; then installed_commit="$("$BIN_DIR/argus" -version 2>/dev/null | sed -n 's/.*(\([0-9a-f]\{7,\}\)[,)].*/\1/p')"; fi
 
 if [[ "$behind" -gt 0 ]]; then
   info "$behind new commit(s):"
