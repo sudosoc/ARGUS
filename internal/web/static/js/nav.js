@@ -68,7 +68,7 @@
     if (!bar.dataset.built) {
       bar.dataset.built = "1";
       for (const t of ordered()) {
-        const b = el("button", { class: "tab", type: "button", role: "tab", "data-tab": t.id, "aria-selected": "false", tabindex: "-1" }, UI.icon(t.icon), el("span", { class: "tl", text: t.label }), el("span", { class: "count", "data-count": t.id, hidden: true }));
+        const b = el("button", { class: "tab", type: "button", role: "tab", "data-tab": t.id, "aria-selected": "false", tabindex: "-1", title: t.label, "aria-label": t.label }, UI.icon(t.icon), el("span", { class: "tl", text: t.label }), el("span", { class: "count", "data-count": t.id, hidden: true }));
         b.addEventListener("click", () => UI.go(t.id));
         b.addEventListener("keydown", (e) => {
           const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
@@ -87,6 +87,7 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
+      if (on && b.offsetParent) bar.scrollLeft = Math.max(0, b.offsetLeft - (bar.clientWidth - b.offsetWidth) / 2);
       const c = b.querySelector(".count");
       let n = null;
       if (t.count) { try { n = t.count(M); } catch (e) { n = null; } }
