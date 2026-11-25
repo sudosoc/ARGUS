@@ -25,7 +25,7 @@
       page.append(K.panel("Picture metadata", "camera", K.opts({ count: rows.length }), K.table([
         { label: "Picture", get: (p) => (p.sources || [])[0] ? String(p.sources[0]).replace(/^[a-z]+: /, "") : UI.host(p.url) }, { label: "Device", get: (p) => p.camera || "" }, { label: "Taken", get: (p) => p.taken || "" },
         { label: "GPS", get: (p) => p.gps || "" }, { label: "Software / author", get: (p) => [p.meta && p.meta.Software, p.meta && (p.meta.Artist || p.meta.Creator)].filter(Boolean).join(" · ") },
-        { label: "Serial", get: (p) => (p.meta && (p.meta.SerialNumber || p.meta.BodySerialNumber)) || "" }], rows, { onRow: (p) => UI.showPhoto(p), empty: "No picture carried metadata." })));
+        { label: "Serial", get: (p) => (p.meta && (p.meta.SerialNumber || p.meta.BodySerialNumber)) || "" }, { label: "Text in picture (OCR)", get: (p) => (p.meta && p.meta.OCRText ? UI.clip(p.meta.OCRText.replace(/\s+/g, " "), 90) : "") }], rows, { onRow: (p) => UI.showPhoto(p), empty: "No picture carried metadata." })));
       page.append(K.findings("Documents and files with metadata", "file", docs, { empty: "No document metadata.", showModule: false }));
     } };
   const hasMeta = (p) => p.gps || p.taken || p.camera || (p.meta && Object.keys(p.meta).length);
@@ -57,7 +57,7 @@
     render(page, M) {
       if (!M.photos.length) { page.append(K.empty("search", "No pictures to search", "Reverse image search needs a picture.", "find accounts with profile pictures, or paste a picture URL as a profile link.")); return; }
       page.append(K.hint("SUDOSOC ARGUS does not upload anything. Each link opens a search engine with the picture's public address; a person decides whether a match is the same person or place."));
-      const engines = [["Google Lens", (u) => "https://lens.google.com/uploadbyurl?url=" + encodeURIComponent(u)], ["Yandex", (u) => "https://yandex.com/images/search?rpt=imageview&url=" + encodeURIComponent(u)], ["TinEye", (u) => "https://tineye.com/search?url=" + encodeURIComponent(u)], ["Bing", (u) => "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:" + encodeURIComponent(u)]];
+      const engines = [["Google Lens", (u) => "https://lens.google.com/uploadbyurl?url=" + encodeURIComponent(u)], ["Yandex", (u) => "https://yandex.com/images/search?rpt=imageview&url=" + encodeURIComponent(u)], ["TinEye", (u) => "https://tineye.com/search?url=" + encodeURIComponent(u)], ["SauceNAO", (u) => "https://saucenao.com/search.php?url=" + encodeURIComponent(u)], ["Bing", (u) => "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:" + encodeURIComponent(u)]];
       for (const p of M.photos.slice(0, 40)) {
         const row = el("div", { class: "revrow" }, el("img", { class: "revthumb", src: UI.imgSrc(p.url), alt: "", loading: "lazy" }),
           el("div", { class: "revmain" }, el("div", { class: "fr-title", text: ((p.sources || [])[0] || UI.host(p.url)).replace(/^[a-z]+: /, "") }), K.links(engines.map(([n, f]) => ({ label: n, url: f(p.url) })))));

@@ -65,6 +65,7 @@ func Build(t models.Target) []models.Lead {
 		add("image", "Google Lens", "https://lens.google.com/", "upload or paste a picture found on a profile")
 		add("image", "Yandex Images", "https://yandex.com/images/", "best general reverse search for faces and places; upload a picture")
 		add("image", "TinEye", "https://tineye.com/", "exact and altered copies of a picture")
+		add("image", "SauceNAO", "https://saucenao.com/", "source of artwork, anime and illustrated avatars")
 		add("image", "Bing Visual Search", "https://www.bing.com/visualsearch", "upload a picture")
 		add("image", "PimEyes", "https://pimeyes.com/en", "face search engine; paid for source links; a human must decide whether a match is the same person")
 		add("image", "FaceCheck.ID", "https://facecheck.id/", "face search across social media; paid; verify every match by hand")

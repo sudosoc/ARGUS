@@ -43,7 +43,7 @@ func New(cfg Config) (*Scanner, error) {
 	if cfg.MaxOutput <= 0 {
 		cfg.MaxOutput = 64 << 20
 	}
-	tools := builtinTools()
+	tools := append(builtinTools(), extraTools()...)
 	if cfg.ToolsFile != "" {
 		custom, err := loadCustomTools(cfg.ToolsFile)
 		if err != nil {
