@@ -214,12 +214,14 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 | `bskygraph` | username | Bluesky social circle from public follow lists: mutual follows and accounts that many of the subject's follows follow but the subject does not. |
 | `codesearch` | e-mail | Public source code that contains the exact address (package metadata, configs, docs, scripts) through grep.app's public endpoint; repository owners become weak leads. |
 | `syswrap` | domain, username | Runs `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, `sherlock`, `maigret`, `holehe`, `phoneinfoga` and your custom tools through `os/exec` (those installed). Maigret is read from its own JSON report (names, bios, pictures, linked usernames). |
+| `spiderfoot` | domain, e-mail, username, phone | Optional: runs the SpiderFoot CLI (`-u passive`) when installed and keeps every event it returns, grouped by type with the SpiderFoot modules that produced it. |
+| `h8mail` | e-mail | Optional: runs h8mail when installed. Only the breach/source names and the number of records are shown; credential values are never stored or displayed. |
 
 Select modules with `-modules domain,ip`. Modules whose required input is missing are skipped and listed in the summary.
 
 ### Photos
 
-Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARGUS, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
+Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARGUS, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. If `tesseract` (or `easyocr`) is installed, text printed in a picture (signs, badges, screenshots) is read and shown with the picture and in Media → Metadata; add languages with `ARGUS_OCR_LANGS=eng+ara`. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
 
 ### What is covered, and what is not
 

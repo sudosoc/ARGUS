@@ -242,6 +242,7 @@ func analyse(ctx context.Context, rawURL string, data []byte, declared string) (
 	}
 	readEXIF(img)
 	readExifTool(ctx, img)
+	readOCR(ctx, img)
 	return img, nil
 }
 
