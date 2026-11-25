@@ -169,6 +169,7 @@
   .crow .c-err, .chead span:nth-child(6) { display: none; }
   .steps li { grid-template-columns: 24px 1fr; } .steps li span { grid-column: 2; }
 }
+@media (max-width: 700px) { .runhead { position: static; } }
 @media (max-width: 600px) {
   #casesBtn, #healthBtn, #densityBtn { display: none; }
   .wm-a { display: none; }
