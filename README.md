@@ -12,15 +12,22 @@ At a glance: **10,600+ username sites** (WhatsMyName + Sherlock + Maigret, in th
 
 ## Screenshots
 
-All screenshots show a **synthetic demonstration case** (an invented person and `example` domains); nothing in them is real data. The first three are the first-use flow.
+All screenshots show a **synthetic demonstration case** (an invented person and `example` domains); nothing in them is real data. (Pictures show as unavailable because the capture machine had no internet access.) The first three are the first-use flow, then one image per main view.
 
 | | |
 |---|---|
-| ![First-use notice](docs/screenshots/01-first-use-notice.png)<br>**1. First start:** the emblem and a short notice about lawful use. | ![New investigation](docs/screenshots/02-new-investigation.png)<br>**2. Start page:** one clue is enough; every field has an ⓘ hint in English and Arabic. |
-| ![Live collectors](docs/screenshots/03-live-collectors.png)<br>**3. Live scan:** every collector with progress, hits, errors and time. | ![Identity](docs/screenshots/04-identity.png)<br>**4. Identity:** who the findings add up to, scored; other candidates kept apart. |
-| ![Overview](docs/screenshots/05-overview.png)<br>**5. Overview:** key facts, risk signals ranked by severity, coverage. | ![Relationship graph](docs/screenshots/06-relationship-graph.png)<br>**6. Relationship graph:** how each lead was found. |
-| ![Location](docs/screenshots/07-location.png)<br>**7. Location:** evidence clustered, with conflicts called out. | ![Findings](docs/screenshots/08-findings.png)<br>**8. Findings:** sortable, filterable, paginated, exportable. |
-| ![Command palette](docs/screenshots/09-command-palette.png)<br>**9. Command palette** (`Ctrl+K`): search the case or run any command. | ![Light theme](docs/screenshots/10-light-theme.png)<br>**10. Light theme** (`t` switches). |
+| ![First start](docs/screenshots/01-first-use-notice.png)<br>**1. First start:** the emblem and a short notice about lawful use. | ![Start page](docs/screenshots/02-start-page.png)<br>**2. Start page:** one clue is enough; every field has an ⓘ hint in English and Arabic. |
+| ![Live scan](docs/screenshots/03-live-scan.png)<br>**3. Live scan:** every collector with progress, hits, errors and time. | ![Overview](docs/screenshots/04-overview.png)<br>**4. Overview:** key facts about the subject, risk signals ranked by severity, coverage gaps. |
+| ![Identity](docs/screenshots/05-identity.png)<br>**5. Identity:** who the findings add up to, scored; other candidates kept apart. Sections: Profile, Aliases, Usernames, E-mails, Phones, Digital identifiers, Verification. | ![Digital footprint](docs/screenshots/06-footprint.png)<br>**6. Digital footprint:** accounts by platform, web presence, historical footprints, username reuse, public mentions, cached pages, activity and cross-platform matches. |
+| ![Infrastructure](docs/screenshots/07-infrastructure.png)<br>**7. Infrastructure:** WHOIS/RDAP, DNS, subdomains, IP intelligence, ASN, TLS, technology fingerprints, historical records, look-alike domains. | ![Media](docs/screenshots/08-media.png)<br>**8. Media:** downloaded pictures fingerprinted and compared, EXIF, similar images, reverse-search links, media timeline. |
+| ![Relationship graph](docs/screenshots/09-graph.png)<br>**9. Relationship graph:** entities and how each lead was found; also shared identifiers, account relationships, infrastructure links, connection paths and clusters. | ![Intelligence tree](docs/screenshots/10-intelligence-tree.png)<br>**10. Intelligence tree:** the same case as a tree of leads. |
+| ![Location](docs/screenshots/11-location.png)<br>**11. Location:** evidence clustered on a map, conflicts called out, EXIF and geographic correlation. | ![Timeline](docs/screenshots/12-timeline.png)<br>**12. Timeline:** every dated fact on one axis, plus account activity, domain history and changes. |
+| ![Exposure & risk](docs/screenshots/13-exposure-risk.png)<br>**13. Exposure & risk:** breach intelligence (metadata only), public leaks and a risk assessment with what to do about each signal. | ![Findings](docs/screenshots/14-findings.png)<br>**14. Findings:** sortable, filterable, paginated, exportable; every row opens its full evidence. |
+| ![Conflicts](docs/screenshots/15-conflicts.png)<br>**15. Conflicts:** where sources disagree, never silently merged. | ![Evidence hashes](docs/screenshots/16-evidence-hashes.png)<br>**16. Evidence hashes:** SHA-256 of every finding, computed in the browser, plus the report's integrity digest. |
+| ![Source coverage](docs/screenshots/17-evidence-coverage.png)<br>**17. Source coverage:** all 28 collectors: ran, skipped, checks, hits and errors. | ![Missing data](docs/screenshots/18-missing-data.png)<br>**18. Missing data:** what was not found and exactly what input would fill it. |
+| ![Confidence score](docs/screenshots/19-confidence-score.png)<br>**19. Confidence score:** a transparent blend of completeness, evidence quality, corroboration and identity match. | ![Reports](docs/screenshots/20-report.png)<br>**20. Reports:** investigation summary, technical, intelligence and evidence reports: copy, download .md or print. |
+| ![Exports](docs/screenshots/21-exports.png)<br>**21. Exports:** HTML, JSON, CSV, Markdown, SQL, JSONL, GraphML; a local export history. | ![Command palette](docs/screenshots/22-command-palette.png)<br>**22. Command palette:** `Ctrl+K`: search the case or run any command. |
+| ![Light theme](docs/screenshots/23-light-theme.png)<br>**23. Light theme:** `t` switches; the emblem keeps its round shape. | ![Phone](docs/screenshots/24-phone.png)<br>**24. Phone:** the same views on a narrow screen: tabs and sections scroll sideways. |
 
 ## Install (Linux)
 
