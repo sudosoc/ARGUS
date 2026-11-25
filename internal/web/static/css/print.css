@@ -1,3 +1,4 @@
+/* Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only */
 /* Print: show the open tab on white paper, drop the application chrome. */
 @page { margin: 14mm; }
 :root, :root[data-theme="dark"], :root[data-theme="light"] {

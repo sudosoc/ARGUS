@@ -8,7 +8,7 @@ API-less OSINT reconnaissance in Go. Give it any combination of full name, usern
 
 At a glance: **10,600+ username sites** (WhatsMyName + Sherlock + Maigret, in three depth tiers) · **30 modules** · **identity resolution with reliability scores** · **location and time-zone analysis** · **sanctions screening, OpenPGP key lookup, look-alike domains, tracking-ID history, platform-ID timestamps, Bluesky social circle, public code search** · **file, place and period inputs (pictures with OCR, documents, videos, coordinates, dates)** · **API settings with encrypted keys** · **saved cases with comparison** · **SQL / Markdown / STIX / MISP / Maltego / GraphML exports**.
 
-> Use only on subjects you are lawfully permitted to investigate. Results are leads, not proof of identity.
+> Use only on subjects you are lawfully permitted to investigate. Results are leads, not proof of identity. Licensed under the [AGPL-3.0](LICENSE); name and artwork reserved (see [Licence](#licence)).
 
 ## Screenshots
 
@@ -44,6 +44,15 @@ The **Settings** button (top bar, or `Ctrl+K` → Settings) holds the interface 
 - [docs/WRITING-A-MODULE.md](docs/WRITING-A-MODULE.md): add a collector (the contract, an example, every place to wire it in, how to test it offline, wrapping external programs).
 - [docs/COMPARING-CASES.md](docs/COMPARING-CASES.md): saved cases, comparing two runs, how to read a difference, comparing from the command line.
 - [docs/COVERAGE.md](docs/COVERAGE.md): what is collected per identifier and what is not possible.
+
+## Licence
+
+SUDOSOC ARGUS is free software under the **GNU Affero General Public License v3.0 only** ([LICENSE](LICENSE), `AGPL-3.0-only`). Copyright (C) 2026 Seif, SUDOSOC.
+
+* You may use, study, modify and share it. If you distribute a copy, or let others use a modified version over a network, you must give them the complete source under the same licence; the web interface links to the source for that reason.
+* The username-site list is a derivative of CC BY-SA 4.0 data and keeps that licence ([data/sites/LICENSE.md](data/sites/LICENSE.md)); third-party notices are in [NOTICE.md](NOTICE.md).
+* **The name SUDOSOC ARGUS, the logos and the artwork are not covered by the licence.** They belong to Seif and SUDOSOC alone; no one may use or imitate them or present anything as coming from or endorsed by SUDOSOC. A modified version must use another name and other artwork ([NOTICE.md](NOTICE.md), *Trademarks and branding*).
+* Acceptable use: [ACCEPTABLE-USE.md](ACCEPTABLE-USE.md) (guidance, not a licence term). Security reports: [SECURITY.md](SECURITY.md). Code contributions are not accepted at present: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Install (Linux)
 

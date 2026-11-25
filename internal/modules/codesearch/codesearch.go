@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package codesearch searches public source code for an e-mail address or a
 // domain. People leave their address in commit-less places no other source
 // looks at: package metadata, config files, docs, test fixtures, scripts.

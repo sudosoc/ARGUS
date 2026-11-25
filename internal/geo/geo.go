@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package geo turns scattered location clues into one assessed answer: it
 // geocodes free-text places, groups evidence that points to the same place,
 // scores each group, and estimates a timezone from activity hours.

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package bskygraph maps the people around a Bluesky account using only the
 // public AT Protocol API: who follows the account back (mutuals) and which
 // accounts the account's own follows tend to follow while the account does

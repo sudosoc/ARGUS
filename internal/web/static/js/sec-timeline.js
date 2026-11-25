@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Timeline: events, activity patterns, domain history, changes between runs.
 (function () {
   const { el } = UI;

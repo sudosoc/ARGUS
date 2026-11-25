@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Location: the map view stays; this adds EXIF locations and a correlation view.
 (function () {
   const { el } = UI;

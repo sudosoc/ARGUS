@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // SUDOSOC ARGUS front end: shared foundation. Everything hangs off the global
 // `UI` object because there is no bundler; scripts are loaded in order from
 // index.html.

@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // File inputs: pictures, documents and videos are sent to the local server, analysed there and
 // never leave the machine. Each upload shows what was found and offers its leads (e-mails, phones,
 // domains) for the form.

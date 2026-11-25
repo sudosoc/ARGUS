@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Intelligence tree: everything collected, organised subject → section →
 // type/category → item. Groups are built lazily when opened and long groups
 // are paged, so thousands of items stay fast.

@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Saved cases (re-open, delete, compare two runs), side-by-side comparison of
 // two candidate people, and the source-status (health) check.
 (function () {

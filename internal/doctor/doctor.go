@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package doctor reports which optional external tools and system services are
 // available, what each one adds to an investigation, and how to get the missing
 // ones. It also locates the source checkout an installation was built from, so

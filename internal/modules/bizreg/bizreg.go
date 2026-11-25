@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package bizreg queries official business registers that publish an open API
 // without a key: the French register (company, address, activity, size and
 // officers) and the Norwegian one (company, address, activity, staff). Results

@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // The application shell: top bar controls (theme, density, status pill), the
 // command palette / global search, keyboard shortcuts and their help overlay,
 // and the first-use notice.

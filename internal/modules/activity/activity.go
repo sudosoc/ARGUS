@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package activity estimates the subject's timezone from when their public
 // accounts are active. Nobody posts at 4 a.m. local time, so the quietest
 // stretch of a few hundred timestamps points at the UTC offset. It reads only

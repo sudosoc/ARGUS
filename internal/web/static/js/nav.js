@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Two-level navigation. The top bar holds the main views (Identity, Footprint,
 // Infrastructure…); each view has a left rail of sections with counts. A section
 // is either one of the original full-page views (`legacy`) or a page built from

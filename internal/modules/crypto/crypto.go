@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package crypto looks up a Bitcoin or Ethereum/EVM wallet address on public
 // block explorers (no keys): balance, activity window, transaction counts,
 // contract status and ENS name. Everything on a public blockchain is public

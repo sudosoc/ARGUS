@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Overview tab: a dashboard. KPI strip, key facts, risk signals ranked by
 // severity, reliability distribution, per-collector coverage, activity heatmap
 // and timeline. Counts always drill down into the findings table.

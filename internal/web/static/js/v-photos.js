@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Photos tab: a gallery of pictures found on profiles. Pictures are fetched by
 // the server (never by the browser) and compared; a thick red frame plus a
 // "same picture" label marks one used by several sources.

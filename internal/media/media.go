@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package media downloads profile pictures safely and fingerprints them.
 //
 // Fetching is SSRF-guarded (public hosts only, every redirect hop re-checked),

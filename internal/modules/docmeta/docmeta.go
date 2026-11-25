@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package docmeta reads the hidden metadata of documents a site publishes
 // (PDF, Word, Excel, PowerPoint, OpenDocument): the author's name, the last
 // person who saved it, their organisation, and the software used. These fields

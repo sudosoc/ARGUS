@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package people finds *candidate profiles* of a person and returns them as
 // structured Records for identity resolution: LinkedIn's public profile view,
 // ORCID, Wikidata, OpenAlex, GitHub, personal CV documents.

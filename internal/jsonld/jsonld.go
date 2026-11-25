@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package jsonld reads schema.org Person data out of a page's
 // <script type="application/ld+json"> blocks. LinkedIn's logged-out public
 // profile view, personal home pages and many portfolio sites publish exactly

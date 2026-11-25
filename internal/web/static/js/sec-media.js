@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Media intelligence: pictures, their metadata, similarity and where to search them.
 (function () {
   const { el } = UI;

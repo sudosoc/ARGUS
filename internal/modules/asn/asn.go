@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package asn maps an autonomous-system number to its owner, announced
 // prefixes, peers and registration contacts (RIPEstat + RDAP, no keys).
 package asn

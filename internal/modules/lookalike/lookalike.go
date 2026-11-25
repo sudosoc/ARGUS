@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package lookalike finds domains that imitate the target's domain: typos,
 // look-alike characters (including IDN homographs), bit flips and phishing
 // style keywords. Only names that actually resolve are reported, with the

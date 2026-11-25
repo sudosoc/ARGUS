@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Graph: the force-directed map and tree stay; this adds analysis on top of the
 // same entity graph: shared identifiers, account relationships, infrastructure
 // links, shortest paths between entities and clusters.
