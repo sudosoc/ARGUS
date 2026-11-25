@@ -33,6 +33,28 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![API settings](docs/screenshots/28-api-settings.png)<br>**29. API settings:** masked keys, Enabled switch and Test connection per provider; model selector. | ![Command palette](docs/screenshots/22-command-palette.png)<br>**30. Command palette:** `Ctrl+K`: search the case or run any command. |
 | ![Light theme](docs/screenshots/23-light-theme.png)<br>**31. Light theme:** `t` switches; the emblem keeps its round shape. | ![Phone](docs/screenshots/24-phone.png)<br>**32. Phone:** the same views on a narrow screen: tabs and sections scroll sideways. |
 | ![Arabic interface](docs/screenshots/33-arabic-rtl.png)<br>**33. Arabic interface:** Settings → Language; the whole interface and the layout switch to right-to-left. |  |
+| ![Insights brief](docs/screenshots/40-insights-brief.png)<br>**40. Insights, brief:** who the best match is, what supports it and what to be careful about. |  |
+| ![Persona](docs/screenshots/41-insights-persona.png)<br>**41. Persona:** languages, skills, daily rhythm and what the habits give away. |  |
+| ![Authenticity](docs/screenshots/42-insights-authenticity.png)<br>**42. Authenticity:** a 0–100 score with every factor listed. |  |
+| ![Hidden links](docs/screenshots/43-insights-hidden.png)<br>**43. Hidden links:** accounts that share a pattern nothing stated. |  |
+| ![Life timeline](docs/screenshots/44-insights-life.png)<br>**44. Life timeline:** dated facts with bursts and silences. |  |
+| ![Movement](docs/screenshots/45-insights-movement.png)<br>**45. Movement:** places and moves from dated, geotagged pictures. |  |
+
+## Insights
+
+Beyond lists of findings, the **Insights** view (second tab) says what the evidence adds up to, using fixed rules (no model, nothing fetched, reproducible):
+
+* **Brief**: who the best match is, how well the evidence identifies them, what supports it and what to be careful about.
+* **Next actions**: the steps that would improve the result most, ordered, with why and how (add a location, check a possible impersonator, resolve a contradiction, open a source that needs a login…).
+* **Persona**: languages written, skills, daily rhythm (time zone, sleep window, night and weekend activity), first trace online, habits and what they give away.
+* **Authenticity**: does this look like an established real person? A 0–100 score with every factor listed, plus per-account flags.
+* **Key associates**: who and what is close to the subject (mutual follows, organisations, schools), ranked.
+* **Hidden links**: accounts that nothing stated as linked but that share a handle pattern, distinctive wording, a value or a near-identical picture.
+* **Life timeline**: dated facts with bursts, long silences and recent activity marked.
+* **Movement**: places and moves from dated, geotagged pictures.
+* **Why this confidence**: the reasoning behind each fact (confirmed, self-reported, single source, contested).
+
+The brief and the next actions are also in the console summary, the Markdown and HTML reports and the JSON. Every rule, weight and limit is documented in [docs/INSIGHTS.md](docs/INSIGHTS.md).
 
 ## Settings: language, API keys and model
 
@@ -52,6 +74,7 @@ It removes the `argus` program, the helper tools `install.sh` put in its private
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised, what happens in a run, the web server, the front end and the language layer.
 - [docs/WRITING-A-MODULE.md](docs/WRITING-A-MODULE.md): add a collector (the contract, an example, every place to wire it in, how to test it offline, wrapping external programs).
+- [docs/INSIGHTS.md](docs/INSIGHTS.md): how each insight is computed: rules, weights and limits.
 - [docs/COMPARING-CASES.md](docs/COMPARING-CASES.md): saved cases, comparing two runs, how to read a difference, comparing from the command line.
 - [docs/COVERAGE.md](docs/COVERAGE.md): what is collected per identifier and what is not possible.
 

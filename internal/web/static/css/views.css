@@ -371,3 +371,14 @@ tr.detail > td { background: var(--well); padding: var(--sp-3) var(--sp-4) var(-
 #drawerBody .sel-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
 #drawerBody .sel-row .input, #drawerBody .sel-row select { flex: 1 1 200px; min-width: 0; }
 #drawerBody .sel-row .check { flex: none; white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: var(--fs-sm); display: inline-flex; gap: 6px; align-items: center; }
+
+/* ---------------------------------------------------------------- insights */
+.brief-lvl { margin-bottom: var(--sp-2); }
+.brief-p { margin: 0 0 var(--sp-3); line-height: 1.6; }
+.act { display: grid; gap: 4px; padding: var(--sp-3) 0; border-top: 1px solid var(--line); }
+.act:first-of-type { border-top: 0; }
+.act-h { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+.act-h b { flex: 1; min-width: 0; }
+.act-p { color: var(--text-3); font-size: var(--fs-xs); }
+.act-w { margin: 0; }
+.act-f { display: flex; gap: var(--sp-3); align-items: center; justify-content: space-between; flex-wrap: wrap; }

@@ -38,6 +38,8 @@ func writeMarkdown(w io.Writer, r *models.Report) error {
 		fmt.Fprintf(&b, "> **Ambiguity:** %s\n\n", r.Ambiguity)
 	}
 
+	writeInsightsMarkdown(&b, r)
+
 	if len(r.Identities) > 0 {
 		b.WriteString("## Identity\n\n")
 		for _, id := range r.Identities {
@@ -316,4 +318,50 @@ func b2i(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// writeInsightsMarkdown writes the intelligence brief, the next actions and the main reasoning.
+func writeInsightsMarkdown(b *strings.Builder, r *models.Report) {
+	in := r.Insights
+	if in == nil || in.Brief.Headline == "" {
+		return
+	}
+	fmt.Fprintf(b, "## Intelligence brief\n\n**%s** (%s)\n\n", in.Brief.Headline, in.Brief.Level)
+	for _, p := range in.Brief.Paragraphs {
+		fmt.Fprintf(b, "%s\n\n", p)
+	}
+	if len(in.Brief.Strengths) > 0 {
+		b.WriteString("**Strengths**\n\n")
+		for _, s := range in.Brief.Strengths {
+			fmt.Fprintf(b, "- %s\n", s)
+		}
+		b.WriteString("\n")
+	}
+	if len(in.Brief.Concerns) > 0 {
+		b.WriteString("**Concerns**\n\n")
+		for _, s := range in.Brief.Concerns {
+			fmt.Fprintf(b, "- %s\n", s)
+		}
+		b.WriteString("\n")
+	}
+	if a := in.Authenticity; a != nil {
+		fmt.Fprintf(b, "**Authenticity:** %s (%d/100). ", a.Label, a.Score)
+		for i, f := range a.Factors {
+			if i == 5 {
+				break
+			}
+			fmt.Fprintf(b, "%s %+d (%s); ", f.Name, f.Effect, f.Detail)
+		}
+		b.WriteString("\n\n")
+	}
+	if len(in.Actions) > 0 {
+		b.WriteString("### Next actions\n\n")
+		for i, a := range in.Actions {
+			fmt.Fprintf(b, "%d. **%s**: %s %s\n", i+1, a.Title, a.Why, a.How)
+		}
+		b.WriteString("\n")
+	}
+	if len(in.Limits) > 0 {
+		b.WriteString("_" + strings.Join(in.Limits, " ") + "_\n\n")
+	}
 }
