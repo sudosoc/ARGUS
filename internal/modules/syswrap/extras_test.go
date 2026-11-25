@@ -45,3 +45,32 @@ func TestParseH8mailHidesCredentials(t *testing.T) {
 		t.Fatalf("bad details: %+v", got[0].Details)
 	}
 }
+
+func TestGenericParserListsUrlsAndEmails(t *testing.T) {
+	out := "profile https://example.org/u/layla, contact layla@example.org or +20 100 555 0199.\n"
+	got := parseGeneric("facebook-scraper", Inputs{Username: "layla"}, out)
+	if len(got) != 1 || got[0].Details["e-mails"] != "1" || got[0].Details["urls"] != "1" || got[0].Details["phones"] != "1" {
+		t.Fatalf("got %+v", got)
+	}
+	if parseGeneric("x", Inputs{}, "nothing here") != nil {
+		t.Fatal("expected nil")
+	}
+}
+
+func TestSocialToolArgsOverride(t *testing.T) {
+	t.Setenv("ARGUS_TOOL_OPEN_NAMI_ARGS", "-u {username} --quiet")
+	var nami *Tool
+	for _, tl := range socialTools() {
+		if tl.Name == "open-nami" {
+			nami = tl
+		}
+	}
+	a := nami.Args(Inputs{Username: "layla"})
+	if len(a) != 1 || strings.Join(a[0], " ") != "-u layla --quiet" {
+		t.Fatalf("args %v", a)
+	}
+	t.Setenv("ARGUS_TOOL_OPEN_NAMI_BIN", "/opt/nami")
+	if nami.binary() != "/opt/nami" {
+		t.Fatal("binary override ignored")
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -48,11 +49,19 @@ type cmdResult struct {
 // stdout is returned even when the command fails, because tools such as whois
 // and dig exit non-zero yet still print useful data.
 func runCmdFull(ctx context.Context, bin string, args []string, timeout time.Duration, maxOut int) cmdResult {
+	return runCmdEnv(ctx, bin, args, nil, timeout, maxOut)
+}
+
+// runCmdEnv is runCmdFull with extra environment variables (API keys the settings page holds).
+func runCmdEnv(ctx context.Context, bin string, args, env []string, timeout time.Duration, maxOut int) cmdResult {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.WaitDelay = 2 * time.Second
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
 	stdout := &limitedBuf{max: maxOut}
 	stderr := &limitedBuf{max: 1 << 20}
 	cmd.Stdout, cmd.Stderr = stdout, stderr

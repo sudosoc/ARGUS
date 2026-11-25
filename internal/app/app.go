@@ -77,6 +77,8 @@ type Options struct {
 	Tools       []string
 	ToolsFile   string
 	ToolTimeout time.Duration
+	// Keys resolves an API provider from the settings store to its key and whether it is enabled.
+	Keys func(provider string) (string, bool)
 }
 
 // Defaults returns the options used when a flag or UI field is left unset.
@@ -143,7 +145,7 @@ func Build(o Options) (*Built, error) {
 	}
 	eng.Register(footMod)
 
-	sysMod, err := syswrap.New(syswrap.Config{Tools: o.Tools, ToolsFile: o.ToolsFile, TimeoutCap: o.ToolTimeout})
+	sysMod, err := syswrap.New(syswrap.Config{Tools: o.Tools, ToolsFile: o.ToolsFile, TimeoutCap: o.ToolTimeout, Keys: o.Keys})
 	if err != nil {
 		return nil, fmt.Errorf("syswrap module: %w", err)
 	}
