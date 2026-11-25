@@ -56,6 +56,7 @@ type Options struct {
 	SitesFile  string
 	Categories []string
 	Verify     bool
+	SiteTier   int  // how deep into the username-site list to go: 1 core, 2 extended (default), 3 all
 	AllSites   bool // ignore the list of sites disabled by -selftest-sites
 
 	// dorks / footprint
@@ -103,11 +104,11 @@ func Build(o Options) (*Built, error) {
 
 	eng.Meta = map[string]string{
 		"aggressive": strconv.FormatBool(o.Aggressive), "verify_social": strconv.FormatBool(o.Verify),
-		"browser": strconv.FormatBool(o.Browser), "proxies": strconv.Itoa(len(o.Proxies)), "wayback": strconv.FormatBool(!o.NoWayback),
+		"browser": strconv.FormatBool(o.Browser), "proxies": strconv.Itoa(len(o.Proxies)), "wayback": strconv.FormatBool(!o.NoWayback), "site_tier": strconv.Itoa(max(o.SiteTier, 2)),
 	}
 
 	socialMod, err := social.New(social.Config{
-		SitesFile: ResolveSites(o.SitesFile), Categories: o.Categories, Verify: o.Verify,
+		SitesFile: ResolveSites(o.SitesFile), Categories: o.Categories, Verify: o.Verify, Tier: o.SiteTier,
 		DisabledFile: disabledFile(o.AllSites),
 	})
 	if err != nil {
@@ -180,7 +181,7 @@ func ResolveSites(explicit string) string {
 	}
 	dirs = append(dirs, "/usr/local/share/argus", "/usr/share/argus")
 	for _, d := range dirs {
-		p := d + "/wmn-data.json"
+		p := d + "/sites.json"
 		if st, err := os.Stat(p); err == nil && st.Size() > 0 {
 			return p
 		}

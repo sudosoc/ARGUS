@@ -28,6 +28,9 @@ type Config struct {
 	// DisabledFile lists sites a self-test found unreliable; they are skipped.
 	// Empty means use every site.
 	DisabledFile string
+	// Tier bounds how deep into the site list a scan goes: 1 core, 2 extended
+	// (default when 0), 3 everything including template-based forums.
+	Tier int
 }
 
 // Scanner is the social-media username module.
@@ -53,6 +56,19 @@ func New(cfg Config) (*Scanner, error) {
 		}
 		sites = kept
 	}
+	maxTier := cfg.Tier
+	if maxTier <= 0 {
+		maxTier = TierExtended
+	}
+	{
+		kept := sites[:0]
+		for _, st := range sites {
+			if st.tier() <= maxTier {
+				kept = append(kept, st)
+			}
+		}
+		sites = kept
+	}
 	if len(cfg.Categories) > 0 {
 		want := map[string]bool{}
 		for _, c := range cfg.Categories {
@@ -61,7 +77,11 @@ func New(cfg Config) (*Scanner, error) {
 		filtered := sites[:0]
 		for _, s := range sites {
 			cat := strings.ToLower(s.Cat)
-			if want[cat] || (want["nsfw"] && isNSFW(cat)) {
+			match := want[cat] || (want["nsfw"] && isNSFW(cat))
+			for _, tg := range s.Tags {
+				match = match || want[strings.ToLower(tg)]
+			}
+			if match {
 				filtered = append(filtered, s)
 			}
 		}
@@ -186,7 +206,7 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 	switch v {
 	case vPresent:
 		conf := 0.6 // status code alone
-		if site.EString != "" {
+		if site.hasMarker() {
 			conf = 0.9 // positive content marker as well
 		}
 		if s.cfg.Verify {
@@ -248,12 +268,12 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 
 // probe sends the request for one (site, username) and classifies the reply.
 func probe(ctx context.Context, c *httpx.Client, site *Site, user string) (verdict, *httpx.Response, error) {
-	enc := url.PathEscape(user)
+	enc := url.PathEscape(site.clean(user))
 	req := httpx.Request{
 		Method:     "GET",
 		URL:        site.checkURL(enc),
 		Headers:    site.Headers,
-		NoRedirect: false,
+		NoRedirect: site.Check == checkRedirect,
 	}
 	if site.PostBody != "" {
 		req.Method = "POST"
@@ -270,15 +290,40 @@ func probe(ctx context.Context, c *httpx.Client, site *Site, user string) (verdi
 func classify(site *Site, r *httpx.Response) verdict {
 	body := string(r.Body)
 	code := r.StatusCode
+	for _, e := range site.Errors {
+		if e != "" && strings.Contains(body, e) {
+			return vBlocked
+		}
+	}
+	if site.Ignore403 && code == 403 {
+		code = site.ECode
+	}
 
-	// "Missing" signature wins: many sites return 200 with a "not found" page.
+	if site.Check == checkRedirect {
+		switch {
+		case code >= 200 && code < 300:
+			return vPresent
+		case code == 403 || code == 407 || code == 429 || code == 503:
+			return vBlocked
+		case code >= 300 && code < 500:
+			return vAbsent
+		}
+		return vUnknown
+	}
+
+	// "Missing" signatures win: many sites return 200 with a "not found" page.
 	if site.MString != "" && strings.Contains(body, site.MString) {
 		return vAbsent
 	}
-	if site.MCode != 0 && code == site.MCode && site.MString == "" {
+	for _, m := range site.MStrings {
+		if m != "" && strings.Contains(body, m) {
+			return vAbsent
+		}
+	}
+	if site.MCode != 0 && code == site.MCode && site.MString == "" && len(site.MStrings) == 0 {
 		return vAbsent
 	}
-	if code == site.ECode && (site.EString == "" || strings.Contains(body, site.EString)) {
+	if code == site.ECode && site.hasExistsMarker(body) {
 		return vPresent
 	}
 
@@ -294,6 +339,25 @@ func classify(site *Site, r *httpx.Response) verdict {
 		return vAbsent
 	}
 	return vUnknown
+}
+
+// hasMarker reports whether the site defines any positive content marker.
+func (s *Site) hasMarker() bool { return s.EString != "" || len(s.EStrings) > 0 }
+
+// hasExistsMarker is true when the site needs no positive marker or the body has one.
+func (s *Site) hasExistsMarker(body string) bool {
+	if !s.hasMarker() {
+		return true
+	}
+	if s.EString != "" && strings.Contains(body, s.EString) {
+		return true
+	}
+	for _, m := range s.EStrings {
+		if m != "" && strings.Contains(body, m) {
+			return true
+		}
+	}
+	return false
 }
 
 func randomCanary() string {
