@@ -6,8 +6,8 @@
   background: var(--surface-1); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--line); z-index: var(--z-top);
 }
 .brand { display: flex; align-items: center; gap: 9px; flex: none; }
-.brand-emblem { display: grid; place-items: center; height: 44px; padding: 0 5px; border-radius: var(--r-md); background: #0a0a0b; border: 1px solid var(--line); }
-.brand-emblem img { height: 38px; width: auto; display: block; }
+.brand-emblem { display: grid; place-items: center; height: 46px; }
+.brand-emblem img { height: 46px; width: auto; display: block; filter: drop-shadow(0 0 6px rgba(160,20,30,.35)); }
 .wm { display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; line-height: 1; }
 .wm-a { font-size: var(--fs-sm); font-weight: 500; letter-spacing: .2em; color: var(--text-2); }
 .wm-b { font-size: var(--fs-lg); font-weight: 800; letter-spacing: .16em; color: var(--text); }
@@ -117,9 +117,9 @@
 .welcome-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: var(--sp-6); align-items: start; }
 .welcome-main { display: grid; gap: var(--sp-4); min-width: 0; }
 /* The logo is dark artwork on transparency: it sits on a dark plate so it reads in both themes. */
-.logo-plate { background: #0a0a0b; border: 1px solid var(--line); border-radius: var(--r-lg); }
+.logo-plate { background: none; border: 0; }
 .welcome-logo { padding: var(--sp-3); position: sticky; top: var(--sp-4); }
-.welcome-logo img { width: 100%; height: auto; display: block; }
+.welcome-logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 28px rgba(150,20,30,.35)); }
 @media (max-width: 900px) { .welcome-cols { grid-template-columns: 1fr; } .welcome-logo { max-width: 300px; position: static; } }
 .steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: var(--sp-2); border-top: 1px solid var(--line); }
 .steps li { counter-increment: s; display: grid; grid-template-columns: 28px 90px 1fr; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); align-items: baseline; }
@@ -218,3 +218,8 @@
   .sn-empty { margin: 0; padding: 0; border: 0; flex: none; }
   .sn-empty[open] { display: flex; }
 }
+
+/* Light theme: the artwork is silver and black, so it carries its own round dark disc (the shape of the emblem) instead of a box. */
+:root[data-theme="light"] .welcome-logo img { border-radius: 50%; background: radial-gradient(circle, #0a0a0b 0 66%, transparent 71%); }
+:root[data-theme="light"] .brand-emblem img { border-radius: 50%; background: radial-gradient(ellipse at center, #0a0a0b 0 58%, transparent 72%); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]):not([data-theme="light"]) .welcome-logo img { border-radius: 50%; background: radial-gradient(circle, #0a0a0b 0 66%, transparent 71%); } }
