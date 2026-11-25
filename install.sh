@@ -396,9 +396,10 @@ py_install() { # py_install TOOL PIP-PACKAGE
   if have "$tool" && [[ ! -d "$venv" ]]; then ok "$tool already installed ($(command -v "$tool"))"; return 0; fi
   pick_python || return 1
   $PRIV mkdir -p "$TOOLS_DIR"
-  if [[ ! -x "$venv/bin/python" ]]; then
+  # a half-made virtualenv (a failed earlier run leaves bin/python but no pip) is removed and made again
+  if [[ ! -x "$venv/bin/python" || ! -x "$venv/bin/pip" ]]; then
     safe_rm "$venv"
-    $PRIV "$PYBIN" -m venv "$venv" >"$log" 2>&1 || { warn "cannot create a virtualenv for $tool: $(tail -n 2 "$log" | tr '\n' ' ')"; return 1; }
+    $PRIV "$PYBIN" -m venv "$venv" >"$log" 2>&1 && [[ -x "$venv/bin/pip" ]] || { warn "cannot create a virtualenv for $tool: $(tail -n 2 "$log" | tr '\n' ' ')"; safe_rm "$venv"; return 1; }
   fi
   if retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade pip wheel >"$log" 2>&1 \
      && retry 2 $PRIV "$venv/bin/pip" install -q --disable-pip-version-check --upgrade "$pkg" >>"$log" 2>&1 \
