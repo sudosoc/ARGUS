@@ -115,3 +115,16 @@ func TestSQLEscapesAndHasSchema(t *testing.T) {
 		}
 	}
 }
+
+func TestHTMLReportCarriesTheEmblem(t *testing.T) {
+	var b bytes.Buffer
+	if err := Render(&b, sample(), "html"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(b.String(), `src="data:image/webp;base64,`) {
+		t.Error("the report must embed the logo as a data URL (html/template would otherwise replace it with #ZgotmplZ)")
+	}
+	if strings.Contains(b.String(), "ZgotmplZ") {
+		t.Error("template sanitiser replaced a URL")
+	}
+}

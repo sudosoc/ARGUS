@@ -254,7 +254,9 @@
     cb.addEventListener("change", () => { go.disabled = !cb.checked; });
     go.addEventListener("click", () => { UI.store.set("consent_v1", "yes"); bg.remove(); });
     bg.append(el("div", { class: "modal consent" },
-      el("div", { class: "consent-brand" }, UI.icon("eye", "brand-ic"), el("span", { class: "wm" }, el("span", { class: "wm-a", text: "SUDOSOC" }), el("span", { class: "wm-b", text: "ARGUS" }))),
+      el("div", { class: "consent-hero", "aria-hidden": "true" },
+        el("img", { class: "consent-eyes", src: "/img/hero-eyes.webp", alt: "" }),
+        el("img", { class: "consent-emblem", src: "/img/argus-emblem.webp", alt: "" })),
       el("h2", { id: "consentTitle", text: "Before you start" }),
       el("p", { text: "SUDOSOC ARGUS gathers information that is already public. It is for lawful, authorised work such as security research, due diligence, journalism, and checking your own exposure." }),
       el("ul", {},

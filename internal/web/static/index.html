@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <title>SUDOSOC ARGUS</title>
+<link rel="icon" type="image/png" href="/img/favicon.png">
 <!-- Sets the saved theme/density before first paint. -->
 <script src="/js/theme.js"></script>
 <link rel="stylesheet" href="/css/tokens.css">
@@ -82,7 +83,7 @@
 <header class="topbar" role="banner">
   <button id="panelToggle" class="btn icon-btn" type="button" aria-controls="casepanel" aria-expanded="true" aria-label="Toggle case panel ( [ )" title="Case panel ( [ )"><svg class="ic" aria-hidden="true"><use href="#i-panel"/></svg></button>
   <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path class="bm-lid" d="M2 12c2.6-4.6 6-7 10-7s7.4 2.4 10 7c-2.6 4.6-6 7-10 7s-7.4-2.4-10-7z"/><circle class="bm-iris" cx="12" cy="12" r="4"/><circle class="bm-pupil" cx="12" cy="12" r="1.7"/><path class="bm-ticks" d="M12 1.5v2M12 20.5v2M3.5 4.5l1.3 1.3M19.2 18.2l1.3 1.3"/></svg>
+    <span class="brand-emblem" aria-hidden="true"><img src="/img/argus-head.webp" alt="" width="54" height="40" decoding="async"></span>
     <span class="wm" aria-label="SUDOSOC ARGUS"><span class="wm-a">SUDOSOC</span><span class="wm-b">ARGUS</span></span>
   </div>
   <button id="paletteBtn" class="search-trigger" type="button" aria-haspopup="dialog" title="Search and commands ( Ctrl+K or / )">
@@ -165,16 +166,23 @@
   <!-- ============================================================ WORKSPACE -->
   <main id="workspace" class="workspace" tabindex="-1">
     <div id="empty" class="welcome">
-      <svg class="ic welcome-ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-eye"/></svg>
-      <h1>Start from any single clue</h1>
-      <p>A username, a nickname, a phone number, an e-mail, a domain, an IP, a wallet, a company name or a pasted profile link. SUDOSOC ARGUS collects everything that clue exposes, then follows the strongest new leads it finds.</p>
-      <ol class="steps">
-        <li><b>Collect</b><span>dozens of public sources in parallel.</span></li>
-        <li><b>Attribute</b><span>profiles are scored so people who merely share a handle are not mixed in.</span></li>
-        <li><b>Pivot</b><span>e-mails, domains, IPs and usernames found along the way are investigated in turn.</span></li>
-        <li><b>Map</b><span>see everything as an overview, an intelligence tree and a relationship graph.</span></li>
-      </ol>
-      <p class="hint">Press <kbd>n</kbd> to fill in the form, <kbd>Ctrl</kbd> <kbd>K</kbd> to search or run a command, <kbd>?</kbd> for all shortcuts.</p>
+      <figure class="hero-banner">
+        <img class="hero-img" src="/img/hero-eyes.webp" alt="" width="1280" height="720" decoding="async">
+        <figcaption class="hero-text"><span class="hero-kicker">OSINT intelligence platform</span><h1>Start from any single clue</h1></figcaption>
+      </figure>
+      <div class="welcome-cols">
+        <div class="welcome-main">
+          <p>A username, a nickname, a phone number, an e-mail, a domain, an IP, a wallet, a company name or a pasted profile link. SUDOSOC ARGUS collects everything that clue exposes, then follows the strongest new leads it finds.</p>
+          <ol class="steps">
+            <li><b>Collect</b><span>dozens of public sources in parallel.</span></li>
+            <li><b>Attribute</b><span>profiles are scored so people who merely share a handle are not mixed in.</span></li>
+            <li><b>Pivot</b><span>e-mails, domains, IPs and usernames found along the way are investigated in turn.</span></li>
+            <li><b>Map</b><span>see everything as an overview, an intelligence tree and a relationship graph.</span></li>
+          </ol>
+          <p class="hint">Press <kbd>n</kbd> to fill in the form, <kbd>Ctrl</kbd> <kbd>K</kbd> to search or run a command, <kbd>?</kbd> for all shortcuts.</p>
+        </div>
+        <aside class="welcome-logo logo-plate" aria-hidden="true"><img src="/img/argus-logo.webp" alt="" width="820" height="820" decoding="async"></aside>
+      </div>
     </div>
 
     <div id="run" hidden>
