@@ -158,7 +158,7 @@ func (e *Engine) photoStage(ctx context.Context, rep *models.Report) {
 			fetched++
 			im := imgs[i]
 			p.ContentType, p.Bytes, p.Width, p.Height, p.SHA256, p.DHash = im.ContentType, im.Bytes, im.Width, im.Height, im.SHA256, im.DHashHex()
-			p.Taken, p.Camera = im.Taken, im.Camera
+			p.Taken, p.Camera, p.Meta = im.Taken, im.Camera, im.Meta
 			if im.HasGPS {
 				p.GPS = fmt.Sprintf("%.6f,%.6f", im.Lat, im.Lon)
 			}

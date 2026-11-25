@@ -54,6 +54,9 @@ type Image struct {
 	Lat, Lon float64
 	Taken    string
 	Camera   string
+	// Meta holds extra tags (software, author, serial numbers…) read with the
+	// exiftool CLI when it is installed.
+	Meta map[string]string
 }
 
 // DHashHex renders the perceptual hash.
@@ -202,7 +205,7 @@ func Fetch(ctx context.Context, c *httpx.Client, rawURL string) (*Image, error) 
 		if resp.StatusCode != 200 {
 			return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
 		}
-		img, err := analyse(rawURL, resp.Body, resp.Header.Get("Content-Type"))
+		img, err := analyse(ctx, rawURL, resp.Body, resp.Header.Get("Content-Type"))
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +215,7 @@ func Fetch(ctx context.Context, c *httpx.Client, rawURL string) (*Image, error) 
 	return nil, errors.New("too many redirects")
 }
 
-func analyse(rawURL string, data []byte, declared string) (*Image, error) {
+func analyse(ctx context.Context, rawURL string, data []byte, declared string) (*Image, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty response")
 	}
@@ -238,6 +241,7 @@ func analyse(rawURL string, data []byte, declared string) (*Image, error) {
 		}
 	}
 	readEXIF(img)
+	readExifTool(ctx, img)
 	return img, nil
 }
 
