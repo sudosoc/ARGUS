@@ -41,7 +41,8 @@ var Sources = []Source{
 	{"XposedOrNot", "breach", "https://api.xposedornot.com/v1/check-email/test@example.com"},
 	{"GLEIF", "company", "https://api.gleif.org/api/v1/lei-records?page%5Bsize%5D=1"},
 	{"crt.sh", "domain", "https://crt.sh/?q=example.com&output=json&exclude=expired"},
-	{"WhatsMyName list", "social", "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"},
+	{"keys.openpgp.org", "keys (PGP)", "https://keys.openpgp.org/"},
+	{"grep.app", "codesearch", "https://grep.app/api/search?q=argus"},
 }
 
 // Result is the outcome of one probe.

@@ -7,3 +7,5 @@ out/
 data/wmn-data.json
 .idea/
 .vscode/
+.argus-install.conf
+.update.lock

@@ -31,6 +31,12 @@ const (
 	Version  = "0.3.0"
 )
 
+// Commit and BuildDate are set at build time (-ldflags "-X ...engine.Commit=abc123").
+var (
+	Commit    = ""
+	BuildDate = ""
+)
+
 var (
 	ErrNoInput      = errors.New("no input supplied: provide at least one of name, username, email, phone, domain, IP or company")
 	ErrNothingToRun = errors.New("no module is applicable to the supplied inputs")
