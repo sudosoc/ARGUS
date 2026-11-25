@@ -6,8 +6,8 @@
   background: var(--surface-1); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--line); z-index: var(--z-top);
 }
 .brand { display: flex; align-items: center; gap: 9px; flex: none; }
-.brand-emblem { display: grid; place-items: center; height: 46px; }
-.brand-emblem img { height: 46px; width: auto; display: block; filter: drop-shadow(0 0 6px rgba(160,20,30,.35)); }
+.brand-emblem { display: grid; place-items: center; height: 50px; }
+.brand-emblem img { height: 50px; width: auto; display: block; filter: drop-shadow(0 0 6px rgba(160,20,30,.35)); }
 .wm { display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; line-height: 1; }
 .wm-a { font-size: var(--fs-sm); font-weight: 500; letter-spacing: .2em; color: var(--text-2); }
 .wm-b { font-size: var(--fs-lg); font-weight: 800; letter-spacing: .16em; color: var(--text); }
@@ -98,9 +98,10 @@
 .tab.active .ic { color: var(--emph); }
 .tab { padding: 9px 11px; }
 .tab .count { margin-left: 2px; }
-@container (max-width: 1280px) { .tab .ic { display: none; } .tab { padding: 9px 9px; } }
-@container (max-width: 900px) { .tab { font-size: var(--fs-sm); padding: 9px 8px; } }
-.tabpanel { padding: var(--sp-4) var(--sp-5) var(--sp-6); display: grid; gap: var(--sp-4); align-content: start; }
+.tab .count:not(.warn) { display: none; }
+/* Narrow workspaces: the main views shrink to icons (the active one keeps its name); every tab has a tooltip. */
+@container (max-width: 1240px) { .tab:not(.active) .tl { display: none; } .tab { padding: 9px 12px; } }
+.tabpanel { padding: var(--sp-4) var(--sp-5) var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-content: start; }
 .tabpanel[hidden] { display: none; }
 
 .welcome { max-width: 1080px; margin: 0 auto; padding: var(--sp-5) var(--sp-5) var(--sp-6); display: grid; gap: var(--sp-5); }
@@ -207,7 +208,7 @@
 .sn-empty[open] summary .caret { transform: rotate(90deg); }
 .subhost { padding: var(--sp-4) var(--sp-5) var(--sp-6); min-width: 0; outline: none; }
 .subhost > .tabpanel { padding: 0; }
-.secpage { display: grid; gap: var(--sp-4); align-content: start; }
+.secpage { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-content: start; }
 .secpage .unlock { color: var(--text-3); font-size: var(--fs-sm); }
 @media (max-width: 1100px) {
   .tabbody { grid-template-columns: minmax(0, 1fr); }

@@ -11,8 +11,10 @@
 
   K.panel = (title, icon, ...kids) => {
     let count = null, sub = null;
-    const last = kids[kids.length - 1];
-    if (last && last.__opts) { ({ count, sub } = kids.pop().__opts); }
+    kids = kids.flat().filter((k) => {
+      if (k && k.__opts) { ({ count = count, sub = sub } = k.__opts); return false; }
+      return true;
+    });
     return el("section", { class: "panel" },
       el("h3", { class: "ph" }, icon ? UI.icon(icon) : null, title, count != null ? el("span", { class: "count", text: UI.n(count) }) : null, sub ? el("span", { class: "ph-sub", text: sub }) : null),
       ...kids);

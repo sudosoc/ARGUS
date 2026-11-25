@@ -146,7 +146,7 @@
     render(page, M) {
       const t = M.target, p = M.primary;
       const items = [
-        ["A confirmed name", M.entsOf("name").length > 0, "give a name, or an account that states one"],
+        ["A confirmed name", !!(M.primary && (M.primary.names || []).length) || M.entsOf("name").length > 0 || !!(t.full_name || t.name), "give a name, or an account that states one"],
         ["An e-mail address", M.entsOf("email").length > 0, "give an e-mail, or a handle whose profile or commits publish one"],
         ["A phone number", M.entsOf("phone").length > 0 || !!t.phone, "give a phone number: owners are rarely published"],
         ["Usernames", M.entsOf("username").length > 0 || !!t.username, "give a handle or alias"],
