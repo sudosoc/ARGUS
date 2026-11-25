@@ -139,6 +139,19 @@
   K.gauge = (score, label, note) => el("div", { class: "gauge" },
     el("div", { class: "g-n num", text: String(Math.round(score)) }), el("div", { class: "g-body" }, el("div", { class: "g-l", text: label }), el("div", { class: "g-bar" }, el("span", { class: "g-fill", style: `width:${Math.max(2, Math.min(100, score))}%` })), note ? el("div", { class: "hint", text: note }) : null));
 
+  /** A section that lists the findings `pick(M)` returns, with a short KPI strip. */
+  K.section = (id, label, icon, pick, { group, empty, intro, unlock, showModule = true } = {}) => ({
+    id, label, icon, group,
+    count: (M) => pick(M).length,
+    render(page, M) {
+      const list = pick(M);
+      if (!list.length) { page.append(K.empty(icon, "Nothing here yet", empty || "No findings in this group.", unlock)); return; }
+      if (intro) page.append(K.hint(intro));
+      page.append(K.stats([[list.length, "findings", { lead: true }], [new Set(list.map((f) => f.source)).size, "sources"], [list.filter((f) => f.confidence >= 0.8).length, "high confidence"]]));
+      page.append(K.findings(label, icon, list, { showModule }));
+    },
+  });
+
   /** Blocks -> DOM and Markdown, so a report page and its download are the same content. */
   K.blocksToNode = (blocks) => {
     const root = el("div", { class: "report-doc" });

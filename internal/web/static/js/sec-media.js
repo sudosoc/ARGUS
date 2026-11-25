@@ -74,5 +74,8 @@
       page.append(K.panel("When pictures were taken", "clock", K.table([{ label: "Taken", get: (r) => r.t }, { label: "Device", get: (r) => r.p.camera || "" }, { label: "Source", get: (r) => ((r.p.sources || [])[0] || "").replace(/^[a-z]+: /, "") }, { label: "GPS", get: (r) => r.p.gps || "" }], rows, { onRow: (r) => UI.showPhoto(r.p), empty: "No picture carried a capture date." })));
     } };
 
-  UI.defineTab({ id: "media", label: "Media", icon: "image", count: (M) => M.photos.length, sections: [collection, exif, similarity, reverse, timeline] });
+  const uploaded = K.section("files", "Uploaded files", "file", (M) => M.hits.filter((f) => f.module === "uploads"), { showModule: false,
+    intro: "Files you supplied, analysed on this machine: hidden metadata, extracted text, video frames and the leads found inside. Open one to read everything, including the full text.",
+    empty: "No file was supplied.", unlock: "drop a picture, document or video into Files when you start an investigation, or use -file on the command line." });
+  UI.defineTab({ id: "media", label: "Media", icon: "image", count: (M) => M.photos.length, sections: [collection, uploaded, exif, similarity, reverse, timeline] });
 })();
