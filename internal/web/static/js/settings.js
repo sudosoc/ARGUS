@@ -8,7 +8,7 @@
   const LLM_LABELS = { anthropic: "Claude (Anthropic)", openai: "OpenAI", gemini: "Google Gemini", local: "Local model" };
 
   UI.showSettings = async function showSettings() {
-    const body = UI.openDrawer("API settings", "keys for model providers and for tools that need one");
+    const body = UI.openDrawer("Settings", "language, keys for model providers and for tools that need one");
     let data;
     try { data = await UI.api("/api/settings"); } catch (e) { body.replaceChildren(UI.emptyState("alert", "Could not load the settings", e.message)); return; }
     draw(body, data);
@@ -17,6 +17,14 @@
   function draw(body, data) {
     const rerender = (d) => draw(body, d);
     body.replaceChildren(el("p", { class: "hint", text: "Keys are stored in an encrypted file in your config directory and are never shown again after saving; environment variables are read too. A tool that needs a key is skipped when its provider is off or has no key." }));
+
+    // ---- interface language (stored in this browser; the page reloads)
+    const langSel = el("select", { "aria-label": "Interface language", translate: "no" },
+      el("option", { value: "en", text: "English", selected: UI.lang === "en" ? "" : null }), el("option", { value: "ar", text: "العربية", selected: UI.lang === "ar" ? "" : null }));
+    langSel.addEventListener("change", () => UI.setLang(langSel.value));
+    body.append(el("section", { class: "panel" }, el("h3", { class: "ph" }, UI.icon("globe"), "Language"),
+      el("div", { class: "sel-row" }, langSel),
+      el("p", { class: "hint", text: "Choose the language of the interface. Arabic switches the layout to right-to-left. Reports and exported files stay in English." })));
 
     // ---- model selector
     const llm = data.providers.filter((p) => p.kind === "llm");
