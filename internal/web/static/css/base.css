@@ -1,0 +1,66 @@
+/* Reset, typography and form controls. */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font: var(--fs) / var(--lh) var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3, h4 { font-weight: 600; letter-spacing: 0; }
+a { color: var(--text); text-decoration: underline; text-decoration-color: var(--text-4); text-underline-offset: 2px; }
+a:hover { color: var(--emph); text-decoration-color: var(--emph); }
+code, .mono { font-family: var(--mono); font-size: .94em; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.muted { color: var(--text-3); font-weight: 400; }
+.hint { color: var(--text-3); font-size: var(--fs-sm); }
+.hint.pad { padding: var(--sp-2) 0; }
+.grow { flex: 1 1 auto; }
+.wrap { overflow-wrap: anywhere; }
+.nowrap { white-space: nowrap; }
+.offscreen { position: fixed; left: -9999px; top: 0; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* Icons: stroke glyphs in currentColor from the sprite. */
+.ic { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ic.big { width: 36px; height: 36px; stroke-width: 1.3; }
+.ic.caret { width: 12px; height: 12px; transition: transform .12s; }
+.shape { width: 12px; height: 12px; fill: currentColor; flex: none; vertical-align: -2px; }
+
+/* One visible focus ring everywhere. */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: var(--r-sm); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; }
+
+.skip { position: fixed; left: var(--sp-3); top: -60px; z-index: 100; background: var(--accent); color: var(--accent-ink); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); }
+.skip:focus { top: var(--sp-2); }
+
+kbd {
+  font: 600 var(--fs-xs) / 1 var(--mono); padding: 3px 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px;
+  border-radius: var(--r-sm); background: var(--surface-2); color: var(--text-2); display: inline-block; min-width: 18px; text-align: center;
+}
+
+/* ------------------------------------------------------------- controls */
+input[type=text], input[type=search], input:not([type]), select, textarea {
+  width: 100%; padding: 6px 9px; border-radius: var(--r-md); border: 1px solid var(--line-strong);
+  background: var(--well); color: var(--text); font: inherit; min-height: 30px;
+}
+input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
+input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); opacity: .6; }
+select { width: auto; padding-right: 6px; }
+textarea { resize: vertical; font: var(--fs-sm) / 1.5 var(--mono); }
+input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; margin: 0; flex: none; }
+input:disabled, button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+input.mono-in { font-family: var(--mono); font-size: var(--fs-sm); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-track { background: transparent; }
+* { scrollbar-color: var(--line-strong) transparent; scrollbar-width: thin; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
