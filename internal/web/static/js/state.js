@@ -83,10 +83,12 @@
     const t = UI.S.target || {};
     const box = $("targetChips");
     box.replaceChildren();
-    const labels = { full_name: "name", username: "user", alias: "alias", email: "email", phone: "phone", domain: "domain", ip: "ip", asn: "asn", wallet: "wallet", company: "company", location: "place" };
+    const labels = { full_name: "name", username: "user", alias: "alias", email: "email", phone: "phone", domain: "domain", ip: "ip", asn: "asn", wallet: "wallet", company: "company", location: "place", coords: "coords" };
     for (const [k, lab] of Object.entries(labels)) {
       if (t[k]) box.append(el("span", { class: "chip strong" }, el("span", { class: "k", text: lab }), el("span", { text: t[k] })));
     }
+    if (t.date_from) box.append(el("span", { class: "chip strong" }, el("span", { class: "k", text: "period" }), el("span", { text: t.date_to && t.date_to !== t.date_from ? t.date_from + " → " + t.date_to : t.date_from })));
+    if (t.files && t.files.length) box.append(el("span", { class: "chip strong" }, el("span", { class: "k", text: "files" }), el("span", { text: String(t.files.length) })));
     const label = UI.targetLabel(t);
     if (label) $("caseTitle").textContent = label;
   }

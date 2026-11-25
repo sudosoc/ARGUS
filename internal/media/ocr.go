@@ -34,13 +34,35 @@ func OCRPath() (engine, path string) {
 }
 
 // ocrLangs is the language set handed to the engine. Tesseract writes it as
-// "eng+ara"; EasyOCR wants "en ar". Set ARGUS_OCR_LANGS=eng+ara to add Arabic.
+// "eng+ara"; EasyOCR wants "en ar". English and Arabic are used when Tesseract has the Arabic data;
+// set ARGUS_OCR_LANGS (for example "eng+ara+fra") to choose others.
 func ocrLangs() string {
 	if v := strings.TrimSpace(os.Getenv("ARGUS_OCR_LANGS")); v != "" {
 		return v
 	}
+	arOnce.Do(func() {
+		if ocrBin == "" {
+			return
+		}
+		out, err := exec.Command(ocrBin, "--list-langs").Output()
+		if err == nil {
+			for _, l := range strings.Fields(string(out)) {
+				if l == "ara" {
+					arabic = true
+				}
+			}
+		}
+	})
+	if arabic {
+		return "eng+ara" // English and Arabic by default when the Arabic data is installed
+	}
 	return "eng"
 }
+
+var (
+	arOnce sync.Once
+	arabic bool
+)
 
 const maxOCRText = 600
 

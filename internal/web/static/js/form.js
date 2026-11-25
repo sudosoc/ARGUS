@@ -22,6 +22,7 @@
     { group: "Organisation & place", items: [
       { name: "company", label: "Company / organisation", ph: "Example Inc" },
       { name: "location", label: "Location", ph: "Cairo, Egypt" },
+      { name: "coords", label: "Coordinates (lat, lon)", ph: "30.0444, 31.2357", mono: 1 },
     ] },
   ];
 
@@ -71,6 +72,18 @@
         det.append(el("div", { class: "field" }, el("label", { for: "f_" + f.name }, el("span", { text: f.label }), UI.infoBtn(f.name)), input));
       }
     }
+
+    // Period of interest
+    const per = group("Period");
+    for (const [name, label] of [["date_from", "From"], ["date_to", "To (optional)"]]) {
+      per.append(el("div", { class: "field" }, el("label", { for: "f_" + name }, el("span", { text: label }), name === "date_from" ? UI.infoBtn("period") : null),
+        el("input", { type: "date", name, id: "f_" + name, class: "mono-in" })));
+    }
+
+    // Files: pictures, documents and videos are analysed on this machine
+    UI.uploads = [];
+    const fl = group("Files");
+    fl.append(UI.buildUploader());
 
     const ev = group("Evidence you already have");
     ev.append(el("div", { class: "field" },
@@ -170,6 +183,7 @@
       const body = {
         full_name: v("full_name"), username: v("username"), alias: v("alias"), email: v("email"), phone: v("phone"),
         domain: v("domain"), ip: v("ip"), asn: v("asn"), wallet: v("wallet"), company: v("company"), location: v("location"), notes: v("notes"),
+        coords: v("coords"), date_from: v("date_from"), date_to: v("date_to"), files: (UI.uploads || []).map((u) => u.id),
         modules: chosen.length === mods.length ? [] : chosen,
         aggressive: f.elements["aggressive"].checked, verify: f.elements["verify"].checked,
         derive: f.elements["derive"].checked, browser: f.elements["browser"].checked, no_pivot: f.elements["no_pivot"].checked,
@@ -191,6 +205,7 @@
     $("form").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submit(e); });
     $("clearBtn").addEventListener("click", () => {
       document.querySelectorAll("#fields input, #fields textarea").forEach((i) => (i.value = ""));
+      if (UI.clearUploads) UI.clearUploads();
       document.querySelectorAll("#fields .fgroup .filled").forEach((f) => (f.textContent = ""));
       UI.showFormError("");
     });

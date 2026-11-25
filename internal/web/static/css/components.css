@@ -302,3 +302,17 @@ details.proxies summary { color: var(--text-2); font-size: var(--fs-sm); display
 .sec-title { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-2) 0; color: var(--text-2); font: 650 var(--fs-xs) var(--sans); text-transform: uppercase; letter-spacing: .09em; }
 
 .tier-note { display: block; margin-top: 4px; color: var(--text-3); font-size: var(--fs-xs); line-height: 1.45; }
+
+/* ---------------------------------------------------------------- file inputs */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dropzone { display: grid; justify-items: center; gap: 4px; padding: var(--sp-4) var(--sp-3); border: 1.5px dashed var(--line-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text-2); cursor: pointer; text-align: center; transition: border-color .12s, background .12s; }
+.dropzone:hover, .dropzone.over, .dropzone:focus-visible { border-color: var(--accent); background: var(--surface-2); color: var(--text); }
+.dropzone .dz-t { font-weight: 600; font-size: var(--fs-sm); }
+.dropzone .dz-s { font-size: var(--fs-xs); color: var(--text-3); }
+.upl-list { display: grid; gap: var(--sp-2); margin-top: var(--sp-2); }
+.upl { display: grid; gap: 4px; padding: var(--sp-2) var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); }
+.upl.bad { border-color: var(--accent); }
+.upl.busy { opacity: .75; }
+.upl-h { display: flex; gap: var(--sp-2); align-items: center; min-width: 0; }
+.upl-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
+.hint.warn { color: var(--emph); }
