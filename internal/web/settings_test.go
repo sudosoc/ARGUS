@@ -67,3 +67,30 @@ func TestSettingsAPIMasksKeysAndTests(t *testing.T) {
 		t.Fatalf("unknown provider: %d", r3.StatusCode)
 	}
 }
+
+func TestUploadAnalysesFile(t *testing.T) {
+	ts, _ := newTestServerWith(t)
+	h := authed()
+	h["Content-Type"] = "application/octet-stream"
+	h["X-Filename"] = "cv%20layla.txt"
+	resp := do(t, "POST", ts.URL+"/api/uploads", "Layla Hassan\nlayla@hassanlabs.org +20 100 555 0199\n", h)
+	defer resp.Body.Close()
+	buf := make([]byte, 8192)
+	n, _ := resp.Body.Read(buf)
+	body := string(buf[:n])
+	if resp.StatusCode != 200 || !strings.Contains(body, `"kind":"text"`) || !strings.Contains(body, "layla@hassanlabs.org") || !strings.Contains(body, "cv layla.txt") {
+		t.Fatalf("%d %s", resp.StatusCode, body)
+	}
+	h["X-Filename"] = "x.bin"
+	r2 := do(t, "POST", ts.URL+"/api/uploads", "\x00\x01\x02\x03\x00\x00\x09\x09", h)
+	defer r2.Body.Close()
+	if r2.StatusCode != 400 {
+		t.Fatalf("binary blob: %d", r2.StatusCode)
+	}
+	// without the CSRF header the upload is refused like every other write
+	r3 := do(t, "POST", ts.URL+"/api/uploads", "x", map[string]string{"Cookie": cookieName + "=" + testToken})
+	defer r3.Body.Close()
+	if r3.StatusCode != 403 {
+		t.Fatalf("csrf: %d", r3.StatusCode)
+	}
+}

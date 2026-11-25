@@ -89,3 +89,6 @@ func clip(s string) string {
 	}
 	return s
 }
+
+// PDFText extracts the text of an in-memory PDF (the first pages, capped).
+func PDFText(data []byte) (string, error) { return pdfText(data) }

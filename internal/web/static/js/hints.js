@@ -51,6 +51,19 @@ UI.HINTS = {
     ar: "مدينة أو دولة. مش مدخل لوحده: بيضيّق البحث بالاسم والشركة واللقب، وبيساعد في تحليل أرقام الهاتف المحلية، وبيأكّد البروفايلات اللي في نفس المكان.",
   },
 
+  coords: {
+    en: "A place as latitude,longitude (for example 30.0444,31.2357). Finds the place's name, geotagged pictures and articles within 1-2 km (Wikimedia Commons, Wikipedia), and gives links to open map and photo searches. It never asks a social network for people at that point.",
+    ar: "مكان بإحداثيات خط العرض,خط الطول (مثلاً 30.0444,31.2357). بيجيب اسم المكان وصور ومقالات موسومة جغرافياً في نطاق 1-2 كم (Wikimedia Commons وWikipedia) وروابط تفتح الخرائط وبحث الصور. مش بيسأل أي شبكة اجتماعية عن ناس في النقطة دي.",
+  },
+  period: {
+    en: "A date or a period (YYYY-MM-DD). Looks for news that names the subject in that window (GDELT), the Internet Archive copy of the domain closest to it, what happened on that day, and builds Google / X searches limited to the period. Posts on social networks cannot be searched by date without an account, so those are links for you to open.",
+    ar: "تاريخ أو فترة (YYYY-MM-DD). بيدوّر على أخبار بتذكر الشخص في الفترة دي (GDELT) وأقرب نسخة من الدومين في أرشيف الإنترنت وإيه اللي حصل في اليوم ده، وبيعمل بحث جوجل وX محدود بالفترة. بوستات السوشيال مينفعش تتبحث بالتاريخ من غير حساب، فبتتحط كروابط تفتحها إنت.",
+  },
+  files: {
+    en: "Pictures (EXIF, GPS, OCR, fingerprints), documents (PDF, Word, Excel, PowerPoint, OpenDocument: hidden author data, text, e-mails, names) and videos (frames read with OCR, metadata). Files are read on this machine only; nothing is uploaded to any service. Up to 100 MB per picture or document, 500 MB per video.",
+    ar: "صور (EXIF وGPS وOCR وبصمات) ومستندات (PDF وWord وExcel وPowerPoint وOpenDocument: بيانات المؤلف المخفية والنص والإيميلات والأسماء) وفيديوهات (إطارات بيتقرا النص منها وبيانات وصفية). الملفات بتتقرا على جهازك بس ومفيش حاجة بتترفع لأي خدمة. لحد 100MB للصورة أو المستند و500MB للفيديو.",
+  },
+
   notes: {
     en: "Paste any text you can see but SUDOSOC ARGUS cannot fetch: a LinkedIn page copied from your own logged-in browser, a LinkedIn 'Save to PDF' export, a CV, a bio. It is parsed into a profile (employers, education, location, e-mail, skills) and joins the identity matching. Nothing is sent anywhere.",
     ar: "الصق أي نص تقدر تشوفه إنت لكن الأداة مش قادرة تجيبه: صفحة LinkedIn منسوخة من متصفحك وإنت عامل login، أو ملف 'Save to PDF' من LinkedIn، أو CV، أو نبذة. بيتحلل لبروفايل (شغل وتعليم ومكان وإيميل ومهارات) وبيدخل في مطابقة الهوية. مفيش حاجة بتتبعت لأي مكان.",

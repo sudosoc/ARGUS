@@ -216,10 +216,14 @@ func Fetch(ctx context.Context, c *httpx.Client, rawURL string) (*Image, error) 
 }
 
 func analyse(ctx context.Context, rawURL string, data []byte, declared string) (*Image, error) {
+	return analyseMax(ctx, rawURL, data, declared, MaxBytes)
+}
+
+func analyseMax(ctx context.Context, rawURL string, data []byte, declared string, max int) (*Image, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty response")
 	}
-	if len(data) >= MaxBytes {
+	if len(data) >= max {
 		return nil, errors.New("image too large")
 	}
 	ct := http.DetectContentType(data)
@@ -319,4 +323,33 @@ func luma(c color.Color) float64 {
 		return 255 // transparent counts as white so cut-out avatars compare sensibly
 	}
 	return (0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b)) / 257
+}
+
+// AnalyseBytes fingerprints a picture the operator supplied (an uploaded file): hashes, EXIF, GPS, OCR.
+// The picture is cached under upload://<sha16>/<name> so the photo stage and the image proxy treat it like a
+// downloaded one, without any network request. maxBytes caps the size (0 = 100 MiB).
+func AnalyseBytes(ctx context.Context, name string, data []byte, maxBytes int) (*Image, error) {
+	if maxBytes <= 0 {
+		maxBytes = 100 << 20
+	}
+	sum := sha256.Sum256(data)
+	clean := strings.Map(func(r rune) rune {
+		if r == '/' || r == '\\' || r < 32 {
+			return '_'
+		}
+		return r
+	}, name)
+	if len(clean) > 80 {
+		clean = clean[len(clean)-80:]
+	}
+	u := "upload://" + hex.EncodeToString(sum[:8]) + "/" + clean
+	if img := shared.get(u); img != nil {
+		return img, nil
+	}
+	img, err := analyseMax(ctx, u, data, "", maxBytes)
+	if err != nil {
+		return nil, err
+	}
+	shared.put(img)
+	return img, nil
 }

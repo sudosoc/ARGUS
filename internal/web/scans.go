@@ -14,6 +14,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/app"
 	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/files"
 	"github.com/sudosoc/argus/internal/identity"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/output"
@@ -142,6 +143,10 @@ type ScanRequest struct {
 	Notes      string   `json:"notes"`
 	ASN        string   `json:"asn"`
 	Wallet     string   `json:"wallet"`
+	Coords     string   `json:"coords"`
+	DateFrom   string   `json:"date_from"`
+	DateTo     string   `json:"date_to"`
+	Files      []string `json:"files"` // ids returned by POST /api/uploads
 	Modules    []string `json:"modules"`
 	Aggressive bool     `json:"aggressive"`
 	Browser    bool     `json:"browser"`
@@ -208,16 +213,24 @@ func validateRequest(r *ScanRequest) error {
 	if len(r.Notes) > 30000 {
 		return errors.New("pasted text too long (max 30000 characters)")
 	}
-	for _, f := range []*string{&r.FullName, &r.Username, &r.Email, &r.Phone, &r.Domain, &r.IP, &r.Company, &r.Location, &r.Alias, &r.ASN, &r.Wallet} {
+	for _, f := range []*string{&r.FullName, &r.Username, &r.Email, &r.Phone, &r.Domain, &r.IP, &r.Company, &r.Location, &r.Alias, &r.ASN, &r.Wallet, &r.Coords, &r.DateFrom, &r.DateTo} {
 		*f = strings.TrimSpace(*f)
 		if len(*f) > 200 {
 			return errors.New("field too long (max 200 characters)")
 		}
 	}
+	if len(r.Files) > 20 {
+		return errors.New("too many files (max 20)")
+	}
+	for _, id := range r.Files {
+		if files.Lookup(id) == nil {
+			return errors.New("an uploaded file is no longer available; upload it again")
+		}
+	}
 	if len(r.Proxies) > 50 {
 		return errors.New("too many proxies")
 	}
-	if r.FullName == "" && r.Username == "" && r.Email == "" && r.Phone == "" && r.Domain == "" && r.IP == "" && r.Company == "" && r.Alias == "" && r.ASN == "" && r.Wallet == "" && r.Notes == "" {
+	if r.FullName == "" && r.Username == "" && r.Email == "" && r.Phone == "" && r.Domain == "" && r.IP == "" && r.Company == "" && r.Alias == "" && r.ASN == "" && r.Wallet == "" && r.Notes == "" && len(r.Files) == 0 && r.Coords == "" {
 		return errNoInput
 	}
 	return nil
@@ -232,7 +245,8 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	// domain or IP) are reported to the form instead of failing the run later.
 	probe := models.Target{FullName: req.FullName, Username: req.Username, Email: req.Email, Phone: req.Phone,
 		Domain: req.Domain, IP: req.IP, Company: req.Company, Location: req.Location,
-		Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet, Notes: req.Notes}
+		Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet, Notes: req.Notes,
+		Coords: req.Coords, DateFrom: req.DateFrom, DateTo: req.DateTo, Files: req.Files}
 	if err := engine.Enrich(&probe, false, 0); err != nil {
 		return nil, err
 	}
@@ -277,7 +291,8 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 		notify: make(chan struct{}), progress: map[string][2]int{},
 		Target: models.Target{FullName: req.FullName, Username: req.Username, Email: req.Email, Phone: req.Phone,
 			Domain: req.Domain, IP: req.IP, Company: req.Company, Location: req.Location,
-			Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet},
+			Alias: req.Alias, ASN: req.ASN, Wallet: req.Wallet, Notes: req.Notes,
+			Coords: req.Coords, DateFrom: req.DateFrom, DateTo: req.DateTo, Files: req.Files},
 	}
 	m.scans[sc.ID] = sc
 	m.order = append(m.order, sc.ID)

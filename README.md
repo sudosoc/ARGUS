@@ -29,6 +29,7 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![Confidence score](docs/screenshots/19-confidence-score.png)<br>**21. Confidence score:** a transparent blend of completeness, evidence quality, corroboration and identity match. | ![Reports](docs/screenshots/20-report.png)<br>**22. Reports:** investigation summary, technical, intelligence and evidence reports: copy, download .md or print. |
 | ![Exports](docs/screenshots/21-exports.png)<br>**23. Exports:** HTML, JSON, CSV, Markdown, SQL, JSONL, GraphML; a local export history. | ![Command palette](docs/screenshots/22-command-palette.png)<br>**24. Command palette:** `Ctrl+K`: search the case or run any command. |
 | ![Light theme](docs/screenshots/23-light-theme.png)<br>**25. Light theme:** `t` switches; the emblem keeps its round shape. | ![Phone](docs/screenshots/24-phone.png)<br>**26. Phone:** the same views on a narrow screen: tabs and sections scroll sideways. |
+| ![File inputs](docs/screenshots/27-file-inputs.png)<br>**27. File, place and period inputs:** drop pictures, documents or videos; what is found inside is offered as leads. | ![API settings](docs/screenshots/28-api-settings.png)<br>**28. API settings:** masked keys, Enabled switch and Test connection per provider; model selector. |
 
 ## API settings
 
@@ -144,6 +145,18 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 - **Collectors are not cut short either.** Every username and alias is probed by `profiles` (not just the first three); API page sizes are raised to the largest the services allow (ORCID, Wikidata, Crossref, Bluesky, Mastodon, GitHub repos and commits…); long text values are kept to 5,000 characters; co-hosted domains, ASN prefixes, ad-network accounts, pictures (up to 1,000), archive snapshots (30), documents (100), look-alike candidates (1,500) and resolved subdomains (3,000) are no longer capped at a few dozen; the identity view keeps up to 60 candidates.
 - **Honest limits.** A tool's output is captured up to 64 MiB; beyond that the run is flagged *capture limit reached*, never cut quietly. Sites behind anti-bot systems a plain client cannot pass are not probed (ARGUS does not evade protections); `-v` keeps the not-found and error records in exports as well.
 
+### Files, a place and a period as inputs
+
+Besides identifiers, an investigation can start from **files**, a **place** or a **period** (web form: the *Files*, *Period* and *Coordinates* fields; CLI: `-file`, `-coords`, `-date-from`, `-date-to`).
+
+- **Pictures** (JPEG, PNG, GIF, WebP, TIFF…): EXIF, GPS, camera, SHA-256 and perceptual hash, OCR of the text printed in them, and reverse-search links (Google Lens, Yandex, TinEye, Bing, SauceNAO). They join the normal photo analysis: "same picture" groups and GPS on the map.
+- **Documents** (PDF, Word, Excel, PowerPoint, OpenDocument, text): hidden metadata (author, last editor, organisation, software, dates), the text, and the e-mails, phone numbers, domains, links and wallets inside it. A CV also yields a name, employers and a place. Every lead found is followed like any other.
+- **Videos** (MP4, MOV, MKV, WebM, AVI): needs `ffmpeg`. Up to 12 frames are taken across the video and each is analysed like a picture (OCR, fingerprints); `ffprobe` reads the container metadata (creation time, device, GPS location tag).
+- **Place** (`lat,lon`): the place's name (OpenStreetMap), geotagged pictures within 1 km (Wikimedia Commons), landmarks within 2 km (Wikipedia), and links to open map, street-photo and social searches. ARGUS does not query a social network for people near a point.
+- **Period** (`YYYY-MM-DD` to `YYYY-MM-DD`): news in the window that names the subject (GDELT), the Internet Archive copy of the domain closest to it, what happened on that day, and searches limited to the period (Google, X). Posts on social networks cannot be searched by date without an account, so they are links for you to open.
+
+Files are read on your machine only; nothing is uploaded to any service. Limits: 100 MB per picture or document, 500 MB per video, 20 files per investigation. OCR reads English and Arabic by default when the Arabic data is installed (`ARGUS_OCR_LANGS` changes it). Example: `argus -file contract.pdf -file photo.jpg -coords 30.0444,31.2357 -date-from 2026-01-10 -date-to 2026-01-12`.
+
 ### CLI
 
 At least one identifier is required. Ctrl-C stops the run and still writes a partial report (exit code 130).
@@ -226,7 +239,7 @@ Select modules with `-modules domain,ip`. Modules whose required input is missin
 
 ### Photos
 
-Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARGUS, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. If `tesseract` (or `easyocr`) is installed, text printed in a picture (signs, badges, screenshots) is read and shown with the picture and in Media → Metadata; add languages with `ARGUS_OCR_LANGS=eng+ara`. Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
+Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARGUS, fingerprinted (SHA-256 + perceptual hash) and compared. The same picture on different sites is reported as a finding and highlighted in the **Photos** tab, with reverse-image-search links (Google Lens, Yandex, TinEye, Bing) per picture. If `tesseract` (or `easyocr`) is installed, text printed in a picture (signs, badges, screenshots) is read and shown with the picture and in Media → Metadata; English and Arabic are used by default when the Arabic data is installed (`ARGUS_OCR_LANGS` changes it). Downloads go through an SSRF-guarded fetcher; the web UI shows them through an authenticated proxy so your browser never contacts third-party hosts. No face recognition is performed.
 
 ### What is covered, and what is not
 

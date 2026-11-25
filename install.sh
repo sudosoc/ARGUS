@@ -211,8 +211,12 @@ pkg_names() { # echo package list for role $1
     exiftool:dnf|exiftool:yum|exiftool:zypper) echo "perl-Image-ExifTool" ;;
     exiftool:pacman)   echo "perl-image-exiftool" ;;
     exiftool:apk)      echo "exiftool" ;;
-    tesseract:apt-get) echo "tesseract-ocr" ;;
-    tesseract:dnf|tesseract:yum|tesseract:zypper|tesseract:pacman|tesseract:apk) echo "tesseract" ;;
+    tesseract:apt-get) echo "tesseract-ocr tesseract-ocr-ara" ;;
+    tesseract:dnf|tesseract:yum) echo "tesseract tesseract-langpack-ara" ;;
+    tesseract:pacman)  echo "tesseract tesseract-data-ara tesseract-data-eng" ;;
+    tesseract:zypper)  echo "tesseract-ocr tesseract-ocr-traineddata-arabic tesseract-ocr-traineddata-english" ;;
+    tesseract:apk)     echo "tesseract-ocr tesseract-ocr-data-ara tesseract-ocr-data-eng" ;;
+    ffmpeg:*)          echo "ffmpeg" ;;
     sqlite:apt-get|sqlite:apk) echo "sqlite3" ;;
     sqlite:*)          echo "sqlite" ;;
   esac
@@ -380,6 +384,7 @@ install_extras() {
   have whois    || install_roles optional whois
   have dig      || install_roles optional dig
   have exiftool || install_roles optional exiftool
+  have ffmpeg || install_roles optional ffmpeg      # video frames and metadata for uploaded videos
   have tesseract || install_roles optional tesseract   # reads text printed in downloaded pictures (OCR)
   have sqlite3  || install_roles optional sqlite
   have python3  || install_roles optional python

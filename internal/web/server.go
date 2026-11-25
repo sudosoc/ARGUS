@@ -28,6 +28,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/app"
 	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/files"
 	"github.com/sudosoc/argus/internal/health"
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/media"
@@ -153,6 +154,7 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	mux.HandleFunc("GET /api/scans/{id}/export", s.handleExport)
 	mux.HandleFunc("POST /api/scans/{id}/notes", s.handleNotes)
 	mux.HandleFunc("GET /api/health", s.handleHealth)
+	mux.HandleFunc("POST /api/uploads", s.handleUpload)
 	mux.HandleFunc("GET /api/settings", s.handleSettings)
 	mux.HandleFunc("PUT /api/settings/llm", s.handleSettingsLLM)
 	mux.HandleFunc("PUT /api/settings/{id}", s.handleSettingsUpdate)
@@ -277,7 +279,11 @@ func (s *Server) secure(next http.Handler) http.Handler {
 				http.Error(w, "missing X-Requested-With header", http.StatusForbidden)
 				return
 			}
-			r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+			if r.URL.Path == "/api/uploads" {
+				r.Body = http.MaxBytesReader(w, r.Body, files.MaxVideo+1<<20) // uploads: the per-type limit is checked after sniffing
+			} else {
+				r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+			}
 		}
 		next.ServeHTTP(w, r)
 	})
