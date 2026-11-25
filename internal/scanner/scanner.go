@@ -6,9 +6,9 @@ package scanner
 import (
 	"context"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/pool"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/pool"
 )
 
 // Deps are the shared services the engine hands to every module.

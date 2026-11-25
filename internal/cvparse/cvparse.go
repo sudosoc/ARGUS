@@ -9,7 +9,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sudosoc/rectool/internal/extract"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // CV is the structured view of a resume.
@@ -124,7 +125,7 @@ func Parse(text string) CV {
 	cv.Skills = items(sections["skills"], 40)
 	cv.Interests = items(sections["interests"], 20)
 	if s := strings.Join(sections["summary"], " "); s != "" {
-		cv.Summary = strings.TrimSpace(clip(s, 400))
+		cv.Summary = strings.TrimSpace(util.Clip(s, 400))
 	}
 	return cv
 }
@@ -192,13 +193,6 @@ func appendUnique(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
-}
-
-func clip(s string, n int) string {
-	if len(s) > n {
-		return s[:n] + "…"
-	}
-	return s
 }
 
 var streetWord = regexp.MustCompile(`(?i)(^\d|\b(street|st\.|road|rd\.|avenue|ave\.|apt|apartment|floor|building|blvd|lane|ln\.|p\.?o\.? box)\b|شارع|عمارة)`)

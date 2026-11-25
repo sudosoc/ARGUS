@@ -7,13 +7,14 @@ package domain
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Config tunes the module.
@@ -88,41 +89,12 @@ func errFinding(source, category string, err error) models.Finding {
 		Details: map[string]string{"error": err.Error()}}
 }
 
-// put sets d[k]=v when v is non-empty.
-func put(d map[string]string, k, v string) {
-	if strings.TrimSpace(v) != "" {
-		d[k] = v
-	}
-}
-
 // list joins up to max items.
 func list(items []string, max int) string {
 	if len(items) > max {
-		return strings.Join(items[:max], ", ") + " … (+" + itoa(len(items)-max) + " more)"
+		return strings.Join(items[:max], ", ") + " … (+" + strconv.Itoa(len(items)-max) + " more)"
 	}
 	return strings.Join(items, ", ")
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	var b [20]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	if neg {
-		i--
-		b[i] = '-'
-	}
-	return string(b[i:])
 }
 
 // sameSite reports whether host is domain or one of its subdomains.

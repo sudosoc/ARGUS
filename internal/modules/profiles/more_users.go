@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Username enrichers for platforms that publish structured public profiles:
@@ -58,9 +59,9 @@ func linkedFrom(links ...string) (accts []string, ents []models.Entity) {
 
 func realName(d map[string]string, n string) {
 	n = strings.TrimSpace(n)
-	put(d, "display name", n)
+	util.Put(d, "display name", n)
 	if strings.Contains(n, " ") && len(n) < 60 {
-		put(d, "name", n)
+		util.Put(d, "name", n)
 	}
 }
 
@@ -84,15 +85,15 @@ func lobsters(ctx context.Context, c *httpx.Client, user string, emit func(model
 		Twitter   string `json:"twitter_username"`
 		Karma     int    `json:"karma"`
 	}
-	if !getJSON(ctx, c, "https://lobste.rs/~"+esc(user)+".json", &r) || r.Username == "" {
+	if !util.GetJSON(ctx, c, "https://lobste.rs/~"+esc(user)+".json", &r) || r.Username == "" {
 		return
 	}
 	d := map[string]string{"area": "community"}
-	put(d, "about", r.About)
-	put(d, "created", r.Created)
-	put(d, "invited by", r.InvitedBy)
+	util.Put(d, "about", r.About)
+	util.Put(d, "created", r.Created)
+	util.Put(d, "invited by", r.InvitedBy)
 	if r.Avatar != "" {
-		put(d, "avatar", "https://lobste.rs"+r.Avatar)
+		util.Put(d, "avatar", "https://lobste.rs"+r.Avatar)
 	}
 	var accts []string
 	var ents []models.Entity
@@ -108,7 +109,7 @@ func lobsters(ctx context.Context, c *httpx.Client, user string, emit func(model
 			ents = append(ents, x)
 		}
 	}
-	put(d, "linked accounts", strings.Join(accts, ", "))
+	util.Put(d, "linked accounts", strings.Join(accts, ", "))
 	emit(profile("Lobsters profile", "https://lobste.rs/~"+esc(user), 0.6, d, ents...))
 }
 
@@ -126,16 +127,16 @@ func duolingo(ctx context.Context, c *httpx.Client, user string, emit func(model
 			} `json:"courses"`
 		} `json:"users"`
 	}
-	if !getJSON(ctx, c, "https://www.duolingo.com/2017-06-30/users?username="+url.QueryEscape(user), &r) || len(r.Users) == 0 {
+	if !util.GetJSON(ctx, c, "https://www.duolingo.com/2017-06-30/users?username="+url.QueryEscape(user), &r) || len(r.Users) == 0 {
 		return
 	}
 	u := r.Users[0]
 	d := map[string]string{"area": "learning"}
 	realName(d, u.Name)
-	put(d, "about", u.Bio)
-	put(d, "location", u.Location)
+	util.Put(d, "about", u.Bio)
+	util.Put(d, "location", u.Location)
 	if u.Picture != "" && !strings.Contains(u.Picture, "default") {
-		put(d, "avatar", "https:"+strings.TrimPrefix(u.Picture, "https:")+"/xlarge")
+		util.Put(d, "avatar", "https:"+strings.TrimPrefix(u.Picture, "https:")+"/xlarge")
 	}
 	var langs []string
 	for _, co := range u.Courses {
@@ -144,7 +145,7 @@ func duolingo(ctx context.Context, c *httpx.Client, user string, emit func(model
 			break
 		}
 	}
-	put(d, "learning", strings.Join(langs, ", "))
+	util.Put(d, "learning", strings.Join(langs, ", "))
 	if u.Streak > 0 {
 		d["streak (days)"] = fmt.Sprint(u.Streak)
 	}
@@ -162,18 +163,18 @@ func launchpad(ctx context.Context, c *httpx.Client, user string, emit func(mode
 		Link     string `json:"web_link"`
 		Karma    int    `json:"karma"`
 	}
-	if !getJSON(ctx, c, "https://api.launchpad.net/1.0/~"+esc(user), &r) || r.Name == "" || r.IsTeam {
+	if !util.GetJSON(ctx, c, "https://api.launchpad.net/1.0/~"+esc(user), &r) || r.Name == "" || r.IsTeam {
 		return
 	}
 	d := map[string]string{"area": "open source"}
 	realName(d, r.Display)
-	put(d, "created", r.Created)
-	put(d, "time zone", r.TimeZone)
-	put(d, "about", r.Home)
+	util.Put(d, "created", r.Created)
+	util.Put(d, "time zone", r.TimeZone)
+	util.Put(d, "about", r.Home)
 	if r.Karma > 0 {
 		d["karma"] = fmt.Sprint(r.Karma)
 	}
-	emit(profile("Launchpad profile", firstNonEmpty(r.Link, "https://launchpad.net/~"+esc(user)), 0.55, d, nameEnt(d, nil)...))
+	emit(profile("Launchpad profile", util.FirstNonEmpty(r.Link, "https://launchpad.net/~"+esc(user)), 0.55, d, nameEnt(d, nil)...))
 }
 
 // hexPM lists the e-mail an Elixir/Erlang package author publishes and the
@@ -187,15 +188,15 @@ func hexPM(ctx context.Context, c *httpx.Client, user string, emit func(models.F
 		Inserted string            `json:"inserted_at"`
 		URL      string            `json:"url"`
 	}
-	if !getJSON(ctx, c, "https://hex.pm/api/users/"+esc(user), &r) || r.Username == "" {
+	if !util.GetJSON(ctx, c, "https://hex.pm/api/users/"+esc(user), &r) || r.Username == "" {
 		return
 	}
 	d := map[string]string{"area": "open source"}
 	realName(d, r.Name)
-	put(d, "created", r.Inserted)
+	util.Put(d, "created", r.Inserted)
 	var ents []models.Entity
 	if x, ok := emailEnt(r.Email, false); ok {
-		put(d, "e-mail", x.Value)
+		util.Put(d, "e-mail", x.Value)
 		ents = append(ents, x)
 	}
 	var accts []string
@@ -207,7 +208,7 @@ func hexPM(ctx context.Context, c *httpx.Client, user string, emit func(models.F
 			}
 		}
 	}
-	put(d, "linked accounts", strings.Join(accts, ", "))
+	util.Put(d, "linked accounts", strings.Join(accts, ", "))
 	emit(profile("Hex.pm profile", "https://hex.pm/users/"+esc(user), 0.55, d, nameEnt(d, ents)...))
 }
 
@@ -226,18 +227,18 @@ func metaCPAN(ctx context.Context, c *httpx.Client, user string, emit func(model
 			ID   string `json:"id"`
 		} `json:"profile"`
 	}
-	if !getJSON(ctx, c, "https://fastapi.metacpan.org/v1/author/"+esc(strings.ToUpper(user)), &r) || r.Name == "" {
+	if !util.GetJSON(ctx, c, "https://fastapi.metacpan.org/v1/author/"+esc(strings.ToUpper(user)), &r) || r.Name == "" {
 		return
 	}
 	d := map[string]string{"area": "open source"}
 	realName(d, r.Name)
-	put(d, "location", strings.Join(nonEmpty(r.City, r.Region, strings.ToUpper(r.Country)), ", "))
-	put(d, "avatar", r.Gravatar)
+	util.Put(d, "location", strings.Join(util.NonEmpty(r.City, r.Region, strings.ToUpper(r.Country)), ", "))
+	util.Put(d, "avatar", r.Gravatar)
 	var ents []models.Entity
 	for _, e := range emailList(r.Email) {
 		if x, ok := emailEnt(e, false); ok {
 			ents = append(ents, x)
-			put(d, "e-mail", x.Value)
+			util.Put(d, "e-mail", x.Value)
 		}
 	}
 	var links []string
@@ -252,19 +253,9 @@ func metaCPAN(ctx context.Context, c *httpx.Client, user string, emit func(model
 	a2, e2 := linkedFrom(links...)
 	accts = append(accts, a2...)
 	ents = append(ents, e2...)
-	put(d, "websites", strings.Join(links, ", "))
-	put(d, "linked accounts", strings.Join(accts, ", "))
+	util.Put(d, "websites", strings.Join(links, ", "))
+	util.Put(d, "linked accounts", strings.Join(accts, ", "))
 	emit(profile("MetaCPAN author", "https://metacpan.org/author/"+esc(strings.ToUpper(user)), 0.6, d, nameEnt(d, ents)...))
-}
-
-func nonEmpty(v ...string) []string {
-	var out []string
-	for _, s := range v {
-		if s = strings.TrimSpace(s); s != "" {
-			out = append(out, s)
-		}
-	}
-	return out
 }
 
 func emailList(v any) []string {
@@ -298,7 +289,7 @@ func kitsu(ctx context.Context, c *httpx.Client, user string, emit func(models.F
 			} `json:"attributes"`
 		} `json:"data"`
 	}
-	if !getJSON(ctx, c, "https://kitsu.io/api/edge/users?filter%5Bname%5D="+url.QueryEscape(user)+"&page%5Blimit%5D=1", &r) || len(r.Data) == 0 {
+	if !util.GetJSON(ctx, c, "https://kitsu.io/api/edge/users?filter%5Bname%5D="+url.QueryEscape(user)+"&page%5Blimit%5D=1", &r) || len(r.Data) == 0 {
 		return
 	}
 	a := r.Data[0].Attributes
@@ -306,10 +297,10 @@ func kitsu(ctx context.Context, c *httpx.Client, user string, emit func(models.F
 		return
 	}
 	d := map[string]string{"area": "anime"}
-	put(d, "about", a.About)
-	put(d, "location", a.Location)
-	put(d, "created", a.Created)
-	put(d, "avatar", a.Avatar.Original)
+	util.Put(d, "about", a.About)
+	util.Put(d, "location", a.Location)
+	util.Put(d, "created", a.Created)
+	util.Put(d, "avatar", a.Avatar.Original)
 	emit(profile("Kitsu profile", "https://kitsu.io/users/"+esc(user), 0.5, d))
 }
 
@@ -318,11 +309,11 @@ func minecraft(ctx context.Context, c *httpx.Client, user string, emit func(mode
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	}
-	if !getJSON(ctx, c, "https://api.mojang.com/users/profiles/minecraft/"+esc(user), &r) || r.ID == "" {
+	if !util.GetJSON(ctx, c, "https://api.mojang.com/users/profiles/minecraft/"+esc(user), &r) || r.ID == "" {
 		return
 	}
 	d := map[string]string{"area": "games", "uuid": r.ID, "name history": "https://namemc.com/profile/" + r.Name}
-	put(d, "avatar", "https://mc-heads.net/avatar/"+r.ID+"/256")
+	util.Put(d, "avatar", "https://mc-heads.net/avatar/"+r.ID+"/256")
 	emit(profile("Minecraft account", "https://namemc.com/profile/"+esc(r.Name), 0.45, d))
 }
 
@@ -354,12 +345,12 @@ func leetcode(ctx context.Context, c *httpx.Client, user string, emit func(model
 	p := r.Data.User.Profile
 	d := map[string]string{"area": "coding practice"}
 	realName(d, p.RealName)
-	put(d, "location", p.Country)
-	put(d, "company", p.Company)
-	put(d, "school", p.School)
-	put(d, "about", p.About)
+	util.Put(d, "location", p.Country)
+	util.Put(d, "company", p.Company)
+	util.Put(d, "school", p.School)
+	util.Put(d, "about", p.About)
 	if !strings.Contains(p.Avatar, "default") {
-		put(d, "avatar", p.Avatar)
+		util.Put(d, "avatar", p.Avatar)
 	}
 	var ents []models.Entity
 	if p.Company != "" {
@@ -376,13 +367,13 @@ func codewars(ctx context.Context, c *httpx.Client, user string, emit func(model
 		Skills   []string `json:"skills"`
 		Honor    int      `json:"honor"`
 	}
-	if !getJSON(ctx, c, "https://www.codewars.com/api/v1/users/"+esc(user), &r) || r.Username == "" {
+	if !util.GetJSON(ctx, c, "https://www.codewars.com/api/v1/users/"+esc(user), &r) || r.Username == "" {
 		return
 	}
 	d := map[string]string{"area": "coding practice"}
 	realName(d, r.Name)
-	put(d, "clan", r.Clan)
-	put(d, "skills", strings.Join(r.Skills, ", "))
+	util.Put(d, "clan", r.Clan)
+	util.Put(d, "skills", strings.Join(r.Skills, ", "))
 	if r.Honor > 0 {
 		d["honor"] = fmt.Sprint(r.Honor)
 	}
@@ -394,7 +385,7 @@ func matrix(ctx context.Context, c *httpx.Client, user string, emit func(models.
 		Display string `json:"displayname"`
 	}
 	mxid := "@" + strings.ToLower(user) + ":matrix.org"
-	if !getJSON(ctx, c, "https://matrix.org/_matrix/client/v3/profile/"+url.PathEscape(mxid), &r) || r.Display == "" {
+	if !util.GetJSON(ctx, c, "https://matrix.org/_matrix/client/v3/profile/"+url.PathEscape(mxid), &r) || r.Display == "" {
 		return
 	}
 	d := map[string]string{"area": "chat", "matrix id": mxid}
@@ -414,21 +405,21 @@ func giteaCom(ctx context.Context, c *httpx.Client, user string, emit func(model
 		Avatar   string `json:"avatar_url"`
 		Created  string `json:"created"`
 	}
-	if !getJSON(ctx, c, "https://gitea.com/api/v1/users/"+esc(user), &r) || r.Login == "" {
+	if !util.GetJSON(ctx, c, "https://gitea.com/api/v1/users/"+esc(user), &r) || r.Login == "" {
 		return
 	}
 	d := map[string]string{"area": "open source"}
 	realName(d, r.Full)
-	put(d, "location", r.Location)
-	put(d, "about", r.Desc)
-	put(d, "created", r.Created)
-	put(d, "website", r.Website)
+	util.Put(d, "location", r.Location)
+	util.Put(d, "about", r.Desc)
+	util.Put(d, "created", r.Created)
+	util.Put(d, "website", r.Website)
 	if !strings.Contains(r.Avatar, "identicon") {
-		put(d, "avatar", r.Avatar)
+		util.Put(d, "avatar", r.Avatar)
 	}
 	var ents []models.Entity
 	if x, ok := emailEnt(r.Email, false); ok && !strings.Contains(x.Value, "gitea") {
-		put(d, "e-mail", x.Value)
+		util.Put(d, "e-mail", x.Value)
 		ents = append(ents, x)
 	}
 	if x, ok := siteEnt(r.Website, false); ok {
@@ -449,12 +440,12 @@ func wikiCommons(ctx context.Context, c *httpx.Client, user string, emit func(mo
 			} `json:"users"`
 		} `json:"query"`
 	}
-	if !getJSON(ctx, c, "https://commons.wikimedia.org/w/api.php?action=query&list=users&format=json&usprop=editcount%7Cregistration&ususers="+url.QueryEscape(user), &r) ||
+	if !util.GetJSON(ctx, c, "https://commons.wikimedia.org/w/api.php?action=query&list=users&format=json&usprop=editcount%7Cregistration&ususers="+url.QueryEscape(user), &r) ||
 		len(r.Query.Users) == 0 || r.Query.Users[0].Missing != nil || r.Query.Users[0].Edits < 5 {
 		return
 	}
 	u := r.Query.Users[0]
 	d := map[string]string{"area": "community", "edits": fmt.Sprint(u.Edits)}
-	put(d, "registered", u.Reg)
+	util.Put(d, "registered", u.Reg)
 	emit(profile("Wikimedia Commons user", "https://commons.wikimedia.org/wiki/User:"+esc(u.Name), 0.4, d))
 }

@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 func lookupCtx(ctx context.Context) (context.Context, context.CancelFunc) {
@@ -66,8 +67,8 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 	}
 	sort.Strings(a4)
 	sort.Strings(a6)
-	put(d, "A", strings.Join(a4, ", "))
-	put(d, "AAAA", strings.Join(a6, ", "))
+	util.Put(d, "A", strings.Join(a4, ", "))
+	util.Put(d, "AAAA", strings.Join(a6, ", "))
 
 	lctx, cancel = lookupCtx(ctx)
 	mxs, _ := r.LookupMX(lctx, domain)
@@ -77,7 +78,7 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 	for _, m := range mxs {
 		mxHosts = append(mxHosts, strings.TrimSuffix(m.Host, "."))
 	}
-	put(d, "MX", strings.Join(mxHosts, ", "))
+	util.Put(d, "MX", strings.Join(mxHosts, ", "))
 
 	lctx, cancel = lookupCtx(ctx)
 	nss, _ := r.LookupNS(lctx, domain)
@@ -87,16 +88,16 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 		nsHosts = append(nsHosts, strings.TrimSuffix(n.Host, "."))
 	}
 	sort.Strings(nsHosts)
-	put(d, "NS", strings.Join(nsHosts, ", "))
+	util.Put(d, "NS", strings.Join(nsHosts, ", "))
 
 	lctx, cancel = lookupCtx(ctx)
 	txts, _ := r.LookupTXT(lctx, domain)
 	cancel()
-	put(d, "TXT", list(txts, 12))
+	util.Put(d, "TXT", list(txts, 12))
 
 	lctx, cancel = lookupCtx(ctx)
 	if cn, err := r.LookupCNAME(lctx, domain); err == nil && strings.TrimSuffix(cn, ".") != domain {
-		put(d, "CNAME", strings.TrimSuffix(cn, "."))
+		util.Put(d, "CNAME", strings.TrimSuffix(cn, "."))
 	}
 	cancel()
 
@@ -124,7 +125,7 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 		}
 	}
 	if spf != "" {
-		put(em, "SPF", spf)
+		util.Put(em, "SPF", spf)
 		for _, tok := range strings.Fields(spf) {
 			if strings.HasPrefix(tok, "include:") {
 				for _, p := range mailProviders {
@@ -157,7 +158,7 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 		}
 	}
 	if dmarc != "" {
-		put(em, "DMARC", dmarc)
+		util.Put(em, "DMARC", dmarc)
 		for _, part := range strings.Split(dmarc, ";") {
 			part = strings.TrimSpace(part)
 			if strings.HasPrefix(part, "p=") {
@@ -192,13 +193,13 @@ func dnsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 			return
 		}
 	}
-	put(em, "DKIM selectors found", strings.Join(selectors, ", "))
+	util.Put(em, "DKIM selectors found", strings.Join(selectors, ", "))
 	var names []string
 	for p := range providers {
 		names = append(names, p)
 	}
 	sort.Strings(names)
-	put(em, "Mail provider(s)", strings.Join(names, ", "))
+	util.Put(em, "Mail provider(s)", strings.Join(names, ", "))
 	if len(em) > 0 {
 		emit(fnd("E-mail infrastructure & security", "email-security", "", 0.9, em, dmarcEnts...))
 	}

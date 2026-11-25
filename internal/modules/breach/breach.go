@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -53,7 +54,7 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		return nil
 	}
 	names := r.Breaches[0]
-	det := map[string]string{"breaches": fmt.Sprint(len(names)), "names": strings.Join(clip(names, 40), ", ")}
+	det := map[string]string{"breaches": fmt.Sprint(len(names)), "names": strings.Join(util.ClipList(names, 40), ", ")}
 	if more := len(names) - 40; more > 0 {
 		det["names"] += fmt.Sprintf(" … and %d more", more)
 	}
@@ -63,13 +64,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 	det["note"] = "shows that the address appears in leaked datasets; the data itself is not retrieved. A hit does not mean the owner was careless"
 	emit(models.Finding{Source: "XposedOrNot breach index", Category: "breach", Status: models.StatusFound, Confidence: 0.85, Details: det})
 	return nil
-}
-
-func clip(s []string, n int) []string {
-	if len(s) > n {
-		return s[:n]
-	}
-	return s
 }
 
 // analytics adds the years and data classes of the exposures when available.
@@ -107,7 +101,7 @@ func analytics(ctx context.Context, c *httpx.Client, email string) map[string]st
 		out["years exposed"] = strings.Join(sorted(years), ", ")
 	}
 	if len(classes) > 0 {
-		out["data types exposed"] = strings.Join(clip(sorted(classes), 25), ", ")
+		out["data types exposed"] = strings.Join(util.ClipList(sorted(classes), 25), ", ")
 	}
 	return out
 }

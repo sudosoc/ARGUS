@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // archiveStage asks the Internet Archive when each profile page of the best

@@ -8,15 +8,17 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/geo"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/geo"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -27,7 +29,7 @@ func New() *Scanner { return &Scanner{} }
 
 func (s *Scanner) Name() string { return "activity" }
 func (s *Scanner) Description() string {
-	return "timezone estimate from the hours a username is active on GitHub, Hacker News, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess"
+	return "timezone estimate from the hours a username is active on GitHub, Hacker News, Reddit, Wikipedia, Codeforces, Bluesky, Mastodon and Lichess"
 }
 func (s *Scanner) CanRun(t models.Target) bool {
 	return strings.TrimSpace(t.Username) != "" || strings.TrimSpace(t.Alias) != ""
@@ -70,6 +72,8 @@ func finding(source, handle string, ts []time.Time) (models.Finding, bool) {
 	if len(ts) < 10 {
 		return models.Finding{}, false
 	}
+	ts = append([]time.Time(nil), ts...)
+	sort.Slice(ts, func(i, j int) bool { return ts[i].After(ts[j]) }) // newest first, whatever order the source used
 	var hours [24]int
 	var week [168]int
 	for _, t := range ts {
@@ -106,7 +110,7 @@ func githubTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 		var ev []struct {
 			Created time.Time `json:"created_at"`
 		}
-		if !getJSON(ctx, c, "https://api.github.com/users/"+h+"/events/public?per_page=100&page="+strconv.Itoa(page), &ev) || len(ev) == 0 {
+		if !util.GetJSON(ctx, c, "https://api.github.com/users/"+h+"/events/public?per_page=100&page="+strconv.Itoa(page), &ev) || len(ev) == 0 {
 			break
 		}
 		for _, e := range ev {
@@ -125,7 +129,7 @@ func hnTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 			At int64 `json:"created_at_i"`
 		} `json:"hits"`
 	}
-	if !getJSON(ctx, c, "https://hn.algolia.com/api/v1/search_by_date?tags=author_"+h+"&hitsPerPage=1000", &r) {
+	if !util.GetJSON(ctx, c, "https://hn.algolia.com/api/v1/search_by_date?tags=author_"+h+"&hitsPerPage=1000", &r) {
 		return nil
 	}
 	out := make([]time.Time, 0, len(r.Hits))
@@ -135,18 +139,11 @@ func hnTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 	return out
 }
 
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 25 * time.Second, MaxBody: 6 << 20, Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, out) == nil
-}
-
 // sources lists every place whose public timestamps are read.
 var sources = map[string]func(context.Context, *httpx.Client, string) []time.Time{
 	"GitHub":      githubTimes,
 	"Hacker News": hnTimes,
+	"Reddit":      redditTimes,
 	"Wikipedia":   wikipediaTimes,
 	"Codeforces":  codeforcesTimes,
 	"Bluesky":     blueskyTimes,
@@ -162,7 +159,7 @@ func wikipediaTimes(ctx context.Context, c *httpx.Client, h string) []time.Time 
 			} `json:"usercontribs"`
 		} `json:"query"`
 	}
-	if !getJSON(ctx, c, "https://en.wikipedia.org/w/api.php?action=query&list=usercontribs&format=json&uclimit=500&ucprop=timestamp&ucuser="+url.QueryEscape(h), &r) {
+	if !util.GetJSON(ctx, c, "https://en.wikipedia.org/w/api.php?action=query&list=usercontribs&format=json&uclimit=500&ucprop=timestamp&ucuser="+url.QueryEscape(h), &r) {
 		return nil
 	}
 	var out []time.Time
@@ -178,7 +175,7 @@ func codeforcesTimes(ctx context.Context, c *httpx.Client, h string) []time.Time
 			At int64 `json:"creationTimeSeconds"`
 		} `json:"result"`
 	}
-	if !getJSON(ctx, c, "https://codeforces.com/api/user.status?from=1&count=300&handle="+url.QueryEscape(h), &r) {
+	if !util.GetJSON(ctx, c, "https://codeforces.com/api/user.status?from=1&count=300&handle="+url.QueryEscape(h), &r) {
 		return nil
 	}
 	var out []time.Time
@@ -202,7 +199,7 @@ func blueskyTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 			Reason any `json:"reason"` // set for reposts, whose time is not the author's own
 		} `json:"feed"`
 	}
-	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?limit=100&filter=posts_with_replies&actor="+url.QueryEscape(h), &r) {
+	if !util.GetJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?limit=100&filter=posts_with_replies&actor="+url.QueryEscape(h), &r) {
 		return nil
 	}
 	var out []time.Time
@@ -221,13 +218,13 @@ func mastodonTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 		var acct struct {
 			ID string `json:"id"`
 		}
-		if !getJSON(ctx, c, "https://"+host+"/api/v1/accounts/lookup?acct="+url.QueryEscape(h), &acct) || acct.ID == "" {
+		if !util.GetJSON(ctx, c, "https://"+host+"/api/v1/accounts/lookup?acct="+url.QueryEscape(h), &acct) || acct.ID == "" {
 			continue
 		}
 		var st []struct {
 			Created time.Time `json:"created_at"`
 		}
-		if !getJSON(ctx, c, "https://"+host+"/api/v1/accounts/"+acct.ID+"/statuses?limit=40&exclude_reblogs=true", &st) {
+		if !util.GetJSON(ctx, c, "https://"+host+"/api/v1/accounts/"+acct.ID+"/statuses?limit=40&exclude_reblogs=true", &st) {
 			continue
 		}
 		var out []time.Time
@@ -252,6 +249,31 @@ func lichessTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
 		}
 		if json.Unmarshal([]byte(line), &g) == nil && g.At > 0 {
 			out = append(out, time.UnixMilli(g.At))
+		}
+	}
+	return out
+}
+
+// redditTimes reads the timestamps of a user's recent public comments and posts.
+func redditTimes(ctx context.Context, c *httpx.Client, h string) []time.Time {
+	var out []time.Time
+	for _, kind := range []string{"comments", "submitted"} {
+		var r struct {
+			Data struct {
+				Children []struct {
+					Data struct {
+						Created float64 `json:"created_utc"`
+					} `json:"data"`
+				} `json:"children"`
+			} `json:"data"`
+		}
+		if !util.GetJSON(ctx, c, "https://www.reddit.com/user/"+url.PathEscape(h)+"/"+kind+".json?limit=100&raw_json=1", &r) {
+			continue
+		}
+		for _, ch := range r.Data.Children {
+			if ch.Data.Created > 0 {
+				out = append(out, time.Unix(int64(ch.Data.Created), 0))
+			}
 		}
 	}
 	return out

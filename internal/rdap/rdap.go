@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Contact is a registrant / admin / tech / abuse entity.
@@ -146,7 +147,7 @@ func LookupDomain(ctx context.Context, c *httpx.Client, name string) (*Domain, e
 		for _, c := range d.Contacts {
 			for _, role := range c.Roles {
 				if role == "registrar" && d.Registrar == "" {
-					d.Registrar = firstNonEmpty(c.Org, c.Name)
+					d.Registrar = util.FirstNonEmpty(c.Org, c.Name)
 				}
 			}
 		}
@@ -192,15 +193,6 @@ func LookupIP(ctx context.Context, c *httpx.Client, ip string) (*IPNet, error) {
 	return n, nil
 }
 
-func firstNonEmpty(s ...string) string {
-	for _, v := range s {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
-}
-
 // flatten turns an entity tree into contacts, parsing each jCard.
 func flatten(e rEntity) []Contact {
 	c := Contact{Roles: e.Roles}
@@ -213,6 +205,9 @@ func flatten(e rEntity) []Contact {
 				}
 				name, _ := arr[0].(string)
 				val, _ := arr[3].(string)
+				if a, ok := arr[3].([]any); ok && len(a) > 0 { // structured values (org) are arrays
+					val, _ = a[0].(string)
+				}
 				val = strings.TrimSpace(val)
 				if redacted(val) {
 					continue
@@ -221,11 +216,6 @@ func flatten(e rEntity) []Contact {
 				case "fn":
 					c.Name = val
 				case "org":
-					if val == "" { // org may be an array value
-						if a, ok := arr[3].([]any); ok && len(a) > 0 {
-							val, _ = a[0].(string)
-						}
-					}
 					c.Org = val
 				case "email":
 					c.Email = strings.ToLower(val)

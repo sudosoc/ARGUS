@@ -7,13 +7,15 @@ import (
 	"encoding/json"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 var interestingSub = []string{"admin", "dev", "stage", "staging", "test", "uat", "qa", "vpn", "mail", "webmail",
@@ -125,7 +127,7 @@ func subdomainsJob(ctx context.Context, c *httpx.Client, domain string, emit fun
 		names = append(names, n)
 	}
 	sort.Strings(names)
-	const maxResolve = 400
+	const maxResolve = 3000
 	if len(names) > maxResolve {
 		names = names[:maxResolve]
 	}
@@ -180,19 +182,19 @@ func subdomainsJob(ctx context.Context, c *httpx.Client, domain string, emit fun
 	}
 
 	sum := map[string]string{
-		"discovered": itoa(len(found)), "resolving": itoa(len(live)), "not resolving": itoa(len(dead)),
+		"discovered": strconv.Itoa(len(found)), "resolving": strconv.Itoa(len(live)), "not resolving": strconv.Itoa(len(dead)),
 	}
 	var srcs []string
 	for s, n := range perSrc {
-		srcs = append(srcs, s+"="+itoa(n))
+		srcs = append(srcs, s+"="+strconv.Itoa(n))
 	}
 	sort.Strings(srcs)
-	put(sum, "per source (new names)", strings.Join(srcs, ", "))
+	util.Put(sum, "per source (new names)", strings.Join(srcs, ", "))
 	if len(wild) > 0 {
 		sum["wildcard DNS"] = "yes — unresolvable-looking names may still answer; results filtered"
 	}
-	put(sum, "live subdomains", list(live, 60))
-	put(sum, "dangling / dead (possible takeover candidates)", list(dead, 25))
+	util.Put(sum, "live subdomains", list(live, 60))
+	util.Put(sum, "dangling / dead (possible takeover candidates)", list(dead, 25))
 	if len(found) == 0 {
 		sum["note"] = "no passive source returned names (crt.sh and others are rate-limited or offline at times)"
 	}

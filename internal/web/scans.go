@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/output"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/output"
 )
 
 const (
@@ -146,6 +146,7 @@ type ScanRequest struct {
 	Aggressive bool     `json:"aggressive"`
 	Browser    bool     `json:"browser"`
 	Verify     bool     `json:"verify"`
+	SiteTier   string   `json:"site_tier"` // core | extended (default) | all
 	Derive     bool     `json:"derive"`
 	NoPivot    bool     `json:"no_pivot"`
 	Proxies    []string `json:"proxies"`
@@ -239,6 +240,14 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	opts := m.base
 	opts.Modules = req.Modules
 	opts.Verify = req.Verify
+	switch req.SiteTier {
+	case "core":
+		opts.SiteTier = 1
+	case "all":
+		opts.SiteTier = 3
+	case "extended":
+		opts.SiteTier = 2
+	}
 	opts.Derive = req.Derive
 	opts.NoPivot = req.NoPivot
 	opts.Aggressive = req.Aggressive
@@ -277,12 +286,21 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 
 	eng := built.Engine
 	eng.OnProgress = sc.setProgress
+	// Show every collector that will run from the first second, including those that
+	// never report progress, so the live table is complete.
+	if plan, _, perr := eng.Plan(probe); perr == nil {
+		sc.mu.Lock()
+		for _, s := range plan {
+			if _, ok := sc.progress[s.Name()]; !ok {
+				sc.progress[s.Name()] = [2]int{0, 0}
+			}
+		}
+		sc.mu.Unlock()
+	}
 	eng.OnFinding = func(f models.Finding) {
 		sc.mu.Lock()
 		sc.hits++
-		if len(sc.all) < 6000 {
-			sc.all = append(sc.all, f)
-		}
+		sc.all = append(sc.all, f)
 		sc.mu.Unlock()
 		for _, ent := range f.Entities {
 			if ent.Type == models.EntImage {
@@ -321,7 +339,7 @@ func (m *manager) saveReportFiles(rep *models.Report) {
 	if m.reportDir == "" {
 		return
 	}
-	base := fmt.Sprintf("rectool_%s", rep.StartedAt.Format("20060102_150405"))
+	base := fmt.Sprintf("argus_%s", rep.StartedAt.Format("20060102_150405"))
 	if _, err := output.Export(rep, m.reportDir, base, []string{"json", "csv", "txt"}); err != nil {
 		fmt.Fprintln(os.Stderr, "[!] saving report:", err)
 	}

@@ -281,6 +281,9 @@ var trackingRules = []struct {
 	{"google-adsense", regexp.MustCompile(`\b(pub-\d{10,18})\b`)},
 	{"facebook-pixel", regexp.MustCompile(`fbq\(\s*['"]init['"]\s*,\s*['"](\d{8,20})['"]`)},
 	{"hotjar", regexp.MustCompile(`hjid\s*[:=]\s*(\d{5,9})`)},
+	{"yandex-metrika", regexp.MustCompile(`\bym\(\s*(\d{6,10})\s*,`)},
+	{"linkedin-insight", regexp.MustCompile(`_linkedin_partner_id\s*=\s*["'](\d{5,9})["']`)},
+	{"tiktok-pixel", regexp.MustCompile(`ttq\.load\(\s*['"]([A-Z0-9]{15,25})['"]`)},
 }
 
 // TrackingIDs returns analytics identifiers by vendor. The same ID on two

@@ -14,10 +14,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -133,7 +134,7 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 			if len(r.match) > 0 {
 				tag = " ✔ context: " + strings.Join(r.match, ", ")
 			}
-			lines = append(lines, fmt.Sprintf("%s · %s · %s%s — %s", date, r.a.Domain, r.a.Country, tag, clip(r.a.Title, 110)))
+			lines = append(lines, fmt.Sprintf("%s · %s · %s%s — %s", date, r.a.Domain, r.a.Country, tag, util.Clip(r.a.Title, 110)))
 		}
 	}
 	det := map[string]string{"articles naming the person": fmt.Sprint(len(rows)), "also matching your other details": fmt.Sprint(ctxN),
@@ -191,14 +192,6 @@ func fetch(ctx context.Context, c *httpx.Client, name string) ([]article, int) {
 func isoDate(s string) string { // 20260115T093000Z
 	if len(s) >= 8 {
 		return s[:4] + "-" + s[4:6] + "-" + s[6:8]
-	}
-	return s
-}
-
-func clip(s string, n int) string {
-	r := []rune(s)
-	if len(r) > n {
-		return string(r[:n]) + "…"
 	}
 	return s
 }

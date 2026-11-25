@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/jsonld"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/jsonld"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func TestLinkedInRecord(t *testing.T) {

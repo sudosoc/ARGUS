@@ -6,12 +6,14 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 func tlsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(models.Finding)) {
@@ -26,14 +28,14 @@ func tlsJob(ctx context.Context, _ *httpx.Client, domain string, emit func(model
 		"valid until": cert.NotAfter.Format("2006-01-02"), "serial": cert.Serial,
 		"signature": cert.SigAlg, "TLS version": cert.TLSVersion,
 	}
-	put(d, "SANs", list(cert.SANs, 40))
+	util.Put(d, "SANs", list(cert.SANs, 40))
 	switch days := int(time.Until(cert.NotAfter).Hours() / 24); {
 	case days < 0:
-		d["status"] = "EXPIRED " + itoa(-days) + " days ago"
+		d["status"] = "EXPIRED " + strconv.Itoa(-days) + " days ago"
 	case days < 21:
-		d["status"] = "expires in " + itoa(days) + " days"
+		d["status"] = "expires in " + strconv.Itoa(days) + " days"
 	default:
-		d["status"] = "valid, " + itoa(days) + " days left"
+		d["status"] = "valid, " + strconv.Itoa(days) + " days left"
 	}
 	if cert.SelfSigned {
 		d["note"] = "self-signed certificate"
@@ -92,13 +94,13 @@ func waybackJob(ctx context.Context, c *httpx.Client, domain string, emit func(m
 	sort.Slice(hl, func(i, j int) bool { return hosts[hl[i]] > hosts[hl[j]] })
 	var el []string
 	for e, n := range exts {
-		el = append(el, e+"="+itoa(n))
+		el = append(el, e+"="+strconv.Itoa(n))
 	}
 	sort.Strings(el)
 
-	sum := map[string]string{"archived URLs examined": itoa(len(rows)), "interesting": itoa(len(hits))}
-	put(sum, "hosts seen in archive", list(hl, 40))
-	put(sum, "file types", list(el, 30))
+	sum := map[string]string{"archived URLs examined": strconv.Itoa(len(rows)), "interesting": strconv.Itoa(len(hits))}
+	util.Put(sum, "hosts seen in archive", list(hl, 40))
+	util.Put(sum, "file types", list(el, 30))
 	emit(fnd("Internet Archive (historical URLs)", "archive", "https://web.archive.org/web/*/"+domain+"/*", 0.8, sum))
 
 	for i, h := range hits {
@@ -113,7 +115,7 @@ func waybackJob(ctx context.Context, c *httpx.Client, domain string, emit func(m
 type httpErr struct{ code int }
 
 func (e *httpErr) Error() string {
-	return "HTTP " + itoa(e.code) + " (service temporarily unavailable?)"
+	return "HTTP " + strconv.Itoa(e.code) + " (service temporarily unavailable?)"
 }
 
 func exposureJob(ctx context.Context, c *httpx.Client, domain string, emit func(models.Finding)) {
@@ -141,8 +143,8 @@ func exposureJob(ctx context.Context, c *httpx.Client, domain string, emit func(
 		return
 	}
 	d := map[string]string{
-		"compromised credentials (stealer logs)": itoa(r.Total), "employees": itoa(r.Employees),
-		"customers/users": itoa(r.Users), "third parties": itoa(r.ThirdParties),
+		"compromised credentials (stealer logs)": strconv.Itoa(r.Total), "employees": strconv.Itoa(r.Employees),
+		"customers/users": strconv.Itoa(r.Users), "third parties": strconv.Itoa(r.ThirdParties),
 		"note": "counts only, from Hudson Rock's public stealer-log index; no credentials are retrieved",
 	}
 	var urls []string
@@ -150,8 +152,8 @@ func exposureJob(ctx context.Context, c *httpx.Client, domain string, emit func(
 		if i >= 10 {
 			break
 		}
-		urls = append(urls, u.URL+" ("+itoa(u.Occurrence)+")")
+		urls = append(urls, u.URL+" ("+strconv.Itoa(u.Occurrence)+")")
 	}
-	put(d, "employee-credential URLs (top)", strings.Join(urls, ", "))
+	util.Put(d, "employee-credential URLs (top)", strings.Join(urls, ", "))
 	emit(fnd("Infostealer exposure (domain)", "exposure", "", 0.8, d))
 }

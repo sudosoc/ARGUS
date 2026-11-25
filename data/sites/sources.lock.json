@@ -1,0 +1,30 @@
+{
+  "generated": "2026-11-25T01:18:40Z",
+  "sources": [
+    {
+      "name": "wmn",
+      "url": "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json",
+      "license": "CC BY-SA 4.0 (Copyright (C) 2015-2026 Micah Hoffman and contributors; project archived 2026-11-09)",
+      "sha256": "a8b8385bee4b4c79f1fcdd458749ec89ba9d8dab94230353d09020b90b436324",
+      "sites_read": 689,
+      "fetched": "2026-11-25"
+    },
+    {
+      "name": "sherlock",
+      "url": "https://raw.githubusercontent.com/sherlock-project/sherlock/master/sherlock_project/resources/data.json",
+      "license": "MIT (Sherlock Project)",
+      "sha256": "3fdfc6694c5cd99798881215554b09e617c6d5284a6219fae309882566a9fb30",
+      "sites_read": 481,
+      "fetched": "2026-11-25"
+    },
+    {
+      "name": "maigret",
+      "url": "https://raw.githubusercontent.com/soxoj/maigret/main/maigret/resources/data.json",
+      "license": "MIT (soxoj/maigret)",
+      "sha256": "9c87eeeb6cb7ead7964ccdcbb5bd29b9ec0dc7993e60f88c9939e9721c70c4b8",
+      "sites_read": 10224,
+      "fetched": "2026-11-25"
+    }
+  ],
+  "total_sites": 10676
+}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Dork is one search query plus the intelligence category it targets.

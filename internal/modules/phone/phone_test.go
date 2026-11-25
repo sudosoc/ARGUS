@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 func run(t *testing.T, tg models.Target) []models.Finding {

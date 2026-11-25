@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // openAlex returns researcher profiles with institutions and research topics
@@ -82,7 +82,7 @@ func githubPeople(ctx context.Context, c *httpx.Client, t models.Target, emit fu
 			Login string `json:"login"`
 		} `json:"items"`
 	}
-	if !getJSON(ctx, c, "https://api.github.com/search/users?per_page=8&q="+esc(q), map[string]string{"Accept": "application/vnd.github+json"}, &sr) {
+	if !getJSON(ctx, c, "https://api.github.com/search/users?per_page=30&q="+esc(q), map[string]string{"Accept": "application/vnd.github+json"}, &sr) {
 		return
 	}
 	for i, it := range sr.Items {

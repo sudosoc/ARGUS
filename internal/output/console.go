@@ -11,14 +11,14 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 var (
 	cGreen  = color.New(color.FgGreen, color.Bold)
 	cRed    = color.New(color.FgRed)
 	cYellow = color.New(color.FgYellow)
-	cCyan   = color.New(color.FgCyan, color.Bold)
+	cCyan   = color.New(color.Bold) // brand and info lines: plain bold, no colour noise
 	cDim    = color.New(color.Faint)
 	cBold   = color.New(color.Bold)
 )
@@ -48,7 +48,7 @@ func (c *Console) clearProgress() {
 func (c *Console) Banner(version string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	cCyan.Fprintf(c.err, "\n  rectool v%s", version)
+	cCyan.Fprintf(c.err, "\n  SUDOSOC ARGUS v%s", version)
 	cDim.Fprintln(c.err, "  — API-less OSINT reconnaissance")
 	cDim.Fprintln(c.err, "  Use only on subjects you are lawfully permitted to investigate.")
 	fmt.Fprintln(c.err)

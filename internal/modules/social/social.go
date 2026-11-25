@@ -8,15 +8,17 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Config tunes the module.
@@ -27,6 +29,9 @@ type Config struct {
 	// DisabledFile lists sites a self-test found unreliable; they are skipped.
 	// Empty means use every site.
 	DisabledFile string
+	// Tier bounds how deep into the site list a scan goes: 1 core, 2 extended
+	// (default when 0), 3 everything including template-based forums.
+	Tier int
 }
 
 // Scanner is the social-media username module.
@@ -52,6 +57,19 @@ func New(cfg Config) (*Scanner, error) {
 		}
 		sites = kept
 	}
+	maxTier := cfg.Tier
+	if maxTier <= 0 {
+		maxTier = TierExtended
+	}
+	{
+		kept := sites[:0]
+		for _, st := range sites {
+			if st.tier() <= maxTier {
+				kept = append(kept, st)
+			}
+		}
+		sites = kept
+	}
 	if len(cfg.Categories) > 0 {
 		want := map[string]bool{}
 		for _, c := range cfg.Categories {
@@ -60,7 +78,11 @@ func New(cfg Config) (*Scanner, error) {
 		filtered := sites[:0]
 		for _, s := range sites {
 			cat := strings.ToLower(s.Cat)
-			if want[cat] || (want["nsfw"] && isNSFW(cat)) {
+			match := want[cat] || (want["nsfw"] && isNSFW(cat))
+			for _, tg := range s.Tags {
+				match = match || want[strings.ToLower(tg)]
+			}
+			if match {
 				filtered = append(filtered, s)
 			}
 		}
@@ -96,7 +118,14 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		done    atomic.Int64
 		retryMu sync.Mutex
 		retry   []retryJob
+		tblMu   sync.Mutex
+		table   []string // every check and its outcome: nothing is silent
 	)
+	rec := func(site *Site, user, outcome string, code int, link string) {
+		tblMu.Lock()
+		table = append(table, site.Name+"\t"+user+"\t"+outcome+"\t"+strconv.Itoa(code)+"\t"+link)
+		tblMu.Unlock()
+	}
 	report := func() {
 		n := int(done.Add(1))
 		if d.Progress != nil {
@@ -112,7 +141,7 @@ submit:
 			err := d.Pool.Submit(ctx, func() {
 				defer wg.Done()
 				defer report()
-				if s.check(ctx, d.HTTP, site, user, emit, false) {
+				if s.check(ctx, d.HTTP, site, user, emit, false, rec) {
 					retryMu.Lock()
 					retry = append(retry, retryJob{site, user})
 					retryMu.Unlock()
@@ -136,10 +165,19 @@ submit:
 			sem <- struct{}{}
 			go func() {
 				defer func() { <-sem; wg.Done() }()
-				s.check(ctx, d.HTTP, j.site, j.user, emit, true)
+				s.check(ctx, d.HTTP, j.site, j.user, emit, true, rec)
 			}()
 		}
 		wg.Wait()
+	}
+
+	// The full table of what was checked and what came back (found, not found,
+	// blocked, inconclusive, failed), kept whole in the report.
+	if len(table) > 0 {
+		sort.Strings(table)
+		out := "site\tusername\toutcome\thttp status\turl\n" + strings.Join(table, "\n")
+		emit(models.Finding{Source: "social: every check", Category: "toolrun", Status: models.StatusFound, Details: map[string]string{
+			"command": strconv.Itoa(len(table)) + " site checks", "output": out, "bytes": strconv.Itoa(len(out)), "truncated": "no"}})
 	}
 	return ctx.Err()
 }
@@ -161,7 +199,7 @@ const (
 // check probes one site for one username and emits the outcome. When final is
 // false, a connection-level failure is not reported: check returns true so the
 // caller can retry it later.
-func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user string, emit func(models.Finding), final bool) (retry bool) {
+func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user string, emit func(models.Finding), final bool, rec func(*Site, string, string, int, string)) (retry bool) {
 	if ctx.Err() != nil || !site.applicable(user) {
 		return false
 	}
@@ -178,6 +216,7 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 		f := base
 		f.Status = models.StatusError
 		f.Details = map[string]string{"error": err.Error()}
+		rec(site, user, "failed: "+err.Error(), 0, base.URL)
 		emit(f)
 		return false
 	}
@@ -185,7 +224,7 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 	switch v {
 	case vPresent:
 		conf := 0.6 // status code alone
-		if site.EString != "" {
+		if site.hasMarker() {
 			conf = 0.9 // positive content marker as well
 		}
 		if s.cfg.Verify {
@@ -199,6 +238,7 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 				f := base
 				f.Status = models.StatusNotFound
 				f.Details = map[string]string{"reason": "canary username also matched (false positive)"}
+				rec(site, user, "rejected: a random username also matched", resp.StatusCode, base.URL)
 				emit(f)
 				return false
 			case cerr == nil && cv == vAbsent:
@@ -212,21 +252,23 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 		// Profile pages usually carry Open Graph metadata: the display name,
 		// bio and avatar are useful for matching the account to the subject.
 		if m := extract.ParseMeta(string(resp.Body)); m.Title != "" || m.Description != "" {
-			if t := firstNonEmpty(m.OGTitle, m.Title); t != "" && !strings.EqualFold(t, site.Name) {
-				f.Details["page title"] = clip(t, 140)
+			if t := util.FirstNonEmpty(m.OGTitle, m.Title); t != "" && !strings.EqualFold(t, site.Name) {
+				f.Details["page title"] = util.Clip(t, 140)
 			}
 			if m.Description != "" {
-				f.Details["description"] = clip(m.Description, 220)
+				f.Details["description"] = util.Clip(m.Description, 220)
 			}
 			if m.OGImage != "" {
-				f.Details["avatar"] = clip(m.OGImage, 300)
+				f.Details["avatar"] = util.Clip(m.OGImage, 300)
 			}
 		}
+		rec(site, user, "found", resp.StatusCode, base.URL)
 		emit(f)
 	case vBlocked:
 		f := base
 		f.Status = models.StatusError
 		f.Details = map[string]string{"error": "blocked or rate-limited", "http_status": strconv.Itoa(resp.StatusCode)}
+		rec(site, user, "blocked or rate-limited", resp.StatusCode, base.URL)
 		emit(f)
 	case vUnknown:
 		f := base
@@ -237,9 +279,11 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			emit(f)
 		}
+		rec(site, user, "inconclusive: the response matched no signature", resp.StatusCode, base.URL)
 	default:
 		f := base
 		f.Status = models.StatusNotFound
+		rec(site, user, "not found", resp.StatusCode, base.URL)
 		emit(f)
 	}
 	return false
@@ -247,12 +291,12 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 
 // probe sends the request for one (site, username) and classifies the reply.
 func probe(ctx context.Context, c *httpx.Client, site *Site, user string) (verdict, *httpx.Response, error) {
-	enc := url.PathEscape(user)
+	enc := url.PathEscape(site.clean(user))
 	req := httpx.Request{
 		Method:     "GET",
 		URL:        site.checkURL(enc),
 		Headers:    site.Headers,
-		NoRedirect: false,
+		NoRedirect: site.Check == checkRedirect,
 	}
 	if site.PostBody != "" {
 		req.Method = "POST"
@@ -269,15 +313,40 @@ func probe(ctx context.Context, c *httpx.Client, site *Site, user string) (verdi
 func classify(site *Site, r *httpx.Response) verdict {
 	body := string(r.Body)
 	code := r.StatusCode
+	for _, e := range site.Errors {
+		if e != "" && strings.Contains(body, e) {
+			return vBlocked
+		}
+	}
+	if site.Ignore403 && code == 403 {
+		code = site.ECode
+	}
 
-	// "Missing" signature wins: many sites return 200 with a "not found" page.
+	if site.Check == checkRedirect {
+		switch {
+		case code >= 200 && code < 300:
+			return vPresent
+		case code == 403 || code == 407 || code == 429 || code == 503:
+			return vBlocked
+		case code >= 300 && code < 500:
+			return vAbsent
+		}
+		return vUnknown
+	}
+
+	// "Missing" signatures win: many sites return 200 with a "not found" page.
 	if site.MString != "" && strings.Contains(body, site.MString) {
 		return vAbsent
 	}
-	if site.MCode != 0 && code == site.MCode && site.MString == "" {
+	for _, m := range site.MStrings {
+		if m != "" && strings.Contains(body, m) {
+			return vAbsent
+		}
+	}
+	if site.MCode != 0 && code == site.MCode && site.MString == "" && len(site.MStrings) == 0 {
 		return vAbsent
 	}
-	if code == site.ECode && (site.EString == "" || strings.Contains(body, site.EString)) {
+	if code == site.ECode && site.hasExistsMarker(body) {
 		return vPresent
 	}
 
@@ -295,6 +364,25 @@ func classify(site *Site, r *httpx.Response) verdict {
 	return vUnknown
 }
 
+// hasMarker reports whether the site defines any positive content marker.
+func (s *Site) hasMarker() bool { return s.EString != "" || len(s.EStrings) > 0 }
+
+// hasExistsMarker is true when the site needs no positive marker or the body has one.
+func (s *Site) hasExistsMarker(body string) bool {
+	if !s.hasMarker() {
+		return true
+	}
+	if s.EString != "" && strings.Contains(body, s.EString) {
+		return true
+	}
+	for _, m := range s.EStrings {
+		if m != "" && strings.Contains(body, m) {
+			return true
+		}
+	}
+	return false
+}
+
 func randomCanary() string {
 	b := make([]byte, 7)
 	_, _ = rand.Read(b)
@@ -306,21 +394,6 @@ func minF(a, b float64) float64 {
 		return a
 	}
 	return b
-}
-
-func firstNonEmpty(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
-}
-
-func clip(s string, n int) string {
-	s = strings.TrimSpace(s)
-	if len(s) > n {
-		return s[:n] + "…"
-	}
-	return s
 }
 
 func isNSFW(cat string) bool { return strings.Contains(cat, "nsfw") }

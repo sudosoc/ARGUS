@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Export writes the report in each requested format ("json", "csv", "txt")
@@ -49,6 +49,11 @@ func Export(r *models.Report, dir, base string, formats []string) ([]string, err
 			write = writeSpiderFoot
 		case "maltego":
 			write = writeMaltego
+		case "md", "markdown":
+			f = "md"
+			write = writeMarkdown
+		case "sql":
+			write = writeSQL
 		case "":
 			continue
 		default:
@@ -69,7 +74,60 @@ func Export(r *models.Report, dir, base string, formats []string) ([]string, err
 		}
 		paths = append(paths, p)
 	}
+	// The complete output of every external tool, one file each, next to the report.
+	if len(r.ToolRuns) > 0 && len(formats) > 0 {
+		tp, err := writeToolRuns(r, dir, base)
+		if err != nil {
+			return paths, err
+		}
+		paths = append(paths, tp...)
+	}
 	return paths, nil
+}
+
+// writeToolRuns saves each tool run's full output as <base>.tools/NN-tool.txt (0600).
+func writeToolRuns(r *models.Report, dir, base string) ([]string, error) {
+	td := filepath.Join(dir, base+".tools")
+	if err := os.MkdirAll(td, 0o700); err != nil {
+		return nil, err
+	}
+	var out []string
+	for i, tr := range r.ToolRuns {
+		name := fmt.Sprintf("%02d-%s.txt", i+1, safeName(tr.Tool))
+		var b strings.Builder
+		if tr.Command != "" {
+			fmt.Fprintf(&b, "$ %s\n", tr.Command)
+		}
+		if tr.Error != "" {
+			fmt.Fprintf(&b, "# error: %s\n", tr.Error)
+		}
+		if tr.Truncated {
+			b.WriteString("# NOTE: the tool printed more than the capture limit; this file is the captured part\n")
+		}
+		b.WriteString("\n" + tr.Output)
+		if tr.Stderr != "" {
+			b.WriteString("\n\n--- stderr ---\n" + tr.Stderr)
+		}
+		p := filepath.Join(td, name)
+		if err := os.WriteFile(p, []byte(b.String()), 0o600); err != nil {
+			return out, err
+		}
+		out = append(out, p)
+	}
+	return out, nil
+}
+
+func safeName(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('_')
+		}
+	}
+	return b.String()
 }
 
 func writeJSON(w io.Writer, r *models.Report) error {
@@ -210,12 +268,18 @@ func writeTXT(w io.Writer, r *models.Report) error {
 	}
 	if len(r.Failures) > 0 {
 		fmt.Fprintf(&b, "\nCOVERAGE GAPS — %d checks could not be completed (absence of a result is NOT evidence of absence)\n", len(r.Failures))
-		for i, f := range r.Failures {
-			if i >= 60 {
-				fmt.Fprintf(&b, "  … and %d more (see the JSON report)\n", len(r.Failures)-i)
-				break
-			}
+		for _, f := range r.Failures {
 			fmt.Fprintf(&b, "  - %s / %s: %s\n", f.Module, f.Source, f.Error)
+		}
+	}
+	if len(r.ToolRuns) > 0 {
+		fmt.Fprintf(&b, "\nRAW TOOL OUTPUT — the complete output of %d tool runs (full text in the JSON report and the .tools folder)\n", len(r.ToolRuns))
+		for _, tr := range r.ToolRuns {
+			note := ""
+			if tr.Truncated {
+				note = "  [capture limit reached]"
+			}
+			fmt.Fprintf(&b, "  - %s: %d bytes%s\n", tr.Tool, len(tr.Output), note)
 		}
 	}
 	if len(r.Settings) > 0 {
@@ -268,12 +332,16 @@ func Render(w io.Writer, r *models.Report, format string) error {
 		return writeSpiderFoot(w, r)
 	case "maltego":
 		return writeMaltego(w, r)
+	case "md", "markdown":
+		return writeMarkdown(w, r)
+	case "sql":
+		return writeSQL(w, r)
 	}
 	return fmt.Errorf("unknown format %q (%s)", format, Formats)
 }
 
 // Formats lists the report formats.
-const Formats = "json, csv, txt, html, pdf, graphml, stix, entities, misp, spiderfoot, maltego"
+const Formats = "json, csv, txt, html, pdf, graphml, stix, entities, misp, spiderfoot, maltego, md, sql"
 
 // ContentType returns the MIME type and file extension for a format.
 func ContentType(format string) (mime, ext string, ok bool) {
@@ -300,6 +368,10 @@ func ContentType(format string) (mime, ext string, ok bool) {
 		return "text/csv", "spiderfoot.csv", true
 	case "maltego":
 		return "text/csv", "maltego.csv", true
+	case "md", "markdown":
+		return "text/markdown", "md", true
+	case "sql":
+		return "application/sql", "sql", true
 	}
 	return "", "", false
 }

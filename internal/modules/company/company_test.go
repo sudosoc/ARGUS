@@ -3,7 +3,7 @@ package company
 import (
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func cand(host string, strong bool) models.Finding {

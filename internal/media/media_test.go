@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // portrait draws a simple synthetic "photo": a vertical gradient with a darker
@@ -47,19 +47,19 @@ func encode(t *testing.T, img image.Image, jpg bool) []byte {
 }
 
 func TestPerceptualHashSurvivesResizeAndReencode(t *testing.T) {
-	a, err := analyse("a", encode(t, portrait(400, 400, 0), false), "image/png")
+	a, err := analyse(context.Background(), "a", encode(t, portrait(400, 400, 0), false), "image/png")
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, _ := analyse("b", encode(t, portrait(128, 128, 0), true), "image/jpeg") // smaller, JPEG
-	c, _ := analyse("c", encode(t, portrait(400, 400, 0), true), "image/jpeg")
+	b, _ := analyse(context.Background(), "b", encode(t, portrait(128, 128, 0), true), "image/jpeg") // smaller, JPEG
+	c, _ := analyse(context.Background(), "c", encode(t, portrait(400, 400, 0), true), "image/jpeg")
 	other := image.NewRGBA(image.Rect(0, 0, 200, 200))
 	for y := 0; y < 200; y++ {
 		for x := 0; x < 200; x++ {
 			other.Set(x, y, color.RGBA{uint8(x), uint8(255 - x), uint8(y), 255}) // horizontal gradient
 		}
 	}
-	d, _ := analyse("d", encode(t, other, false), "image/png")
+	d, _ := analyse(context.Background(), "d", encode(t, other, false), "image/png")
 
 	if !a.Hashed || a.Width != 400 {
 		t.Fatalf("decode failed: %+v", a)
@@ -76,7 +76,7 @@ func TestPerceptualHashSurvivesResizeAndReencode(t *testing.T) {
 }
 
 func TestRejectsNonImagesAndUnsafeHosts(t *testing.T) {
-	if _, err := analyse("x", []byte("<html>not an image</html>"), "text/html"); err == nil {
+	if _, err := analyse(context.Background(), "x", []byte("<html>not an image</html>"), "text/html"); err == nil {
 		t.Error("html must be rejected")
 	}
 	for _, u := range []string{"http://127.0.0.1/a.png", "http://localhost/a.png", "http://10.0.0.1/a.png",
@@ -96,5 +96,23 @@ func TestFetchFollowsOnlySafeRedirects(t *testing.T) {
 	// httptest listens on loopback, so even the first hop must be refused.
 	if _, err := Fetch(context.Background(), c, srv.URL+"/x.png"); err == nil {
 		t.Fatal("loopback server must be refused")
+	}
+}
+
+func TestParseExifTool(t *testing.T) {
+	img := &Image{}
+	parseExifTool([]byte(`[{"SourceFile":"-","EXIF:Make":"Canon","EXIF:Model":"EOS R5","EXIF:Software":"Adobe Photoshop 25.0","EXIF:SerialNumber":"0123456789",
+	  "EXIF:DateTimeOriginal":"2024:05:06 07:08:09","Composite:GPSLatitude":30.0444,"Composite:GPSLongitude":31.2357,"XMP:Creator":"Jane Roe","File:Junk":"x"}]`), img)
+	if img.Camera != "Canon EOS R5" || !img.HasGPS || img.Lat != 30.0444 || img.Lon != 31.2357 || img.Taken != "2024:05:06 07:08:09" {
+		t.Errorf("%+v", img)
+	}
+	if img.Meta["Software"] != "Adobe Photoshop 25.0" || img.Meta["SerialNumber"] != "0123456789" || img.Meta["Creator"] != "Jane Roe" || img.Meta["Junk"] != "" {
+		t.Errorf("meta: %v", img.Meta)
+	}
+	bad := &Image{}
+	parseExifTool([]byte("not json"), bad)
+	parseExifTool([]byte(`[{"GPSLatitude":999,"GPSLongitude":999}]`), bad)
+	if bad.HasGPS || bad.Meta != nil {
+		t.Errorf("garbage must be ignored: %+v", bad)
 	}
 }

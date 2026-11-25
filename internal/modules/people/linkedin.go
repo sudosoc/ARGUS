@@ -3,15 +3,16 @@ package people
 import (
 	"context"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/browser"
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/jsonld"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/browser"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/jsonld"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // linkedIn reads the *logged-out public view* of LinkedIn profiles: the same
@@ -89,12 +90,12 @@ func linkedIn(ctx context.Context, c *httpx.Client, t models.Target, emit func(m
 					blocked = 0
 					break
 				}
-				emit(errFinding("LinkedIn public profile", "headless browser: "+berr.Error()+" ("+tg.url+"). rectool does not log in or solve CAPTCHAs: paste the profile text into the Notes box instead"))
+				emit(errFinding("LinkedIn public profile", "headless browser: "+berr.Error()+" ("+tg.url+"). argus does not log in or solve CAPTCHAs: paste the profile text into the Notes box instead"))
 				return
 			}
 			blocked++
 			if tg.explicit || blocked == 1 {
-				emit(errFinding("LinkedIn public profile", "LinkedIn blocks automated access (HTTP "+itoa(resp.StatusCode)+", "+tg.url+"). rectool does not evade this: open the profile yourself and paste its text into the Notes box, or use the manual link"))
+				emit(errFinding("LinkedIn public profile", "LinkedIn blocks automated access (HTTP "+strconv.Itoa(resp.StatusCode)+", "+tg.url+"). argus does not evade this: open the profile yourself and paste its text into the Notes box, or use the manual link"))
 			}
 			if blocked >= 2 {
 				return // never hammer a service that is saying no
@@ -186,18 +187,4 @@ func appendUniq(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [10]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(b[i:])
 }

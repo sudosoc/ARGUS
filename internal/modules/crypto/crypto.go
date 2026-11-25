@@ -1,12 +1,11 @@
 // Package crypto looks up a Bitcoin or Ethereum/EVM wallet address on public
 // block explorers (no keys): balance, activity window, transaction counts,
 // contract status and ENS name. Everything on a public blockchain is public
-// by design; rectool only reads it.
+// by design; argus only reads it.
 package crypto
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -14,9 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Scanner is the wallet module.
@@ -56,14 +56,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 	return ctx.Err()
 }
 
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 20 * time.Second, Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, out) == nil
-}
-
 func btc(sats int64) string {
 	return strconv.FormatFloat(float64(sats)/1e8, 'f', 8, 64) + " BTC"
 }
@@ -79,7 +71,7 @@ func bitcoin(ctx context.Context, c *httpx.Client, addr string, emit func(models
 			TxCnt int `json:"tx_count"`
 		} `json:"mempool_stats"`
 	}
-	if !getJSON(ctx, c, "https://mempool.space/api/address/"+addr, &a) {
+	if !util.GetJSON(ctx, c, "https://mempool.space/api/address/"+addr, &a) {
 		emit(models.Finding{Source: "Bitcoin address", Category: "crypto", Status: models.StatusError,
 			Details: map[string]string{"error": "mempool.space did not answer"}})
 		return
@@ -108,7 +100,7 @@ func bitcoin(ctx context.Context, c *httpx.Client, addr string, emit func(models
 			BlockTime int64 `json:"block_time"`
 		} `json:"status"`
 	}
-	if getJSON(ctx, c, "https://mempool.space/api/address/"+addr+"/txs", &txs) && len(txs) > 0 {
+	if util.GetJSON(ctx, c, "https://mempool.space/api/address/"+addr+"/txs", &txs) && len(txs) > 0 {
 		var newest, oldest int64
 		for _, tx := range txs {
 			bt := tx.Status.BlockTime
@@ -156,7 +148,7 @@ func ethereum(ctx context.Context, c *httpx.Client, addr string, emit func(model
 			Name string `json:"name"`
 		} `json:"implementations"`
 	}
-	if !getJSON(ctx, c, "https://eth.blockscout.com/api/v2/addresses/"+addr, &a) {
+	if !util.GetJSON(ctx, c, "https://eth.blockscout.com/api/v2/addresses/"+addr, &a) {
 		emit(models.Finding{Source: "Ethereum address", Category: "crypto", Status: models.StatusError,
 			Details: map[string]string{"error": "Blockscout did not answer"}})
 		return
@@ -185,7 +177,7 @@ func ethereum(ctx context.Context, c *httpx.Client, addr string, emit func(model
 		Tx        string `json:"transactions_count"`
 		Transfers string `json:"token_transfers_count"`
 	}
-	if getJSON(ctx, c, "https://eth.blockscout.com/api/v2/addresses/"+addr+"/counters", &cnt) {
+	if util.GetJSON(ctx, c, "https://eth.blockscout.com/api/v2/addresses/"+addr+"/counters", &cnt) {
 		put("transactions", cnt.Tx)
 		put("token transfers", cnt.Transfers)
 	}

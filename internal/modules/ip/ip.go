@@ -18,12 +18,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/probe"
-	"github.com/sudosoc/rectool/internal/rdap"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/rdap"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Scanner is the IP module.
@@ -87,12 +88,6 @@ func errFinding(source, category string, err error) models.Finding {
 		Details: map[string]string{"error": err.Error()}}
 }
 
-func put(d map[string]string, k, v string) {
-	if strings.TrimSpace(v) != "" {
-		d[k] = v
-	}
-}
-
 func ptrJob(ctx context.Context, _ *httpx.Client, a netip.Addr, emit func(models.Finding)) {
 	lctx, cancel := context.WithTimeout(ctx, 6*time.Second)
 	defer cancel()
@@ -132,14 +127,14 @@ func asnJob(ctx context.Context, _ *httpx.Client, a netip.Addr, emit func(models
 	asn := strings.Fields(f[0])[0]
 	d := map[string]string{"ASN": "AS" + asn, "prefix": f[1], "country": f[2]}
 	if len(f) >= 4 {
-		put(d, "registry", f[3])
+		util.Put(d, "registry", f[3])
 	}
 	if len(f) >= 5 {
-		put(d, "allocated", f[4])
+		util.Put(d, "allocated", f[4])
 	}
 	if nt, err := net.DefaultResolver.LookupTXT(lctx, "AS"+asn+".asn.cymru.com"); err == nil && len(nt) > 0 {
 		if p := strings.Split(nt[0], "|"); len(p) >= 5 {
-			put(d, "AS name", strings.TrimSpace(p[4]))
+			util.Put(d, "AS name", strings.TrimSpace(p[4]))
 		}
 	}
 	emit(fnd("ASN (Team Cymru)", "network", "https://bgp.he.net/AS"+asn, 0.95, d))
@@ -154,21 +149,21 @@ func rdapJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(model
 		return
 	}
 	d := map[string]string{}
-	put(d, "network name", n.Name)
-	put(d, "handle", n.Handle)
-	put(d, "type", n.Type)
-	put(d, "country", n.Country)
-	put(d, "range", strings.TrimSpace(n.Start+" – "+n.End))
-	put(d, "CIDR", strings.Join(n.CIDRs, ", "))
-	put(d, "parent", n.Parent)
-	put(d, "registered", n.Created)
-	put(d, "last changed", n.Updated)
-	put(d, "remarks", n.Remarks)
+	util.Put(d, "network name", n.Name)
+	util.Put(d, "handle", n.Handle)
+	util.Put(d, "type", n.Type)
+	util.Put(d, "country", n.Country)
+	util.Put(d, "range", strings.TrimSpace(n.Start+" – "+n.End))
+	util.Put(d, "CIDR", strings.Join(n.CIDRs, ", "))
+	util.Put(d, "parent", n.Parent)
+	util.Put(d, "registered", n.Created)
+	util.Put(d, "last changed", n.Updated)
+	util.Put(d, "remarks", n.Remarks)
 	var ents []models.Entity
 	seen := map[string]bool{}
 	for _, ct := range n.Contacts {
 		role := strings.Join(ct.Roles, "/")
-		label := strings.Join(nonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
+		label := strings.Join(util.NonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
 		if label != "" {
 			if old := d[role]; old != "" {
 				label = old + " | " + label
@@ -182,16 +177,6 @@ func rdapJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(model
 		}
 	}
 	emit(fnd("IP registration (RDAP)", "whois", "https://rdap.org/ip/"+a.String(), 0.9, d, ents...))
-}
-
-func nonEmpty(s ...string) []string {
-	var out []string
-	for _, v := range s {
-		if v != "" {
-			out = append(out, v)
-		}
-	}
-	return out
 }
 
 func getJSON(ctx context.Context, c *httpx.Client, url string, timeout time.Duration, out any) bool {
@@ -227,15 +212,15 @@ func geoJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(models
 		return
 	}
 	d := map[string]string{}
-	put(d, "country", r.Country)
-	put(d, "region", r.Region)
-	put(d, "city", r.City)
-	put(d, "postal", r.Postal)
-	put(d, "coordinates", strconv.FormatFloat(r.Lat, 'f', 4, 64)+", "+strconv.FormatFloat(r.Lon, 'f', 4, 64))
-	put(d, "timezone", r.Timezone.ID)
-	put(d, "organisation", r.Connection.Org)
-	put(d, "ISP", r.Connection.ISP)
-	put(d, "ISP domain", r.Connection.Domain)
+	util.Put(d, "country", r.Country)
+	util.Put(d, "region", r.Region)
+	util.Put(d, "city", r.City)
+	util.Put(d, "postal", r.Postal)
+	util.Put(d, "coordinates", strconv.FormatFloat(r.Lat, 'f', 4, 64)+", "+strconv.FormatFloat(r.Lon, 'f', 4, 64))
+	util.Put(d, "timezone", r.Timezone.ID)
+	util.Put(d, "organisation", r.Connection.Org)
+	util.Put(d, "ISP", r.Connection.ISP)
+	util.Put(d, "ISP domain", r.Connection.Domain)
 	d["note"] = "IP geolocation is approximate (usually city-level, often the ISP's location)"
 	var ents []models.Entity
 	if dom, ok := intel.NormalizeDomain(r.Connection.Domain); ok {
@@ -260,16 +245,16 @@ func internetDBJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func
 	if len(r.Ports)+len(r.Hostnames)+len(r.CPEs)+len(r.Tags)+len(r.Vulns) == 0 {
 		return
 	}
-	d := map[string]string{"note": "passively indexed by Shodan InternetDB; not scanned by rectool"}
+	d := map[string]string{"note": "passively indexed by Shodan InternetDB; not scanned by argus"}
 	var ps []string
 	for _, p := range r.Ports {
 		ps = append(ps, strconv.Itoa(p))
 	}
-	put(d, "open ports", strings.Join(ps, ", "))
-	put(d, "hostnames", strings.Join(r.Hostnames, ", "))
-	put(d, "software (CPE)", strings.Join(r.CPEs, ", "))
-	put(d, "tags", strings.Join(r.Tags, ", "))
-	put(d, "known vulnerabilities", strings.Join(r.Vulns, ", "))
+	util.Put(d, "open ports", strings.Join(ps, ", "))
+	util.Put(d, "hostnames", strings.Join(r.Hostnames, ", "))
+	util.Put(d, "software (CPE)", strings.Join(r.CPEs, ", "))
+	util.Put(d, "tags", strings.Join(r.Tags, ", "))
+	util.Put(d, "known vulnerabilities", strings.Join(r.Vulns, ", "))
 	var ents []models.Entity
 	for _, h := range r.Hostnames {
 		if dom, ok := intel.NormalizeDomain(h); ok {
@@ -300,11 +285,8 @@ func reverseIPJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(
 	}
 	sort.Strings(hosts)
 	shown := hosts
-	if len(shown) > 80 {
-		shown = shown[:80]
-	}
 	var ents []models.Entity
-	for _, h := range shown[:min(len(shown), 25)] {
+	for _, h := range shown[:min(len(shown), 200)] {
 		if dom, ok := intel.NormalizeDomain(h); ok {
 			ents = append(ents, models.Entity{Type: models.EntDomain, Value: dom})
 		}
@@ -319,7 +301,7 @@ func bannerJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(mod
 	if cert, err := probe.FetchCert(ctx, host, 443); err == nil {
 		d := map[string]string{"subject": cert.Subject, "issuer": cert.Issuer,
 			"valid until": cert.NotAfter.Format("2006-01-02")}
-		put(d, "names in certificate", strings.Join(cert.SANs, ", "))
+		util.Put(d, "names in certificate", strings.Join(cert.SANs, ", "))
 		var ents []models.Entity
 		if dom, ok := intel.NormalizeDomain(cert.Subject); ok {
 			ents = append(ents, models.Entity{Type: models.EntDomain, Value: dom, Strong: true})
@@ -328,8 +310,8 @@ func bannerJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(mod
 	}
 	if w, err := probe.FetchWeb(ctx, c, host); err == nil {
 		d := map[string]string{"status": strconv.Itoa(w.Status), "final URL": w.FinalURL}
-		put(d, "title", w.Meta.Title)
-		put(d, "server", w.Header.Get("Server"))
+		util.Put(d, "title", w.Meta.Title)
+		util.Put(d, "server", w.Header.Get("Server"))
 		emit(fnd("Web service on the IP", "web", w.FinalURL, 0.8, d))
 	}
 }

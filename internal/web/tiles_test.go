@@ -2,9 +2,9 @@ package web
 
 import (
 	"context"
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,7 +26,7 @@ func TestTileRejectsBadCoordinates(t *testing.T) {
 }
 
 func TestLiveTile(t *testing.T) {
-	if os.Getenv("RECTOOL_LIVE") == "" {
+	if os.Getenv("ARGUS_LIVE") == "" {
 		t.Skip("live")
 	}
 	c, _ := httpx.New(httpx.Options{Timeout: 20 * time.Second, Retries: 1})

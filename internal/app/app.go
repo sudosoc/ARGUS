@@ -9,29 +9,36 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/modules/activity"
-	"github.com/sudosoc/rectool/internal/modules/asn"
-	"github.com/sudosoc/rectool/internal/modules/bizreg"
-	"github.com/sudosoc/rectool/internal/modules/breach"
-	"github.com/sudosoc/rectool/internal/modules/company"
-	"github.com/sudosoc/rectool/internal/modules/crypto"
-	"github.com/sudosoc/rectool/internal/modules/devtrace"
-	"github.com/sudosoc/rectool/internal/modules/docmeta"
-	"github.com/sudosoc/rectool/internal/modules/domain"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/modules/footprint"
-	"github.com/sudosoc/rectool/internal/modules/images"
-	"github.com/sudosoc/rectool/internal/modules/ip"
-	"github.com/sudosoc/rectool/internal/modules/mentions"
-	"github.com/sudosoc/rectool/internal/modules/people"
-	"github.com/sudosoc/rectool/internal/modules/phone"
-	"github.com/sudosoc/rectool/internal/modules/profiles"
-	"github.com/sudosoc/rectool/internal/modules/records"
-	"github.com/sudosoc/rectool/internal/modules/sitefiles"
-	"github.com/sudosoc/rectool/internal/modules/social"
-	"github.com/sudosoc/rectool/internal/modules/syswrap"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/modules/activity"
+	"github.com/sudosoc/argus/internal/modules/asn"
+	"github.com/sudosoc/argus/internal/modules/bizreg"
+	"github.com/sudosoc/argus/internal/modules/breach"
+	"github.com/sudosoc/argus/internal/modules/bskygraph"
+	"github.com/sudosoc/argus/internal/modules/codesearch"
+	"github.com/sudosoc/argus/internal/modules/company"
+	"github.com/sudosoc/argus/internal/modules/crypto"
+	"github.com/sudosoc/argus/internal/modules/devtrace"
+	"github.com/sudosoc/argus/internal/modules/docmeta"
+	"github.com/sudosoc/argus/internal/modules/domain"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/modules/footprint"
+	"github.com/sudosoc/argus/internal/modules/iddecode"
+	"github.com/sudosoc/argus/internal/modules/images"
+	"github.com/sudosoc/argus/internal/modules/ip"
+	"github.com/sudosoc/argus/internal/modules/keys"
+	"github.com/sudosoc/argus/internal/modules/lookalike"
+	"github.com/sudosoc/argus/internal/modules/mentions"
+	"github.com/sudosoc/argus/internal/modules/people"
+	"github.com/sudosoc/argus/internal/modules/phone"
+	"github.com/sudosoc/argus/internal/modules/profiles"
+	"github.com/sudosoc/argus/internal/modules/records"
+	"github.com/sudosoc/argus/internal/modules/sanctions"
+	"github.com/sudosoc/argus/internal/modules/sitefiles"
+	"github.com/sudosoc/argus/internal/modules/social"
+	"github.com/sudosoc/argus/internal/modules/syswrap"
+	"github.com/sudosoc/argus/internal/modules/webhistory"
 )
 
 // Options is the complete configuration of one engine.
@@ -56,6 +63,7 @@ type Options struct {
 	SitesFile  string
 	Categories []string
 	Verify     bool
+	SiteTier   int  // how deep into the username-site list to go: 1 core, 2 extended, 3 all (the CLI and UI default)
 	AllSites   bool // ignore the list of sites disabled by -selftest-sites
 
 	// dorks / footprint
@@ -76,7 +84,7 @@ func Defaults() Options {
 	return Options{
 		Workers: 200, Timeout: 12 * time.Second, Retries: 1,
 		DorkEngines: []string{"brave", "bing", "duckduckgo", "google"},
-		DorkDelay:   3 * time.Second, MaxDorks: 60, MaxPivots: 10, PivotDepth: 2,
+		DorkDelay:   3 * time.Second, MaxDorks: 200, MaxPivots: 30, PivotDepth: 3,
 	}
 }
 
@@ -103,11 +111,11 @@ func Build(o Options) (*Built, error) {
 
 	eng.Meta = map[string]string{
 		"aggressive": strconv.FormatBool(o.Aggressive), "verify_social": strconv.FormatBool(o.Verify),
-		"browser": strconv.FormatBool(o.Browser), "proxies": strconv.Itoa(len(o.Proxies)), "wayback": strconv.FormatBool(!o.NoWayback),
+		"browser": strconv.FormatBool(o.Browser), "proxies": strconv.Itoa(len(o.Proxies)), "wayback": strconv.FormatBool(!o.NoWayback), "site_tier": strconv.Itoa(max(o.SiteTier, 2)),
 	}
 
 	socialMod, err := social.New(social.Config{
-		SitesFile: ResolveSites(o.SitesFile), Categories: o.Categories, Verify: o.Verify,
+		SitesFile: ResolveSites(o.SitesFile), Categories: o.Categories, Verify: o.Verify, Tier: o.SiteTier,
 		DisabledFile: disabledFile(o.AllSites),
 	})
 	if err != nil {
@@ -158,6 +166,13 @@ func Build(o Options) (*Built, error) {
 	eng.Register(phone.New())
 	eng.Register(crypto.New())
 	eng.Register(asn.New())
+	eng.Register(iddecode.New())
+	eng.Register(keys.New())
+	eng.Register(lookalike.New())
+	eng.Register(webhistory.New())
+	eng.Register(sanctions.New())
+	eng.Register(bskygraph.New())
+	eng.Register(codesearch.New())
 
 	return &Built{Engine: eng, SocialSites: socialMod.SiteCount()}, nil
 }
@@ -170,17 +185,17 @@ func ResolveSites(explicit string) string {
 		return explicit
 	}
 	var dirs []string
-	if d := os.Getenv("RECTOOL_DATA"); d != "" {
+	if d := os.Getenv("ARGUS_DATA"); d != "" {
 		dirs = append(dirs, d)
 	}
 	if x := os.Getenv("XDG_DATA_HOME"); x != "" {
-		dirs = append(dirs, x+"/rectool")
+		dirs = append(dirs, x+"/argus")
 	} else if h, err := os.UserHomeDir(); err == nil {
-		dirs = append(dirs, h+"/.local/share/rectool")
+		dirs = append(dirs, h+"/.local/share/argus")
 	}
-	dirs = append(dirs, "/usr/local/share/rectool", "/usr/share/rectool")
+	dirs = append(dirs, "/usr/local/share/argus", "/usr/share/argus")
 	for _, d := range dirs {
-		p := d + "/wmn-data.json"
+		p := d + "/sites.json"
 		if st, err := os.Stat(p); err == nil && st.Size() > 0 {
 			return p
 		}
@@ -196,29 +211,29 @@ func (o Options) applyPreset() Options {
 	}
 	o.Derive = true
 	o.Verify = true
-	if o.MaxPivots < 25 {
-		o.MaxPivots = 25
+	if o.MaxPivots < 80 {
+		o.MaxPivots = 80
 	}
-	if o.PivotDepth < 3 {
-		o.PivotDepth = 3
+	if o.PivotDepth < 4 {
+		o.PivotDepth = 4
 	}
-	if o.MaxDorks < 120 {
-		o.MaxDorks = 120
+	if o.MaxDorks < 500 {
+		o.MaxDorks = 500
 	}
 	return o
 }
 
-// DataDir is where rectool keeps downloaded/generated data: $RECTOOL_DATA,
-// else $XDG_DATA_HOME/rectool, else ~/.local/share/rectool.
+// DataDir is where argus keeps downloaded/generated data: $ARGUS_DATA,
+// else $XDG_DATA_HOME/argus, else ~/.local/share/argus.
 func DataDir() string {
-	if d := os.Getenv("RECTOOL_DATA"); d != "" {
+	if d := os.Getenv("ARGUS_DATA"); d != "" {
 		return d
 	}
 	if x := os.Getenv("XDG_DATA_HOME"); x != "" {
-		return x + "/rectool"
+		return x + "/argus"
 	}
 	if h, err := os.UserHomeDir(); err == nil {
-		return h + "/.local/share/rectool"
+		return h + "/.local/share/argus"
 	}
 	return ""
 }

@@ -20,9 +20,9 @@ func TestBlocked(t *testing.T) {
 }
 
 func TestLive(t *testing.T) {
-	u := os.Getenv("RECTOOL_LIVE_URL")
+	u := os.Getenv("ARGUS_LIVE_URL")
 	if u == "" {
-		t.Skip("set RECTOOL_LIVE_URL")
+		t.Skip("set ARGUS_LIVE_URL")
 	}
 	bin, err := Find()
 	if err != nil {
