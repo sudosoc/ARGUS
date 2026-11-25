@@ -15,7 +15,17 @@ type Tool struct {
 	Timeout  time.Duration
 	Args     func(Inputs) [][]string
 	Parse    func(in Inputs, args []string, stdout string) []models.Finding
+
+	// ArgsDir/ParseDir serve tools that write their result to files instead of
+	// stdout (Maigret's JSON report). The runner gives each invocation a private
+	// temporary directory, substituted for dirPlaceholder in the arguments,
+	// hands it to ParseDir after the run and removes it afterwards.
+	ArgsDir  func(in Inputs, dir string) [][]string
+	ParseDir func(in Inputs, dir, stdout string) []models.Finding
 }
+
+// dirPlaceholder stands for a job's private output directory in ArgsDir results.
+const dirPlaceholder = "{{ARGUS_DIR}}"
 
 func (t *Tool) applicable(in Inputs) bool {
 	for _, r := range t.Requires {
@@ -65,11 +75,14 @@ func builtinTools() []*Tool {
 			Parse: parseWhatweb,
 		},
 		{
-			Name: "maigret", Binary: "maigret", Requires: []string{"username"}, Timeout: 420 * time.Second,
-			Args: func(in Inputs) [][]string {
-				return [][]string{{"--no-color", "--no-progressbar", "--timeout", "10", "-n", "300", in.Username}}
+			// Maigret's own JSON report carries the profile data it extracts
+			// (names, bios, pictures, linked accounts), not just "found" lines.
+			Name: "maigret", Binary: "maigret", Requires: []string{"username"}, Timeout: 600 * time.Second,
+			ArgsDir: func(in Inputs, dir string) [][]string {
+				return [][]string{{"--no-color", "--no-progressbar", "--timeout", "10", "--retries", "1", "-n", "60",
+					"--top-sites", "1500", "--no-recursion", "--json", "ndjson", "--folderoutput", dir, in.Username}}
 			},
-			Parse: parseFoundLines("maigret"),
+			ParseDir: parseMaigretDir,
 		},
 		{
 			Name: "holehe", Binary: "holehe", Requires: []string{"email"}, Timeout: 240 * time.Second,

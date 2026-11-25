@@ -5,6 +5,7 @@ package syswrap
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -85,7 +86,7 @@ func (s *Scanner) CanRun(t models.Target) bool {
 type job struct {
 	tool *Tool
 	bin  string
-	args []string
+	args []string // may contain dirPlaceholder when the tool uses ArgsDir
 }
 
 // Scan queues one job per tool invocation. Missing binaries are reported as
@@ -102,6 +103,12 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		if err != nil {
 			emit(models.Finding{Source: tool.Name, Category: "tooling", Status: models.StatusError,
 				Details: map[string]string{"error": tool.Binary + " not installed or not in PATH"}})
+			continue
+		}
+		if tool.ArgsDir != nil {
+			for _, args := range tool.ArgsDir(in, dirPlaceholder) {
+				jobs = append(jobs, job{tool, bin, args})
+			}
 			continue
 		}
 		for _, args := range tool.Args(in) {
@@ -149,11 +156,31 @@ func (s *Scanner) run(ctx context.Context, in Inputs, j job, emit func(models.Fi
 		timeout = s.cfg.TimeoutCap
 	}
 
-	out, err := runCmd(ctx, j.bin, j.args, timeout, s.cfg.MaxOutput)
+	args, dir := j.args, ""
+	if j.tool.ArgsDir != nil {
+		d, derr := os.MkdirTemp("", "argus-"+j.tool.Name+"-")
+		if derr != nil {
+			emit(models.Finding{Source: j.tool.Name, Category: "tooling", Status: models.StatusError,
+				Details: map[string]string{"error": "cannot create a temporary directory: " + derr.Error()}})
+			return
+		}
+		defer os.RemoveAll(d)
+		dir = d
+		args = make([]string, len(j.args))
+		for i, a := range j.args {
+			args[i] = strings.ReplaceAll(a, dirPlaceholder, dir)
+		}
+	}
+	out, err := runCmd(ctx, j.bin, args, timeout, s.cfg.MaxOutput)
 	if ctx.Err() != nil {
 		return
 	}
-	findings := j.tool.Parse(in, j.args, out)
+	var findings []models.Finding
+	if j.tool.ParseDir != nil {
+		findings = j.tool.ParseDir(in, dir, out)
+	} else {
+		findings = j.tool.Parse(in, args, out)
+	}
 	for _, f := range findings {
 		emit(f)
 	}

@@ -2,7 +2,9 @@ package syswrap
 
 import (
 	"context"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -83,5 +85,63 @@ func TestRunCmdAndTimeout(t *testing.T) {
 	}
 	if _, err := runCmd(context.Background(), goBin, []string{"version"}, time.Nanosecond, 1<<16); err == nil {
 		t.Fatal("expected timeout error")
+	}
+}
+
+func TestParseMaigretDir(t *testing.T) {
+	dir := t.TempDir()
+	lines := `{"sitename":"GitHub","url_user":"https://github.com/bob","rank":80,"status":{"site_name":"GitHub","url":"https://github.com/bob","status":"Claimed","tags":["coding"],"ids":{"fullname":"Bob Builder","image":"https://avatars.example/bob.png","bio":"builds things","location":"Cairo","email":"Bob@Example.com","links":"[]","uid":"42"}},"ids_usernames":{"bobby":"username","bob":"username"}}
+{"sitename":"Plain","url_user":"https://plain.example/bob","status":{"site_name":"Plain","url":"https://plain.example/bob","status":"Claimed","ids":{}}}
+not json
+{"sitename":"","url_user":"","status":{}}
+`
+	if err := os.WriteFile(filepath.Join(dir, "report_bob_ndjson.json"), []byte(lines), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	res := parseMaigretDir(Inputs{Username: "bob"}, dir, "")
+	if len(res) != 2 {
+		t.Fatalf("want 2 findings, got %d: %+v", len(res), res)
+	}
+	g := res[0]
+	if g.Source != "GitHub" || g.Details["name"] != "Bob Builder" || g.Details["bio"] != "builds things" || g.Confidence < 0.8 {
+		t.Errorf("profile data lost: %+v", g)
+	}
+	var kinds []string
+	for _, e := range g.Entities {
+		kinds = append(kinds, e.Type+":"+e.Value)
+	}
+	for _, want := range []string{"name:Bob Builder", "email:bob@example.com", "location:Cairo", "username:bobby"} {
+		found := false
+		for _, k := range kinds {
+			found = found || k == want
+		}
+		if !found {
+			t.Errorf("entity %q missing in %v", want, kinds)
+		}
+	}
+	for _, k := range kinds {
+		if k == "username:bob" {
+			t.Error("the searched username must not be re-reported as a new lead")
+		}
+	}
+	if res[1].Confidence != 0.7 || res[1].Source != "Plain" {
+		t.Errorf("plain account: %+v", res[1])
+	}
+}
+
+func TestArgsDirPlaceholderRoundTrip(t *testing.T) {
+	var mg *Tool
+	for _, tl := range builtinTools() {
+		if tl.Name == "maigret" {
+			mg = tl
+		}
+	}
+	if mg == nil || mg.ArgsDir == nil || mg.ParseDir == nil {
+		t.Fatal("maigret must use the file-based report")
+	}
+	args := mg.ArgsDir(Inputs{Username: "bob"}, dirPlaceholder)[0]
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, dirPlaceholder) || !strings.Contains(joined, "--json ndjson") || args[len(args)-1] != "bob" {
+		t.Errorf("args: %q", joined)
 	}
 }
