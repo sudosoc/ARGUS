@@ -6,20 +6,56 @@ At a glance: **10,600+ username sites** (WhatsMyName + Sherlock + Maigret, in th
 
 > Use only on subjects you are lawfully permitted to investigate. Results are leads, not proof of identity.
 
+## Screenshots
+
+All screenshots show a **synthetic demonstration case** (an invented person and `example` domains); nothing in them is real data. The first three are the first-use flow.
+
+| | |
+|---|---|
+| ![First-use notice](docs/screenshots/01-first-use-notice.png)<br>**1. First start:** a short notice about lawful use. | ![New investigation](docs/screenshots/02-new-investigation.png)<br>**2. New investigation:** one clue is enough; every field has an ⓘ hint in English and Arabic. |
+| ![Live collectors](docs/screenshots/03-live-collectors.png)<br>**3. Live scan:** every collector with progress, hits, errors and time. | ![Identity](docs/screenshots/04-identity.png)<br>**4. Identity:** who the findings add up to, scored; other candidates kept apart. |
+| ![Overview](docs/screenshots/05-overview.png)<br>**5. Overview:** key facts, risk signals ranked by severity, coverage. | ![Relationship graph](docs/screenshots/06-relationship-graph.png)<br>**6. Relationship graph:** how each lead was found. |
+| ![Location](docs/screenshots/07-location.png)<br>**7. Location:** evidence clustered, with conflicts called out. | ![Findings](docs/screenshots/08-findings.png)<br>**8. Findings:** sortable, filterable, paginated, exportable. |
+| ![Command palette](docs/screenshots/09-command-palette.png)<br>**9. Command palette** (`Ctrl+K`): search the case or run any command. | ![Light theme](docs/screenshots/10-light-theme.png)<br>**10. Light theme** (`t` switches). |
+
 ## Install (Linux)
 
-SUDOSOC ARGUS targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). Copy this directory to the machine and run the installer:
+SUDOSOC ARGUS targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). One command does everything:
 
 ```bash
-chmod +x install.sh
-./install.sh            # system-wide: /usr/local/bin/argus (uses sudo)
-./install.sh --user     # no root: ~/.local/bin/argus
-./update.sh             # later: pull the latest version, rebuild, reinstall (--check only looks)
+git clone https://github.com/sudosoc/ARGUS && cd ARGUS
+./install.sh                  # system-wide: /usr/local/bin/argus (uses sudo when not root)
+./install.sh --user           # or: no root needed, installs into ~/.local
+./install.sh --auto-update    # optional: also keep it updated automatically (daily)
 ```
 
-The installer installs the OS packages it needs, installs Go 1.26+ if missing (checksum-verified from go.dev), builds a static binary, downloads the 600+ site WhatsMyName list into `share/argus/` (ARGUS finds it automatically), and installs the optional tools `whois`, `dig`, `sherlock` and `theHarvester` on a best-effort basis. Options: `--no-deps`, `--no-extras`, `--no-sites`, `--prefix DIR`, `--uninstall`.
+(If the executable bit was lost, use `bash install.sh`.) The installer is safe to re-run at any time; it repairs or completes an installation. It:
 
-If `~/.local/bin` is not in your `PATH` after a `--user` install, the script prints the line to add.
+1. installs the **OS packages**: curl, git, tar, python3 + venv, whois, dig, exiftool, sqlite3, whatweb, a Chrome/Chromium for `-browser` and PDF reports, and the build libraries the Python tools need;
+2. installs **Go 1.26+** if missing (checksum-verified from go.dev) and builds a static binary stamped with the commit it was built from;
+3. installs the **helper tools** into private virtualenvs under `share/argus/tools/` (nothing touches the system Python): `maigret`, `sherlock`, `holehe`, plus the `phoneinfoga` release build (checksum-verified) and `subfinder`; `theHarvester` where the distribution packages it (Debian/Kali);
+4. adds the install directory to your `PATH` if needed, records how it was installed (`install.conf`, used by the updater), and finishes with `argus -doctor`.
+
+Options: `--user`, `--system`, `--prefix DIR`, `--no-deps` (skip OS packages and helper tools), `--no-extras`, `--no-browser`, `--no-path`, `--auto-update[=daily|weekly]`, `--doctor`, `--uninstall`. Installing from a pipe works too: `curl -fsSL https://raw.githubusercontent.com/sudosoc/ARGUS/main/install.sh | bash -s -- --user` clones the source first.
+
+**Check what you have:**
+
+```bash
+argus -doctor           # lists every optional tool: found (path) or missing (what it adds, how to get it)
+```
+
+ARGUS works without any of the helper tools; each one adds depth (see *Modules*). Missing tools are reported as coverage gaps, never as "nothing found".
+
+### Updating
+
+```bash
+argus -update           # from anywhere; same as ./update.sh in the source directory
+./update.sh --check     # only say whether a newer version exists
+./update.sh --enable-auto weekly   # update automatically (systemd timer, or cron when there is no systemd)
+./update.sh --status    # version, install mode, schedule, last log lines
+```
+
+The updater pulls the latest source (fast-forward only), rebuilds, reinstalls with the same mode and options as the original install, upgrades the helper tools, verifies the new binary and runs the doctor. If the build fails, the previous version stays installed and the source is put back. Local changes in the source tree are stashed for a manual update and make the scheduled update skip itself. `--fast` skips the OS-package step (the scheduled job uses it). The log is `~/.local/state/argus/update.log`. Your reports, saved cases, proxy lists and custom site files are never touched. Turn automatic updates off with `./update.sh --disable-auto`; `./install.sh --uninstall` removes everything the installer put in place.
 
 Manual build instead (needs Go 1.26+):
 
@@ -38,6 +74,8 @@ argus -ip 203.0.113.10
 argus                 # on a terminal with no flags: interactive prompts
 argus -list-modules
 argus -version
+argus -doctor            # which optional tools are installed
+argus -update            # pull the latest version and rebuild
 ```
 
 ### Web UI
@@ -186,7 +224,7 @@ Sources for a name: ORCID (employments, education, keywords, links), Wikidata (o
 
 ## Which sites know an e-mail address
 
-With an e-mail, the `syswrap` module runs [holehe](https://github.com/megadose/holehe) (installed by `install.sh` through pipx) and reports the sites where that address has an account. holehe works by touching each site's sign-up or password-reset form; it is built not to alert the owner, but it does contact those sites, so run it only on addresses you are entitled to check. Without holehe installed the module says so. Pair it with the `breach` module (which leaks an address appeared in) and Gravatar to see an address's footprint.
+With an e-mail, the `syswrap` module runs [holehe](https://github.com/megadose/holehe) (installed by `install.sh` into its own virtualenv) and reports the sites where that address has an account. holehe works by touching each site's sign-up or password-reset form; it is built not to alert the owner, but it does contact those sites, so run it only on addresses you are entitled to check. Without holehe installed the module says so. Pair it with the `breach` module (which leaks an address appeared in) and Gravatar to see an address's footprint.
 
 ## Web UI at a glance
 
