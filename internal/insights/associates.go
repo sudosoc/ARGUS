@@ -19,7 +19,7 @@ func associates(c *ctx) []models.Associate {
 	agg := map[string]*models.Associate{}
 	put := func(kind, name string, strength float64, why, src, url string) {
 		name = strings.TrimSpace(name)
-		if name == "" {
+		if name == "" || (kind != "person" && c.protected(name)) {
 			return
 		}
 		k := kind + "|" + strings.ToLower(name)

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/sudosoc/argus/internal/sensitive"
 )
 
 // parseDate reads YYYY-MM-DD (possibly followed by a time) and the EXIF form YYYY:MM:DD HH:MM:SS.
@@ -146,4 +148,13 @@ func clamp(v, lo, hi int) int {
 		return hi
 	}
 	return v
+}
+
+// protected reports whether free text touches a protected category, and counts it as withheld.
+func (c *ctx) protected(text string) bool {
+	if sensitive.Is(text) {
+		c.withheld++
+		return true
+	}
+	return false
 }

@@ -81,6 +81,22 @@ From pictures that carry GPS and a date, and from the location evidence. Sightin
 
 For each fact about the best-matching person: **confirmed** (two or more independent platforms), **self-reported** (only the person's own profile), **single source** (one third-party record) or **contested** (sources disagree), with the sources, the source reliability and the earliest dated trace.
 
+## Protected characteristics
+
+ARGUS never derives anything about **religion or belief, health, sexual orientation or gender identity, or political and
+trade-union affiliation**, even when such words appear in the evidence. There is no setting to turn this off.
+
+* The Insights are built only from text that passes the check: interests, skills and topics, headlines, organisations and schools
+  (as associates), timeline events. A person's own name is never filtered.
+* After the insights are built, every remaining piece of text is checked once more; anything that still touches these areas is replaced
+  by `[withheld]` so a new analysis cannot leak by accident.
+* The Limits line says how many items were left out, never what they were.
+* The evidence itself (the profiles and findings as collected) is not edited: it is what was found. Only what ARGUS *concludes* is restricted.
+
+The check is a plain word list (English and Arabic, with common stems and folding of Arabic letter forms), in `internal/sensitive`.
+It leans towards leaving things out, so a harmless text that uses one of the words (for example a church as an employer) is left out
+too. It cannot recognise every way of saying these things, so it lowers the risk and is not a guarantee.
+
 ## Limits
 
 * Insights describe the **best-matching person**. If none could be resolved, only the sections that do not need one are filled.

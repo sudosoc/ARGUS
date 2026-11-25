@@ -4,6 +4,7 @@
 package insights
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -248,5 +249,35 @@ func TestDeterministic(t *testing.T) {
 	a, b := Build(fixture()), Build(fixture())
 	if len(a.Actions) != len(b.Actions) || a.Brief.Headline != b.Brief.Headline || a.Authenticity.Score != b.Authenticity.Score {
 		t.Fatal("not deterministic")
+	}
+}
+
+// Nothing derived may state religion, health, sexual orientation or political affiliation,
+// even when the evidence itself does.
+func TestProtectedCharacteristicsNeverDerived(t *testing.T) {
+	rep := fixture()
+	id := &rep.Identities[0]
+	id.Interests = []models.Fact{{Value: "Islamic history", Sources: []string{"GitHub"}}, {Value: "chess", Sources: []string{"GitHub"}}}
+	id.Headlines = append(id.Headlines, models.Fact{Value: "Labour party activist", Sources: []string{"Mastodon"}})
+	id.Employers = append(id.Employers, models.Fact{Value: "St Mark Coptic Church", Sources: []string{"ORCID"}})
+	id.Education = append(id.Education, models.Fact{Value: "Cairo Institute of Theology", Sources: []string{"ORCID"}})
+	rep.Timeline = append(rep.Timeline, models.TimelineEvent{Date: "2020-02-02", Event: "joined a cancer support group", Source: "Forum"})
+	rep.Findings = append(rep.Findings, models.Finding{Module: "devtrace", Source: "GitHub activity profile", Status: models.StatusFound,
+		Details: map[string]string{"topics": "lgbtq (4), osint (2)", "main languages": "Go (9)"}})
+	in := Build(rep)
+	b, _ := json.Marshal(in)
+	text := strings.ToLower(string(b))
+	for _, w := range []string{"islamic", "labour party", "coptic", "theology", "cancer", "lgbtq"} {
+		if strings.Contains(text, w) {
+			t.Errorf("derived output mentions %q: %s", w, text)
+		}
+	}
+	for _, w := range []string{"chess", "osint", "go"} {
+		if !strings.Contains(text, w) {
+			t.Errorf("harmless %q was lost", w)
+		}
+	}
+	if len(in.Limits) == 0 || !strings.Contains(in.Limits[0], "left out") {
+		t.Errorf("the withheld items are not accounted for: %v", in.Limits)
 	}
 }

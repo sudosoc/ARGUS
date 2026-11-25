@@ -39,6 +39,9 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![Hidden links](docs/screenshots/43-insights-hidden.png)<br>**43. Hidden links:** accounts that share a pattern nothing stated. |  |
 | ![Life timeline](docs/screenshots/44-insights-life.png)<br>**44. Life timeline:** dated facts with bursts and silences. |  |
 | ![Movement](docs/screenshots/45-insights-movement.png)<br>**45. Movement:** places and moves from dated, geotagged pictures. |  |
+| ![What will be collected](docs/screenshots/46-collection-plan.png)<br>**46. What will be collected:** the question, each collector's inputs and destinations, tick or untick before anything is sent. |  |
+| ![Live collectors](docs/screenshots/47-live-collectors.png)<br>**47. Live collectors:** all run at once; each row says what it is checking now. |  |
+| ![Collection plan, Arabic](docs/screenshots/48-collection-plan-ar.png)<br>**48. The same step in Arabic.** |  |
 
 ## Insights
 
@@ -55,6 +58,10 @@ Beyond lists of findings, the **Insights** view (second tab) says what the evide
 * **Why this confidence**: the reasoning behind each fact (confirmed, self-reported, single source, contested).
 
 The brief and the next actions are also in the console summary, the Markdown and HTML reports and the JSON. Every rule, weight and limit is documented in [docs/INSIGHTS.md](docs/INSIGHTS.md).
+
+## Collect the least, and see it first
+
+The web form asks **what you want to find out** (identify, check a claimed identity, see what is exposed, investigate a domain or company, or everything) and proposes only the collectors that answer it. Starting shows **what will be collected**: for each collector, which of your details it reads and where it sends them, with a rough request count; you tick or untick before anything is sent. While it runs, every collector is shown live (waiting, running, finished or stopped) with what it is checking right now. On the command line use `-goal` and `-plan`. ARGUS never analyses religion or belief, health, sexual orientation or gender identity, or political and trade-union affiliation, even when they appear in the evidence. Details in [docs/COLLECTION.md](docs/COLLECTION.md).
 
 ## Settings: language, API keys and model
 
@@ -74,6 +81,7 @@ It removes the `argus` program, the helper tools `install.sh` put in its private
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised, what happens in a run, the web server, the front end and the language layer.
 - [docs/WRITING-A-MODULE.md](docs/WRITING-A-MODULE.md): add a collector (the contract, an example, every place to wire it in, how to test it offline, wrapping external programs).
+- [docs/COLLECTION.md](docs/COLLECTION.md): choosing what is collected, the plan shown before a run and the live collector view.
 - [docs/INSIGHTS.md](docs/INSIGHTS.md): how each insight is computed: rules, weights and limits.
 - [docs/COMPARING-CASES.md](docs/COMPARING-CASES.md): saved cases, comparing two runs, how to read a difference, comparing from the command line.
 - [docs/COVERAGE.md](docs/COVERAGE.md): what is collected per identifier and what is not possible.
@@ -217,6 +225,7 @@ Other flags worth knowing (`argus -h` lists all):
 
 | Flag | Effect |
 |---|---|
+| `-goal G`, `-plan` | collect only what answers a question (`identify`, `verify`, `exposure`, `infrastructure`) / show what would be collected and exit |
 | `-list-modules`, `-version` | list the modules / print the version and exit |
 | `-v` | keep not-found and error records in exported reports |
 | `-no-color` | plain console output |
@@ -249,7 +258,7 @@ All optional; each one you add unlocks more sources:
 
 A pasted **profile link** in the domain field (`-d https://x.com/handle`) is recognised and treated as a username, not a domain. A phone number without `+` is parsed using the country in `-l`.
 
-**One clue is enough.** Give only a phone number, a nickname, a wallet or a profile link and every module that can use it runs; whatever it finds (emails, domains, IPs, usernames) is followed automatically. Use `-aggressive` (a checkbox, on by default, in the web UI) for maximum coverage: derived usernames, verified hits, pivot depth 3 and up to 25 followed leads, 120 dorks.
+**One clue is enough.** Give only a phone number, a nickname, a wallet or a profile link and the collectors that can use it and answer your question run (all of them with *Everything available* or on the command line without `-goal`); whatever it finds (emails, domains, IPs, usernames) is followed automatically. Use `-aggressive` (a checkbox, on by default, in the web UI) for maximum coverage: derived usernames, verified hits, pivot depth 3 and up to 25 followed leads, 120 dorks.
 
 ## Modules
 

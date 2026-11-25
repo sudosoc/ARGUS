@@ -250,7 +250,7 @@ func expertise(c *ctx) []models.Labelled {
 	agg := map[string]*models.Labelled{}
 	add := func(l models.Labelled, note string) {
 		k := strings.ToLower(l.Label)
-		if k == "" {
+		if k == "" || c.protected(l.Label) {
 			return
 		}
 		if e, ok := agg[k]; ok {

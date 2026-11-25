@@ -432,3 +432,62 @@ func (m fakeToolRunModule) Scan(_ context.Context, _ models.Target, _ scanner.De
 	emit(models.Finding{Source: "real", Category: "x", Status: models.StatusFound})
 	return nil
 }
+
+// Every collector must run at the same time (none waits for another), and the live state must say
+// what each one is doing and when it ends.
+func TestCollectorsRunInParallelAndReportLiveState(t *testing.T) {
+	c, err := httpx.New(httpx.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := New(Config{Workers: 4}, c)
+	const n = 6
+	var started sync.WaitGroup
+	started.Add(n)
+	release := make(chan struct{})
+	for i := 0; i < n; i++ {
+		name := string(rune('a' + i))
+		e.Register(&fake{name: name, can: func(models.Target) bool { return true },
+			run: func(_ models.Target, emit func(models.Finding)) {
+				started.Done()
+				<-release // returns only once all the others have started too
+				emit(models.Finding{Source: "site-" + name, Status: models.StatusNotFound})
+			}})
+	}
+	var mu sync.Mutex
+	last := map[string]ModuleLive{}
+	running := map[string]bool{}
+	peak := 0
+	e.OnModule = func(l ModuleLive) {
+		mu.Lock()
+		defer mu.Unlock()
+		last[l.Name] = l
+		running[l.Name] = l.State == "running"
+		cnt := 0
+		for _, r := range running {
+			if r {
+				cnt++
+			}
+		}
+		if cnt > peak {
+			peak = cnt
+		}
+	}
+	go func() { started.Wait(); close(release) }()
+	if _, err := e.Run(context.Background(), models.Target{Username: "someone"}); err != nil {
+		t.Fatal(err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if peak != n {
+		t.Fatalf("only %d of %d collectors were running at once", peak, n)
+	}
+	for name, l := range last {
+		if l.State != "done" || l.Checked != 1 || l.Ended.IsZero() {
+			t.Errorf("%s: final live state %+v", name, l)
+		}
+	}
+	if len(last) != n {
+		t.Fatalf("live state for %d collectors, want %d", len(last), n)
+	}
+}

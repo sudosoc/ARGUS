@@ -69,6 +69,21 @@ type Config struct {
 	PivotDepth     int      // how many rounds of following (default 2: input -> lead -> lead of the lead)
 }
 
+// ModuleLive is the live state of one collector in the current run.
+type ModuleLive struct {
+	Name    string    `json:"name"`  // includes " ↳ via" for pivot runs
+	State   string    `json:"state"` // running | done | failed
+	Started time.Time `json:"started"`
+	Ended   time.Time `json:"ended,omitempty"`
+	Checked int       `json:"checked"`
+	Found   int       `json:"found"`
+	Errors  int       `json:"errors"`
+	// Now is what the collector last looked at (the source of its latest result).
+	Now   string    `json:"now,omitempty"`
+	NowAt time.Time `json:"now_at,omitempty"`
+	Error string    `json:"error,omitempty"`
+}
+
 // Engine wires scanners, the HTTP client and the worker pool together.
 type Engine struct {
 	cfg      Config
@@ -79,6 +94,10 @@ type Engine struct {
 	// concurrency-safe). Set before Run.
 	OnFinding  func(models.Finding)
 	OnProgress func(module string, done, total int)
+	// OnModule reports what each collector is doing right now: it is called when a
+	// collector starts, whenever it checks something, and when it ends. It may be
+	// called from many goroutines at once and must be cheap.
+	OnModule func(ModuleLive)
 
 	// Meta is copied into Report.Settings (set by the application so reports
 	// record how they were produced).
@@ -333,7 +352,37 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 		go func() {
 			defer wg.Done()
 			start := time.Now()
+			var lmu sync.Mutex
+			live := ModuleLive{Name: label(m.Name()), State: "running", Started: start.UTC()}
+			report := func(mut func(*ModuleLive)) {
+				if e.OnModule == nil {
+					return
+				}
+				lmu.Lock()
+				if mut != nil {
+					mut(&live)
+				}
+				snap := live
+				lmu.Unlock()
+				e.OnModule(snap)
+			}
+			report(nil)
 			emit := func(f models.Finding) {
+				report(func(l *ModuleLive) {
+					if f.Category == "toolrun" {
+						return
+					}
+					l.Checked++
+					switch f.Status {
+					case models.StatusFound:
+						l.Found++
+					case models.StatusError:
+						l.Errors++
+					}
+					if f.Source != "" {
+						l.Now, l.NowAt = f.Source, time.Now().UTC()
+					}
+				})
 				f.Module = m.Name()
 				f.Via = via
 				if f.Timestamp.IsZero() {
@@ -363,6 +412,13 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 			if scanErr != nil && !errors.Is(scanErr, context.Canceled) {
 				runs[i].Error = scanErr.Error()
 			}
+			report(func(l *ModuleLive) {
+				l.Ended, l.Now = time.Now().UTC(), ""
+				l.State = "done"
+				if runs[i].Error != "" {
+					l.State, l.Error = "failed", firstLine(runs[i].Error)
+				}
+			})
 		}()
 	}
 	wg.Wait()
@@ -510,4 +566,14 @@ func toolRunFrom(f models.Finding) models.ToolRun {
 	fmt.Sscan(d["bytes"], &n)
 	return models.ToolRun{Tool: f.Source, Command: d["command"], Output: d["output"], Stderr: d["stderr"], Error: d["error"],
 		Via: f.Via, Bytes: n, Truncated: d["truncated"] == "yes", Millis: ms}
+}
+
+func firstLine(s string) string {
+	if i := strings.IndexByte(s, '\n'); i >= 0 {
+		s = s[:i]
+	}
+	if len(s) > 200 {
+		s = s[:200]
+	}
+	return s
 }

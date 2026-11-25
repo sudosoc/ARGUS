@@ -26,6 +26,9 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/plan"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/sensitive"
 	"github.com/sudosoc/argus/internal/settings"
 	"github.com/sudosoc/argus/internal/web"
 )
@@ -65,6 +68,8 @@ func run() int {
 		doctorFlag = flag.Bool("doctor", false, "check the optional external tools and report what is missing")
 		updateFlag = flag.Bool("update", false, "update this installation (runs update.sh from the source checkout) and exit")
 		listMods   = flag.Bool("list-modules", false, "list modules and exit")
+		goalFlag   = flag.String("goal", "", "collect only what answers one question: identify | verify | exposure | infrastructure (default: every collector that applies)")
+		planOnly   = flag.Bool("plan", false, "show what would be collected, from which of your inputs and where it would be sent, then exit without collecting")
 		selfTest   = flag.Bool("selftest-sites", false, "test every social site against a known account, disable unreliable ones, and exit")
 		allSites   = flag.Bool("all-sites", false, "use every social site, including ones a self-test disabled")
 		workers    = flag.Int("workers", def.Workers, "concurrent workers in the shared pool")
@@ -144,6 +149,15 @@ func run() int {
 		Tools: splitCSV(*tools), ToolsFile: *toolsFile, ToolTimeout: *toolCap,
 	}
 
+	if *goalFlag != "" && len(opts.Modules) == 0 && *webAddr == "" {
+		g := plan.GoalByID(*goalFlag)
+		if g.ID != *goalFlag {
+			ui.Error("unknown goal %q: use identify, verify, exposure, infrastructure or everything", *goalFlag)
+			return 2
+		}
+		opts.Modules = g.Modules
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -164,6 +178,9 @@ func run() int {
 		return 2
 	}
 	eng := built.Engine
+	if *goalFlag != "" && eng.Meta != nil {
+		eng.Meta["goal"] = *goalFlag
+	}
 
 	if *listMods {
 		for _, s := range eng.Scanners() {
@@ -195,9 +212,30 @@ func run() int {
 		target = promptTarget()
 	}
 
+	if *planOnly {
+		if err := engine.Enrich(&target, false, 0); err != nil {
+			ui.Error("%v", err)
+			return 2
+		}
+		run, skipped, perr := eng.Plan(target)
+		if perr != nil {
+			ui.Error("%v", perr)
+			return 2
+		}
+		printPlan(run, skipped)
+		return 0
+	}
+
 	ui.Banner(engine.Version)
 	eng.OnFinding = ui.Finding
 	eng.OnProgress = ui.Progress
+	eng.OnModule = func(l engine.ModuleLive) {
+		took := time.Duration(0)
+		if !l.Ended.IsZero() {
+			took = l.Ended.Sub(l.Started)
+		}
+		ui.Module(l.Name, l.State, l.Found, l.Errors, l.Now, l.Error, took)
+	}
 
 	ui.Info("loaded %d social platforms, %d workers, %d proxies", built.SocialSites, *workers, len(proxyList))
 	rep, err := eng.Run(ctx, target)
@@ -402,3 +440,21 @@ type multiFlag []string
 
 func (m *multiFlag) String() string     { return strings.Join(*m, ",") }
 func (m *multiFlag) Set(v string) error { *m = append(*m, v); return nil }
+
+// printPlan lists what a run would do: each collector, the question it answers, where it sends
+// what you entered, and what is left out. Nothing is contacted.
+func printPlan(run []scanner.Scanner, skipped []string) {
+	fmt.Println("What would be collected (nothing has been sent):")
+	for _, sc := range run {
+		m := plan.Of(sc.Name())
+		to := m.SendsTo
+		if to == "" {
+			to = "stays on this machine"
+		}
+		fmt.Printf("  %-10s %s\n             reads: %s · sends to: %s · %s\n", sc.Name(), m.Question, strings.Join(m.Uses, ", "), to, m.Weight)
+	}
+	if len(skipped) > 0 {
+		fmt.Printf("Not run (%d): %s\n", len(skipped), strings.Join(skipped, "; "))
+	}
+	fmt.Println("Never collected or analysed, even if it appears in the evidence: " + strings.Join(sensitive.Categories, "; ") + ".")
+}
