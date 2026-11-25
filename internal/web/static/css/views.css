@@ -214,8 +214,8 @@ thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); c
 .th-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; padding: 0; }
 .th-btn .ic { width: 12px; height: 12px; opacity: .45; }
 th.sorted .th-btn { color: var(--text); } th.sorted .th-btn .ic { opacity: 1; color: var(--emph); }
-.ftable { table-layout: fixed; min-width: 860px; }
-.ftable .c-sel { width: 34px; } .ftable .c-status { width: 96px; } .ftable .c-mod { width: 104px; } .ftable .c-conf { width: 108px; } .ftable .c-find { width: 32%; }
+.ftable { table-layout: fixed; min-width: 700px; }
+.ftable .c-sel { width: 34px; } .ftable .c-status { width: 96px; } .ftable .c-mod { width: 104px; } .ftable .c-conf { width: 118px; } .ftable .c-find { width: 30%; }
 .ftable tbody tr.frow-main { cursor: pointer; }
 .ftable tbody tr.frow-main:hover td { background: var(--surface-2); }
 .ftable tr.sel td { background: var(--sel); }
