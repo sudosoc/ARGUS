@@ -286,6 +286,17 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 
 	eng := built.Engine
 	eng.OnProgress = sc.setProgress
+	// Show every collector that will run from the first second, including those that
+	// never report progress, so the live table is complete.
+	if plan, _, perr := eng.Plan(probe); perr == nil {
+		sc.mu.Lock()
+		for _, s := range plan {
+			if _, ok := sc.progress[s.Name()]; !ok {
+				sc.progress[s.Name()] = [2]int{0, 0}
+			}
+		}
+		sc.mu.Unlock()
+	}
 	eng.OnFinding = func(f models.Finding) {
 		sc.mu.Lock()
 		sc.hits++
