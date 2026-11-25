@@ -67,7 +67,7 @@ func run() int {
 		insecure   = flag.Bool("insecure", false, "skip TLS certificate verification")
 		sitesFile  = flag.String("sites", "", "custom site list in WhatsMyName JSON format")
 		categories = flag.String("categories", "", "restrict social sites to these categories (comma-separated)")
-		siteTier   = flag.String("site-tier", "extended", "how many username sites to probe: core (best maintained), extended (default), all (adds template forums, slow)")
+		siteTier   = flag.String("site-tier", "all", "how many username sites to probe: core (about 1,100, quick), extended (about 3,200), all (about 10,600, default: nothing is left out)")
 		verify     = flag.Bool("verify", false, "re-test hits with a random canary username to drop false positives")
 		derive     = flag.Bool("derive", false, "derive candidate usernames from the full name")
 		noPivot    = flag.Bool("no-pivot", false, "do not follow discovered emails/domains/IPs/usernames")

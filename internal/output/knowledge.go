@@ -176,6 +176,13 @@ func writeMarkdown(w io.Writer, r *models.Report) error {
 		}
 		b.WriteString("\n")
 	}
+	if len(r.ToolRuns) > 0 {
+		b.WriteString("## Raw tool output\n\nThe complete output of every tool is stored in the JSON report (`tool_runs`) and in the `.tools` folder next to the exported files:\n\n")
+		for _, tr := range r.ToolRuns {
+			fmt.Fprintf(&b, "- %s: %d bytes\n", tr.Tool, len(tr.Output))
+		}
+		b.WriteString("\n")
+	}
 	if len(r.Failures) > 0 {
 		b.WriteString("## Coverage gaps\n\nA check that could not complete is not proof that nothing exists.\n\n")
 		for _, f := range r.Failures {
@@ -231,6 +238,7 @@ CREATE TABLE timeline (date TEXT, event TEXT, source TEXT, url TEXT);
 CREATE TABLE leads (grp TEXT, label TEXT, url TEXT, why TEXT);
 CREATE TABLE gaps (module TEXT, source TEXT, error TEXT);
 CREATE TABLE notes (key TEXT, text TEXT);
+CREATE TABLE tool_runs (tool TEXT, command TEXT, output TEXT, stderr TEXT, error TEXT, bytes INTEGER, truncated INTEGER, duration_ms INTEGER);
 CREATE INDEX findings_category ON findings(category);
 CREATE INDEX findings_status ON findings(status);
 CREATE INDEX details_finding ON finding_details(finding_id);
@@ -288,6 +296,9 @@ CREATE INDEX details_finding ON finding_details(finding_id);
 	}
 	for _, f := range r.Failures {
 		fmt.Fprintf(&b, "INSERT INTO gaps VALUES (%s,%s,%s);\n", q(f.Module), q(f.Source), q(f.Error))
+	}
+	for _, tr := range r.ToolRuns {
+		fmt.Fprintf(&b, "INSERT INTO tool_runs VALUES (%s,%s,%s,%s,%s,%d,%d,%d);\n", q(tr.Tool), q(tr.Command), q(tr.Output), q(tr.Stderr), q(tr.Error), tr.Bytes, b2i(tr.Truncated), tr.Millis)
 	}
 	for k, v := range r.Notes {
 		fmt.Fprintf(&b, "INSERT INTO notes VALUES (%s,%s);\n", q(k), q(v))

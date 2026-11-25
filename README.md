@@ -118,6 +118,13 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 - **Attribution scoring** keeps unrelated people who share a handle out of the leads that get followed.
 - **Integrity digest** (SHA-256 of target, entities and findings) and recorded run settings make a report verifiable and reproducible.
 
+### Nothing a tool prints is dropped
+
+- **Raw output is always kept.** Every external tool run (`maigret`, `sherlock`, `holehe`, `phoneinfoga`, `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, custom tools) is stored whole, unparsed, in the report (`tool_runs`), shown in **Coverage → Raw tool output** (with copy and download), written as one file per run in a `<report>.tools/` folder when you export, and loaded into the SQL export (`tool_runs` table). So even where a parser extracts only part of what a tool printed, the original text is there.
+- **Every username-site check is listed**: *social: every check* is a full table of site, username, outcome (found, not found, blocked, inconclusive, failed) and HTTP status, so inconclusive and blocked responses are not silently discarded.
+- **No result caps.** Parsers no longer limit the number of items, subdomains and fields; Maigret runs on **all** its sites with recursion on and every field it extracts is kept; holehe runs without `--only-used` and reports registered, not registered and rate-limited sites (an unknown result is a coverage gap, not silence); coverage gaps are never cut off (CLI, HTML and UI list all of them).
+- **Honest limits.** A tool's output is captured up to 64 MiB; beyond that the run is flagged *capture limit reached*, never cut quietly. Sites behind anti-bot systems a plain client cannot pass are not probed (ARGUS does not evade protections); `-v` keeps the not-found and error records in exports as well.
+
 ### CLI
 
 At least one identifier is required. Ctrl-C stops the run and still writes a partial report (exit code 130).
@@ -135,7 +142,7 @@ Other flags worth knowing (`argus -h` lists all):
 | `-insecure` | skip TLS verification (use only for broken targets you are allowed to test) |
 | `-no-wayback` | skip the Internet Archive query in the domain module |
 | `-dork-engines`, `-dork-delay`, `-max-dorks` | dorking engines in order (default `brave,bing,duckduckgo,google`), per-engine delay (3s), dork cap (60) |
-| `-site-tier core\|extended\|all` | how deep into the username-site list to go (default `extended`) |
+| `-site-tier core\|extended\|all` | how deep into the username-site list to go (default `all`) |
 | `-selftest-sites` | validate every site signature, see *Reliability* |
 
 ## Inputs
@@ -164,7 +171,7 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 
 | Module | Needs | What it does |
 |---|---|---|
-| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,200, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
+| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,200) and `all` (the default: adds about 7,400 template-based forums and small communities, so nothing is left out). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
 | `phone` | phone | libphonenumber analysis: validity, country, region/area, line type (mobile / landline / VoIP), original carrier, time zones, all formats. |
 | `crypto` | wallet | Bitcoin (mempool.space) and Ethereum/EVM (Blockscout): balance, tx counts, activity window, contract status, ENS name. |
 | `asn` | ASN | RIPEstat + RDAP: holder, announced prefixes, BGP neighbours, contacts. |

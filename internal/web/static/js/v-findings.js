@@ -156,7 +156,7 @@
     if (f.details && Object.keys(f.details).length) right.append(el("h4", { text: "Evidence" }), UI.kvTable(f.details));
     if (f.entities && f.entities.length) {
       const chips = el("div", { class: "chips" });
-      for (const e of f.entities.slice(0, 30)) chips.append(UI.entityChip(e));
+      for (const e of f.entities) chips.append(UI.entityChip(e));
       right.append(el("h4", { text: "Leads discovered here" }), chips);
     }
     const actions = el("div", { class: "detail-actions" },

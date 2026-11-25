@@ -87,8 +87,24 @@ type Report struct {
 	Geo         *GeoSummary       `json:"geo,omitempty"`   // where the subject probably is, with evidence
 	ManualLeads []Lead            `json:"manual_leads,omitempty"`
 	Failures    []Failure         `json:"failures,omitempty"`
-	Settings    map[string]string `json:"settings,omitempty"` // how the run was configured, for reproducibility
+	ToolRuns    []ToolRun         `json:"tool_runs,omitempty"` // the complete, unparsed output of every external tool and raw check list
+	Settings    map[string]string `json:"settings,omitempty"`  // how the run was configured, for reproducibility
 	Integrity   *Integrity        `json:"integrity,omitempty"`
+}
+
+// ToolRun is the complete, unfiltered output of one external tool run (or the
+// full table of a built-in check). Parsers turn output into findings, but the
+// raw text is always kept so nothing a tool printed is ever lost.
+type ToolRun struct {
+	Tool      string `json:"tool"`
+	Command   string `json:"command,omitempty"`
+	Output    string `json:"output"`
+	Stderr    string `json:"stderr,omitempty"`
+	Error     string `json:"error,omitempty"`
+	Via       string `json:"via,omitempty"`
+	Bytes     int    `json:"bytes"`
+	Truncated bool   `json:"truncated,omitempty"` // the tool printed more than the capture limit
+	Millis    int64  `json:"duration_ms,omitempty"`
 }
 
 // Failure is one check that did not complete.

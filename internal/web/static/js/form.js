@@ -89,7 +89,7 @@
       return el("label", { class: "check", for: "o_" + name }, cb, el("span", { class: "t" }, el("b", { text: title }), el("small", { text: sub })), UI.infoBtn(name));
     };
     const tier = el("select", { name: "site_tier", id: "o_site_tier", "aria-label": "Username sites to probe" },
-      el("option", { value: "core", text: "Core · about 1,100 sites (fast)" }), el("option", { value: "extended", text: "Extended · about 3,300 sites", selected: "" }), el("option", { value: "all", text: "All · about 10,600 sites (slower)" }));
+      el("option", { value: "core", text: "Core · about 1,100 sites (fast)" }), el("option", { value: "extended", text: "Extended · about 3,200 sites" }), el("option", { value: "all", text: "All · about 10,600 sites (default, slower)", selected: "" }));
     $("tier").replaceChildren(el("label", { class: "field-tier", for: "o_site_tier" }, el("span", { text: "Username sites" }), UI.infoBtn("site_tier")), tier);
     $("intensity").replaceChildren(check("aggressive", "Aggressive", "maximum coverage, slower, many more requests", true));
     $("options").replaceChildren(
