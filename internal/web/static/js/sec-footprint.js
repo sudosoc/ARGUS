@@ -139,5 +139,8 @@
       if (!ids.length && !groups.size) page.append(K.empty("layers", "Nothing to match yet", "Matching links accounts that share an e-mail, website, picture or distinctive name.", "give a name plus a second detail, or enough accounts for pictures and handles to repeat."));
     } };
 
-  UI.defineTab({ id: "footprint", label: "Footprint", icon: "globe", count: (M) => M.accounts.length, sections: [webPresence, publicAccounts, historical, reuse, mentions, cached, platforms, analysis, connections, activity, interactions, cross] });
+  const collectors = K.section("collectors", "Social collectors & frameworks", "user", (M) => M.hits.filter((f) => f.category === "social-scraper" || f.category === "osint-framework"), { group: "Social profiles",
+    intro: "Output of the optional social-media collectors (facebook-scraper, instagram-osint, Insta OSINT Engine, open-nami, The 3rd Eye) and of SpiderFoot. The complete raw output of each run is under Evidence → Collection coverage.",
+    empty: "None of these tools ran.", unlock: "install the tool, and for The 3rd Eye turn on the Google API key in API settings." });
+  UI.defineTab({ id: "footprint", label: "Footprint", icon: "globe", count: (M) => M.accounts.length, sections: [collectors, webPresence, publicAccounts, historical, reuse, mentions, cached, platforms, analysis, connections, activity, interactions, cross] });
 })();

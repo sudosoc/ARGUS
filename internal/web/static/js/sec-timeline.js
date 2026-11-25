@@ -80,5 +80,8 @@
     return [...m.values()].filter((r) => r.src.size >= 2).sort((a, b) => b.m.localeCompare(a.m));
   }
 
-  UI.defineTab({ id: "timeline", label: "Timeline", icon: "clock", count: (M) => M.timeline.length, sections: [events, activity, domain, changes, correlationSec] });
+  const period = K.section("period", "Period you gave", "clock", (M) => M.hits.filter((f) => f.module === "context" && f.category !== "geo" && f.category !== "geo-media"), { showModule: false,
+    intro: "News that names the subject in the period, the closest Internet Archive copy of the domain, what happened on those days, and searches limited to the period to open yourself.",
+    empty: "No period was supplied.", unlock: "enter a From date (and optionally To) in the form, or use -date-from / -date-to." });
+  UI.defineTab({ id: "timeline", label: "Timeline", icon: "clock", count: (M) => M.timeline.length, sections: [events, period, activity, domain, changes, correlationSec] });
 })();
