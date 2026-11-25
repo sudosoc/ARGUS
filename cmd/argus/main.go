@@ -18,6 +18,7 @@ import (
 	"github.com/sudosoc/argus/internal/app"
 	"github.com/sudosoc/argus/internal/doctor"
 	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/files"
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/modules/social"
@@ -42,6 +43,10 @@ func run() int {
 		alias      = flag.String("a", "", "nickname / alias / known-as")
 		asnFlag    = flag.String("asn", "", "autonomous system number, e.g. AS13335")
 		wallet     = flag.String("w", "", "Bitcoin or Ethereum wallet address")
+		coordsFlag = flag.String("coords", "", "a place as latitude,longitude (decimal degrees): nearby pictures and places, links to map and photo search")
+		dateFrom   = flag.String("date-from", "", "start of a period of interest, YYYY-MM-DD (news, archive copies and searches in that period)")
+		dateTo     = flag.String("date-to", "", "end of the period, YYYY-MM-DD (default: same day)")
+		fileArgs   multiFlag
 		notesFile  = flag.String("notes-file", "", "file with text to treat as a profile: a CV, a LinkedIn page you copied from your own browser, a bio")
 		contact    = flag.String("contact", "", "your contact e-mail, sent only to sec.gov in the User-Agent (the SEC requires it) for the records module")
 		useBrowser = flag.Bool("browser", false, "read LinkedIn public profiles with your installed Chrome/Edge (headless, logged out) when plain HTTP is refused")
@@ -89,6 +94,7 @@ func run() int {
 		fmt.Fprintf(os.Stderr, "Usage: argus [options]\n       argus -web 127.0.0.1:8080\n\nAll identifiers are optional; with none given on a terminal you are prompted.\n\n")
 		flag.PrintDefaults()
 	}
+	flag.Var(&fileArgs, "file", "analyse a picture, PDF, Word/Excel/PowerPoint/OpenDocument, text or video file (repeatable); read locally, nothing is uploaded")
 	flag.Parse()
 	if *contact != "" {
 		_ = os.Setenv("ARGUS_CONTACT", *contact)
@@ -166,6 +172,20 @@ func run() int {
 		FullName: *fullName, Username: *username, Email: *email, Phone: *phone,
 		Domain: *domain, IP: *ipAddr, Company: *company, Location: *location,
 		Alias: *alias, ASN: *asnFlag, Wallet: *wallet, Notes: readNotes(*notesFile),
+	}
+	target.Coords, target.DateFrom, target.DateTo = *coordsFlag, *dateFrom, *dateTo
+	for _, p := range fileArgs {
+		data, rerr := os.ReadFile(p)
+		if rerr != nil {
+			ui.Error("file %s: %v", p, rerr)
+			return 2
+		}
+		a, aerr := files.Analyze(context.Background(), filepath.Base(p), data)
+		if aerr != nil {
+			ui.Error("file %s: %v", p, aerr)
+			return 2
+		}
+		target.Files = append(target.Files, a.ID)
 	}
 	if target.IsEmpty() && isTerminal(os.Stdin) {
 		target = promptTarget()
@@ -372,3 +392,9 @@ func runUpdate(args []string) int {
 	}
 	return 0
 }
+
+// multiFlag collects a repeatable string flag.
+type multiFlag []string
+
+func (m *multiFlag) String() string     { return strings.Join(*m, ",") }
+func (m *multiFlag) Set(v string) error { *m = append(*m, v); return nil }

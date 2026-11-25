@@ -18,6 +18,7 @@ import (
 	"github.com/sudosoc/argus/internal/modules/bskygraph"
 	"github.com/sudosoc/argus/internal/modules/codesearch"
 	"github.com/sudosoc/argus/internal/modules/company"
+	"github.com/sudosoc/argus/internal/modules/contextual"
 	"github.com/sudosoc/argus/internal/modules/crypto"
 	"github.com/sudosoc/argus/internal/modules/devtrace"
 	"github.com/sudosoc/argus/internal/modules/docmeta"
@@ -38,6 +39,7 @@ import (
 	"github.com/sudosoc/argus/internal/modules/sitefiles"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/modules/syswrap"
+	"github.com/sudosoc/argus/internal/modules/uploads"
 	"github.com/sudosoc/argus/internal/modules/webhistory"
 )
 
@@ -171,6 +173,8 @@ func Build(o Options) (*Built, error) {
 	eng.Register(iddecode.New())
 	eng.Register(keys.New())
 	eng.Register(lookalike.New())
+	eng.Register(uploads.New())
+	eng.Register(contextual.New())
 	eng.Register(webhistory.New())
 	eng.Register(sanctions.New())
 	eng.Register(bskygraph.New())

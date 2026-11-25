@@ -222,6 +222,7 @@
 
     // Reliability of a source type: how much a hit from it can be trusted on its own.
     UI.RELIABILITY = {
+      uploads: ["High", "read from a file you supplied: it says what the file contains, not who the subject is"], context: ["Low", "public material tied to a place or a date: context, not proof about the subject"],
       registry: ["High", "official registers and registries"], bizreg: ["High", "official business registers"], domain: ["High", "DNS, RDAP and TLS are read directly from the infrastructure"],
       ip: ["High", "RDAP, ASN and passive scan data"], asn: ["High", "routing and registration data"], phone: ["High", "offline number analysis"], keys: ["High", "published cryptographic keys"],
       iddecode: ["High", "arithmetic on identifiers, no lookup"], crypto: ["High", "public ledger data"], sanctions: ["Medium", "name match on official lists: needs human comparison"],

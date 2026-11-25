@@ -17,6 +17,13 @@ type Target struct {
 	Company  string `json:"company,omitempty"`  // organisation name
 	Location string `json:"location,omitempty"` // city / country; used to focus searches
 
+	// Coords is a "lat,lon" point (decimal degrees) the operator supplied; DateFrom and DateTo bound a
+	// period of interest (YYYY-MM-DD). Files are ids of uploaded pictures, documents and videos.
+	Coords   string   `json:"coords,omitempty"`
+	DateFrom string   `json:"date_from,omitempty"`
+	DateTo   string   `json:"date_to,omitempty"`
+	Files    []string `json:"files,omitempty"`
+
 	// Aliases are candidate usernames derived by the engine's planner
 	// (e-mail local part, name permutations). Never set by the user directly.
 	Aliases []string `json:"aliases,omitempty"`
@@ -33,7 +40,7 @@ type Target struct {
 // Location alone is only a refinement, so it does not count.
 func (t Target) IsEmpty() bool {
 	return t.FullName == "" && t.Username == "" && t.Email == "" && t.Phone == "" &&
-		t.Domain == "" && t.IP == "" && t.Company == "" && t.Alias == "" && t.ASN == "" && t.Wallet == "" && strings.TrimSpace(t.Notes) == ""
+		t.Domain == "" && t.IP == "" && t.Company == "" && t.Alias == "" && t.ASN == "" && t.Wallet == "" && strings.TrimSpace(t.Notes) == "" && len(t.Files) == 0 && t.Coords == ""
 }
 
 // Usernames returns the explicit username followed by derived aliases,

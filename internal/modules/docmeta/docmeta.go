@@ -395,3 +395,7 @@ func trimDate(s string) string {
 	}
 	return s
 }
+
+// FileMeta reads the hidden metadata (author, last editor, organisation, software, dates) of an
+// in-memory PDF, Office or OpenDocument file. name only selects the format by extension.
+func FileMeta(name string, data []byte) map[string]string { return extract(name, data).fields() }

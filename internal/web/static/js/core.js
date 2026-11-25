@@ -82,7 +82,7 @@ window.UI = window.UI || {};
   UI.host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
   UI.dur = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? s + "s" : Math.floor(s / 60) + "m " + String(s % 60).padStart(2, "0") + "s"; };
   UI.when = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); };
-  UI.targetLabel = (t) => (t && (t.full_name || t.username || t.alias || t.email || t.domain || t.company || t.ip || t.asn || t.wallet || t.phone)) || "";
+  UI.targetLabel = (t) => (t && (t.full_name || t.username || t.alias || t.email || t.domain || t.company || t.ip || t.asn || t.wallet || t.phone || t.coords)) || (t && t.files && t.files.length ? "Uploaded files" : "");
 
   /** Confidence / score meter: numeric figure sits next to the bar, so meaning never rests on fill alone. */
   UI.meter = function meter(p, withNum) {
@@ -164,7 +164,7 @@ window.UI = window.UI || {};
     history: C("History", "clock"), activity: C("Activity", "pulse"),
     // categories added by newer collectors
     idinfo: C("Decoded platform IDs", "hash"), lookalike: C("Look-alike domains", "globe"), sanctions: C("Sanctions & watchlists", "alert"),
-    graph: C("Social graph", "graph"), exif: C("Picture metadata", "camera"), pgp: C("PGP & signing keys", "key"), code: C("Code search", "code"),
+    graph: C("Social graph", "graph"), file: C("Uploaded files", "file"), "geo-media": C("Geotagged pictures nearby", "image"), context: C("Place and period", "clock"), "osint-framework": C("OSINT framework events", "layers"), "social-scraper": C("Social collectors", "user"), exif: C("Picture metadata", "camera"), pgp: C("PGP & signing keys", "key"), code: C("Code search", "code"),
   };
   UI.cat = (c) => {
     const key = c || "other";
@@ -185,8 +185,9 @@ window.UI = window.UI || {};
     activity: "username", breach: "e-mail", sitefiles: "domain", bizreg: "company", devtrace: "username or e-mail", mentions: "full name", docmeta: "domain",
     records: "name, domain or IP", footprint: "e-mail / phone", phone: "phone", crypto: "wallet", dorks: "anything", syswrap: "domain / username",
     iddecode: "username or ID", keys: "e-mail or username", lookalike: "domain", webhistory: "domain", sanctions: "name or company", bskygraph: "username", codesearch: "username, e-mail or domain",
+    uploads: "an uploaded file", context: "coordinates or a period",
   };
-  UI.MODULE_ORDER = ["social", "profiles", "footprint", "phone", "domain", "ip", "asn", "company", "people", "images", "activity", "breach", "sitefiles", "bizreg", "mentions", "devtrace", "docmeta", "records", "crypto", "iddecode", "keys", "lookalike", "webhistory", "sanctions", "bskygraph", "codesearch", "dorks", "syswrap"];
+  UI.MODULE_ORDER = ["social", "profiles", "footprint", "phone", "domain", "ip", "asn", "company", "people", "images", "activity", "breach", "sitefiles", "bizreg", "mentions", "devtrace", "docmeta", "records", "crypto", "iddecode", "keys", "lookalike", "webhistory", "sanctions", "bskygraph", "codesearch", "uploads", "context", "dorks", "syswrap"];
   UI.modRank = (m) => { const i = UI.MODULE_ORDER.indexOf(m); return i < 0 ? 999 : i; };
 
   // --------------------------------------------------------- hint buttons

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/sudosoc/argus/internal/extract"
@@ -62,6 +64,20 @@ func Enrich(t *models.Target, deriveFromName bool, maxAliases int) error {
 			}
 			t.Domain = d
 		}
+	}
+	if t.Coords != "" {
+		c, ok := NormaliseCoords(t.Coords)
+		if !ok {
+			return fmt.Errorf("coordinates: %q is not a latitude,longitude pair (for example 30.0444,31.2357)", t.Coords)
+		}
+		t.Coords = c
+	}
+	if t.DateFrom != "" || t.DateTo != "" {
+		from, to, err := NormaliseDates(t.DateFrom, t.DateTo)
+		if err != nil {
+			return err
+		}
+		t.DateFrom, t.DateTo = from, to
 	}
 	if t.ASN != "" {
 		asn, ok := normaliseASN(t.ASN)
@@ -273,4 +289,47 @@ func localVariants(local string) []string {
 		out = append(out, flat, strings.ReplaceAll(local, ".", "_"), strings.ReplaceAll(strings.ReplaceAll(local, "_", "."), "-", "."))
 	}
 	return out
+}
+
+// NormaliseCoords accepts "lat,lon" or "lat lon" in decimal degrees and returns "lat,lon" with five decimals.
+func NormaliseCoords(s string) (string, bool) {
+	f := strings.FieldsFunc(strings.TrimSpace(s), func(r rune) bool { return r == ',' || r == ';' || r == ' ' })
+	if len(f) != 2 {
+		return "", false
+	}
+	la, e1 := strconv.ParseFloat(f[0], 64)
+	lo, e2 := strconv.ParseFloat(f[1], 64)
+	if e1 != nil || e2 != nil || la < -90 || la > 90 || lo < -180 || lo > 180 {
+		return "", false
+	}
+	return fmt.Sprintf("%.5f,%.5f", la, lo), true
+}
+
+// NormaliseDates checks a YYYY-MM-DD period. A single date becomes a one-day period; an end before the start is an error.
+func NormaliseDates(from, to string) (string, string, error) {
+	parse := func(label, v string) (time.Time, error) {
+		t, err := time.Parse("2006-01-02", strings.TrimSpace(v))
+		if err != nil {
+			return t, fmt.Errorf("%s: %q is not a date (use YYYY-MM-DD)", label, v)
+		}
+		return t, nil
+	}
+	if strings.TrimSpace(from) == "" {
+		from = to
+	}
+	if strings.TrimSpace(to) == "" {
+		to = from
+	}
+	f, err := parse("date from", from)
+	if err != nil {
+		return "", "", err
+	}
+	e, err := parse("date to", to)
+	if err != nil {
+		return "", "", err
+	}
+	if e.Before(f) {
+		return "", "", fmt.Errorf("the end date is before the start date")
+	}
+	return f.Format("2006-01-02"), e.Format("2006-01-02"), nil
 }
