@@ -50,7 +50,6 @@ type htmlData struct {
 	Gallery    []htmlPhoto
 	Categories []htmlCategory
 	Failures   []models.Failure
-	MoreFail   int
 	Settings   [][2]string
 }
 
@@ -154,10 +153,6 @@ func writeHTML(w io.Writer, r *models.Report) error {
 		d.Notes = append(d.Notes, [2]string{noteTitle(k), r.Notes[k]})
 	}
 	d.Failures = r.Failures
-	if len(d.Failures) > 80 {
-		d.MoreFail = len(d.Failures) - 80
-		d.Failures = d.Failures[:80]
-	}
 	skeys := make([]string, 0, len(r.Settings))
 	for k := range r.Settings {
 		skeys = append(skeys, k)
@@ -251,7 +246,7 @@ a{color:var(--fg);text-decoration-color:var(--emph);word-break:break-all}a:hover
 {{range .R.ManualLeads}}<div class="fact"><b>{{.Group}}</b> · {{if safe .URL}}<a href="{{safe .URL}}">{{.Label}}</a>{{else}}{{.Label}}{{end}} <span class="src">{{.Why}}</span></div>{{end}}</div>{{end}}
 
 {{if .Failures}}<h2>Coverage gaps</h2><div class="card"><div class="mut">Checks that could not complete. A missing result is not evidence of absence.</div>
-{{range .Failures}}<div class="src">{{.Module}} / {{.Source}}: {{.Error}}</div>{{end}}{{if .MoreFail}}<div class="src">… and {{.MoreFail}} more (see the JSON report)</div>{{end}}</div>{{end}}
+{{range .Failures}}<div class="src">{{.Module}} / {{.Source}}: {{.Error}}</div>{{end}}</div>{{end}}
 
 {{if .Settings}}<h2>Run settings</h2><div class="card"><table>{{range .Settings}}<tr><th>{{index . 0}}</th><td>{{index . 1}}</td></tr>{{end}}</table></div>{{end}}
 {{if .R.Integrity}}<h2>Integrity</h2><div class="card"><code>{{.R.Integrity.Algorithm}} {{.R.Integrity.Digest}}</code><div class="mut">Digest of target + entities + findings in the JSON report; recompute it to verify nothing was edited.</div></div>{{end}}

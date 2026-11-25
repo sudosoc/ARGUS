@@ -2,6 +2,7 @@ package syswrap
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -143,5 +144,89 @@ func TestArgsDirPlaceholderRoundTrip(t *testing.T) {
 	joined := strings.Join(args, " ")
 	if !strings.Contains(joined, dirPlaceholder) || !strings.Contains(joined, "--json ndjson") || args[len(args)-1] != "bob" {
 		t.Errorf("args: %q", joined)
+	}
+}
+
+func TestParseHoleheKeepsEveryOutcome(t *testing.T) {
+	out := `[+] twitter.com
+Email Recovery : ex****@gmail.com
+Phone Number : 0*******78
+[-] instagram.com
+[x] snapchat.com
+[+] imgur.com
+[-] spotify.com
+[!] discord.com
+`
+	f := parseHolehe(Inputs{Email: "a@b.c"}, nil, out)
+	if len(f) != 3 { // one summary + two unknown-result gaps
+		t.Fatalf("%d findings: %+v", len(f), f)
+	}
+	d := f[0].Details
+	if d["count"] != "2" || d["sites"] != "twitter.com, imgur.com" || d["not registered on"] != "instagram.com, spotify.com" || d["checked"] != "6" {
+		t.Errorf("summary: %v", d)
+	}
+	if !strings.Contains(d["recovery hints"], "twitter.com → Email Recovery: ex****@gmail.com; Phone Number: 0*******78") {
+		t.Errorf("recovery hints lost: %q", d["recovery hints"])
+	}
+	if !strings.Contains(d["rate-limited or failed (result unknown)"], "snapchat.com") {
+		t.Errorf("rate-limited sites must be listed: %v", d)
+	}
+	for _, g := range f[1:] {
+		if g.Status != models.StatusError {
+			t.Errorf("unknown outcomes are coverage gaps, not silence: %+v", g)
+		}
+	}
+	// nothing registered: the negative result is still reported
+	n := parseHolehe(Inputs{Email: "a@b.c"}, nil, "[-] x.com\n[-] y.com\n")
+	if len(n) != 1 || n[0].Status != models.StatusNotFound || n[0].Details["not registered on"] != "x.com, y.com" {
+		t.Errorf("%+v", n)
+	}
+}
+
+func TestNoItemCapsOnParsers(t *testing.T) {
+	var b strings.Builder
+	for i := 0; i < 700; i++ {
+		fmt.Fprintf(&b, "sub%d.example.com\n", i)
+	}
+	f := parseSubfinder(Inputs{Domain: "example.com"}, nil, b.String())
+	if len(f) != 1 || f[0].Details["count"] != "700" || strings.Count(f[0].Details["subdomains"], "sub") != 700 {
+		t.Errorf("subfinder dropped hosts: %s", f[0].Details["count"])
+	}
+	long := strings.Repeat("x", 5000)
+	if w := parseWhatweb(Inputs{Domain: "e.com"}, nil, long+"\nline2"); len(w) != 1 || !strings.Contains(w[0].Details["fingerprint"], "line2") || len(w[0].Details["fingerprint"]) < 5000 {
+		t.Error("whatweb output was clipped")
+	}
+	if p := parseRawSummary("phoneinfoga", "phone")(Inputs{}, nil, long); len(p) != 1 || len(p[0].Details["output"]) != 5000 {
+		t.Error("raw summary was clipped")
+	}
+}
+
+func TestEveryRunKeepsItsCompleteOutput(t *testing.T) {
+	goBin, err := exec.LookPath("go")
+	if err != nil {
+		t.Skip("go not in PATH")
+	}
+	tool := &Tool{Name: "gover", Binary: goBin, Requires: []string{"domain"}, Timeout: 30 * time.Second,
+		Args:  func(Inputs) [][]string { return [][]string{{"version"}} },
+		Parse: func(Inputs, []string, string) []models.Finding { return nil }} // a parser that finds nothing
+	s := &Scanner{cfg: Config{MaxProcs: 1, MaxOutput: 1 << 20}, tools: []*Tool{tool}}
+	var got []models.Finding
+	s.run(context.Background(), Inputs{Domain: "example.com"}, job{tool, goBin, []string{"version"}}, func(f models.Finding) { got = append(got, f) })
+	if len(got) != 1 || got[0].Category != "toolrun" {
+		t.Fatalf("a run whose parser finds nothing must still store its output: %+v", got)
+	}
+	if !strings.HasPrefix(got[0].Details["output"], "go version") || got[0].Details["truncated"] != "no" || got[0].Details["command"] == "" {
+		t.Errorf("%v", got[0].Details)
+	}
+}
+
+func TestTruncationIsFlaggedNotSilent(t *testing.T) {
+	goBin, err := exec.LookPath("go")
+	if err != nil {
+		t.Skip("go not in PATH")
+	}
+	r := runCmdFull(context.Background(), goBin, []string{"env"}, 30*time.Second, 50)
+	if !r.Truncated || len(r.Stdout) != 50 {
+		t.Errorf("truncated=%v len=%d", r.Truncated, len(r.Stdout))
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -21,7 +23,7 @@ type Config struct {
 	Tools      []string      // restrict to these tool names; empty = all installed
 	ToolsFile  string        // extra user-defined wrappers (JSON, see CustomSpec)
 	MaxProcs   int           // concurrent child processes (default 4)
-	MaxOutput  int           // bytes of stdout kept per run (default 4 MiB)
+	MaxOutput  int           // bytes of stdout kept per run (default 64 MiB); anything beyond is flagged as truncated
 	TimeoutCap time.Duration // upper bound for any tool's timeout; 0 = tool default
 }
 
@@ -39,7 +41,7 @@ func New(cfg Config) (*Scanner, error) {
 		cfg.MaxProcs = 4
 	}
 	if cfg.MaxOutput <= 0 {
-		cfg.MaxOutput = 4 << 20
+		cfg.MaxOutput = 64 << 20
 	}
 	tools := builtinTools()
 	if cfg.ToolsFile != "" {
@@ -171,10 +173,24 @@ func (s *Scanner) run(ctx context.Context, in Inputs, j job, emit func(models.Fi
 			args[i] = strings.ReplaceAll(a, dirPlaceholder, dir)
 		}
 	}
-	out, err := runCmd(ctx, j.bin, args, timeout, s.cfg.MaxOutput)
+	res := runCmdFull(ctx, j.bin, args, timeout, s.cfg.MaxOutput)
 	if ctx.Err() != nil {
 		return
 	}
+	out, err := res.Stdout, res.Err
+
+	// The complete output of every run is kept in the report, whatever the parser
+	// makes of it. Files a tool wrote (Maigret's JSON report) are appended.
+	full := out
+	if dir != "" {
+		full += readReportFiles(dir)
+	}
+	emit(models.Finding{Source: j.tool.Name, Category: "toolrun", Status: models.StatusFound, Details: map[string]string{
+		"command": j.bin + " " + strings.Join(redactDir(args, dir), " "), "output": full, "stderr": res.Stderr,
+		"bytes": strconv.Itoa(len(full)), "duration_ms": strconv.FormatInt(res.Duration.Milliseconds(), 10),
+		"truncated": yesNo(res.Truncated), "error": errText(err),
+	}})
+
 	var findings []models.Finding
 	if j.tool.ParseDir != nil {
 		findings = j.tool.ParseDir(in, dir, out)
@@ -190,4 +206,47 @@ func (s *Scanner) run(ctx context.Context, in Inputs, j job, emit func(models.Fi
 		emit(models.Finding{Source: j.tool.Name, Category: "tooling", Status: models.StatusError,
 			Details: map[string]string{"error": err.Error()}})
 	}
+}
+
+func yesNo(b bool) string {
+	if b {
+		return "yes"
+	}
+	return "no"
+}
+
+func errText(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
+// redactDir shows the temporary directory as <tmp> in the recorded command line.
+func redactDir(args []string, dir string) []string {
+	if dir == "" {
+		return args
+	}
+	out := make([]string, len(args))
+	for i, a := range args {
+		out[i] = strings.ReplaceAll(a, dir, "<tmp>")
+	}
+	return out
+}
+
+// readReportFiles returns the text files a tool wrote into dir, each under a header.
+func readReportFiles(dir string) string {
+	var b strings.Builder
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil || len(data) > 64<<20 {
+			continue
+		}
+		fmt.Fprintf(&b, "\n\n===== file written by the tool: %s =====\n%s", e.Name(), data)
+	}
+	return b.String()
 }

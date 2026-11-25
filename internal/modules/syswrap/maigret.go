@@ -93,15 +93,15 @@ func maigretFinding(in Inputs, l maigretLine) (models.Finding, bool) {
 				d["avatar"] = util.Clip(v, 300)
 			}
 		case "bio", "about", "description":
-			d["bio"] = util.Clip(v, 300)
+			d["bio"] = util.Clip(v, 2000)
 		case "location", "country", "city":
 			d[k] = util.Clip(v, 100)
 			ents = append(ents, models.Entity{Type: models.EntLocation, Value: util.Clip(v, 100)})
 		case "email":
 			d["email"] = util.Clip(v, 120)
 			ents = append(ents, models.Entity{Type: models.EntEmail, Value: strings.ToLower(util.Clip(v, 120))})
-		case "website", "links", "created_at", "follower_count", "following_count", "gender", "birthday", "company", "uid", "id":
-			d[k] = util.Clip(v, 200)
+		default: // keep every other field the page yielded (followers, gender, birthday, ids, links…)
+			d[k] = util.Clip(v, 2000)
 		}
 	}
 	if len(d) > 4 { // the page yielded real profile data beyond "exists"

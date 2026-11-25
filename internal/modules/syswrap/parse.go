@@ -8,7 +8,9 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 )
 
-const maxItems = 500
+// maxItems is a safety valve against a runaway tool, not a result limit: the complete
+// output is always stored separately (see syswrap.run).
+const maxItems = 1 << 20
 
 func finding(source, category, url string, conf float64, d map[string]string) models.Finding {
 	return models.Finding{Source: source, Category: category, URL: url,
@@ -146,24 +148,21 @@ func parseSubfinder(in Inputs, _ []string, out string) []models.Finding {
 	if len(hosts) == 0 {
 		return nil
 	}
-	shown := hosts
-	if len(shown) > 100 {
-		shown = shown[:100]
-	}
 	return []models.Finding{finding("subfinder "+in.Domain, "subdomain", "", 0.8,
-		map[string]string{"count": strconv.Itoa(len(hosts)), "subdomains": strings.Join(shown, ", ")})}
+		map[string]string{"count": strconv.Itoa(len(hosts)), "subdomains": strings.Join(hosts, ", ")})}
 }
 
-// parseWhatweb keeps WhatWeb's one-line fingerprint of the site.
+// parseWhatweb keeps WhatWeb's fingerprint of the site, every line of it.
 func parseWhatweb(in Inputs, _ []string, out string) []models.Finding {
-	line := strings.TrimSpace(strings.SplitN(strings.TrimSpace(out), "\n", 2)[0])
-	if line == "" {
+	out = strings.TrimSpace(out)
+	if out == "" {
 		return nil
 	}
-	if len(line) > 900 {
-		line = line[:900] + "…"
+	d := map[string]string{"fingerprint": out}
+	if lines := strings.Split(out, "\n"); len(lines) > 1 {
+		d["fingerprint"] = strings.Join(lines, "\n")
 	}
-	return []models.Finding{finding("whatweb "+in.Domain, "tech", "", 0.7, map[string]string{"fingerprint": line})}
+	return []models.Finding{finding("whatweb "+in.Domain, "tech", "", 0.7, d)}
 }
 
 // parseFoundLines reads "[+] Site: URL" lines (Sherlock/Maigret style).
@@ -180,21 +179,61 @@ func parseFoundLines(via string) func(Inputs, []string, string) []models.Finding
 	}
 }
 
-var holeheRe = regexp.MustCompile(`^\[\+\]\s+([A-Za-z0-9.\-]+\.[a-z]{2,})`)
+var holeheLine = regexp.MustCompile(`^\[([+\-x!?])\]\s+(\S+)\s*(.*)$`)
+var holeheExtra = regexp.MustCompile(`(?i)^(Email Recovery|Phone Number|Others?)\s*:\s*(.+)$`)
 
-// parseHolehe lists the sites where an e-mail address has an account.
+// parseHolehe keeps every outcome holehe printed: the sites where the address
+// has an account (with the recovery hints holehe prints), the sites where it
+// has none, and the sites that rate-limited or failed (an unknown result, listed
+// as a coverage gap rather than dropped).
 func parseHolehe(in Inputs, _ []string, out string) []models.Finding {
-	var sites []string
+	var used, unused, limited []string
+	notes := map[string][]string{}
+	var site string
 	for _, l := range strings.Split(out, "\n") {
-		if m := holeheRe.FindStringSubmatch(strings.TrimSpace(l)); m != nil {
-			sites = append(sites, m[1])
+		l = strings.TrimSpace(l)
+		if m := holeheLine.FindStringSubmatch(l); m != nil {
+			site = m[2]
+			switch m[1] {
+			case "+":
+				used = append(used, site)
+			case "-":
+				unused = append(unused, site)
+			default: // x, !, ?
+				limited = append(limited, site)
+			}
+			continue
+		}
+		if m := holeheExtra.FindStringSubmatch(l); m != nil && site != "" {
+			notes[site] = append(notes[site], m[1]+": "+strings.TrimSpace(m[2]))
 		}
 	}
-	if len(sites) == 0 {
-		return nil
+	var res []models.Finding
+	if len(used) > 0 {
+		d := map[string]string{"count": strconv.Itoa(len(used)), "sites": strings.Join(used, ", "),
+			"checked": strconv.Itoa(len(used) + len(unused) + len(limited)), "not registered on": strings.Join(unused, ", ")}
+		if len(limited) > 0 {
+			d["rate-limited or failed (result unknown)"] = strings.Join(limited, ", ")
+		}
+		var hints []string
+		for _, s := range used {
+			if n := notes[s]; len(n) > 0 {
+				hints = append(hints, s+" → "+strings.Join(n, "; "))
+			}
+		}
+		if len(hints) > 0 {
+			d["recovery hints"] = strings.Join(hints, "\n")
+		}
+		res = append(res, finding("holehe: accounts registered with "+in.Email, "email-account", "", 0.75, d))
+	} else if len(unused) > 0 {
+		res = append(res, models.Finding{Source: "holehe: accounts registered with " + in.Email, Category: "email-account", Status: models.StatusNotFound,
+			Details: map[string]string{"checked": strconv.Itoa(len(unused) + len(limited)), "not registered on": strings.Join(unused, ", ")}})
 	}
-	return []models.Finding{finding("holehe: accounts registered with "+in.Email, "email-account", "", 0.75,
-		map[string]string{"count": strconv.Itoa(len(sites)), "sites": strings.Join(sites, ", ")})}
+	for _, s := range limited {
+		res = append(res, models.Finding{Source: "holehe: " + s, Category: "email-account", Status: models.StatusError,
+			Details: map[string]string{"error": "rate-limited or failed: whether " + in.Email + " has an account here is unknown"}})
+	}
+	return res
 }
 
 // parseRawSummary keeps the first lines of a tool's report verbatim.
@@ -203,9 +242,6 @@ func parseRawSummary(name, category string) func(Inputs, []string, string) []mod
 		out = strings.TrimSpace(out)
 		if out == "" {
 			return nil
-		}
-		if len(out) > 1500 {
-			out = out[:1500] + "…"
 		}
 		return []models.Finding{finding(name, category, "", 0.6, map[string]string{"output": out})}
 	}

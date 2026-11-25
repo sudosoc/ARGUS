@@ -98,9 +98,8 @@
       return box;
     };
     const where = full.findings || [];
-    body.append(section(`Mentioned in ${UI.n(where.length)} finding${where.length === 1 ? "" : "s"}`, finder(where.slice(0, 40)),
-      where.length > 40 ? el("p", { class: "hint", text: `${where.length - 40} more: use the findings table search.` }) : null));
-    const via = UI.S ? UI.S.findings.filter((f) => (f.via || "").toLowerCase() === key).slice(0, 40) : [];
+    body.append(section(`Mentioned in ${UI.n(where.length)} finding${where.length === 1 ? "" : "s"}`, finder(where)));
+    const via = UI.S ? UI.S.findings.filter((f) => (f.via || "").toLowerCase() === key) : [];
     if (via.length) body.append(section("Found by investigating it", finder(via)));
     $("drawerClose").focus();
     if (UI.graphNeighbours) UI.graphNeighbours(e, body);

@@ -63,7 +63,7 @@ type Options struct {
 	SitesFile  string
 	Categories []string
 	Verify     bool
-	SiteTier   int  // how deep into the username-site list to go: 1 core, 2 extended (default), 3 all
+	SiteTier   int  // how deep into the username-site list to go: 1 core, 2 extended, 3 all (the CLI and UI default)
 	AllSites   bool // ignore the list of sites disabled by -selftest-sites
 
 	// dorks / footprint

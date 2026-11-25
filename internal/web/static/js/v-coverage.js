@@ -42,6 +42,40 @@
     if ((rep.skipped || []).length) mp.append(el("p", { class: "hint", text: "Not run: " + rep.skipped.join(" · ") }));
     root.append(mp);
 
+    // ---- raw tool output: everything every tool printed, unparsed and unclipped
+    const runs = rep.tool_runs || [];
+    if (runs.length) {
+      const total = runs.reduce((a, r) => a + (r.bytes || (r.output || "").length), 0);
+      const rp = el("section", { class: "panel" }, el("h3", { class: "ph" }, UI.icon("file"), "Raw tool output", el("span", { class: "count", text: String(runs.length) })),
+        el("p", { class: "hint", text: `The complete, unparsed output of every external tool and the full table of every username-site check (${UI.n(total)} bytes). Parsers turn it into findings; this is the original, so nothing a tool printed can be lost. It is also in the JSON report and in the .tools folder next to exported files.` }));
+      for (const r of runs) {
+        const det = el("details", { class: "gap rawrun" }, el("summary", {}, UI.icon("chevron", "caret"), el("span", { class: "tag mod", text: r.tool }),
+          el("b", { class: "num", text: UI.n(r.bytes || (r.output || "").length) + " bytes" }),
+          r.duration_ms ? el("span", { class: "muted gap-why", text: (r.duration_ms / 1000).toFixed(1) + "s" }) : null,
+          r.truncated ? el("span", { class: "tag bad", text: "capture limit reached" }) : null,
+          r.error ? el("span", { class: "tag bad", text: "exited with an error" }) : null));
+        det.addEventListener("toggle", () => {
+          if (!det.open || det.dataset.built) return;
+          det.dataset.built = "1";
+          const body = el("div", { class: "rawbody" });
+          if (r.command) body.append(el("div", { class: "rawcmd mono", text: "$ " + r.command }));
+          if (r.error) body.append(el("div", { class: "rawcmd mono bad", text: r.error }));
+          body.append(el("pre", { class: "rawout mono", text: r.output || "(no output)" }));
+          if (r.stderr) body.append(el("div", { class: "rawcmd muted", text: "stderr" }), el("pre", { class: "rawout mono", text: r.stderr }));
+          const dl = el("button", { type: "button", class: "btn small", text: "Download .txt" });
+          dl.addEventListener("click", () => {
+            const blob = new Blob([(r.command ? "$ " + r.command + "\n\n" : "") + (r.output || "") + (r.stderr ? "\n\n--- stderr ---\n" + r.stderr : "")], { type: "text/plain" });
+            const a = el("a", { href: URL.createObjectURL(blob), download: r.tool.replace(/[^A-Za-z0-9._-]+/g, "_") + ".txt" });
+            document.body.append(a); a.click(); a.remove();
+          });
+          body.append(el("div", { class: "rawtools" }, UI.copyBtn(r.output || "", "output"), dl));
+          det.append(body);
+        });
+        rp.append(det);
+      }
+      root.append(rp);
+    }
+
     // ---- gaps
     const gp = el("section", { class: "panel" }, el("h3", { class: "ph" }, UI.icon("alert"), "Coverage gaps", el("span", { class: "count" + (fails.length ? " warn" : ""), text: String(fails.length) })));
     if (!fails.length) gp.append(el("p", { class: "hint", text: "Every check that ran completed." }));
@@ -53,8 +87,11 @@
       const top = Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([r, n]) => `${n}× ${r}`).join(" · ");
       const det = el("details", { class: "gap" }, el("summary", {}, UI.icon("chevron", "caret"), el("span", { class: "tag mod", text: m }), el("b", { class: "num", text: UI.n(list.length) }), el("span", { class: "muted gap-why", text: top })));
       const kv = el("dl", { class: "kv" });
-      for (const f of list.slice(0, 60)) { kv.append(el("dt", { text: UI.clip(f.source, 40) }), el("dd", { text: UI.clip(f.error, 160) + (f.via ? "  (via " + f.via + ")" : "") })); }
-      if (list.length > 60) kv.append(el("dt", { text: "…" }), el("dd", { text: `${UI.n(list.length - 60)} more in the JSON report` }));
+      // every gap is listed (built when the group is opened, so thousands stay fast)
+      det.addEventListener("toggle", () => {
+        if (!det.open || kv.childElementCount) return;
+        for (const f of list) kv.append(el("dt", { text: f.source }), el("dd", { text: (f.error || "") + (f.via ? "  (via " + f.via + ")" : "") }));
+      });
       det.append(kv);
       gp.append(det);
     }

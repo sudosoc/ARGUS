@@ -289,11 +289,16 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 	}
 	var kept []models.Finding
 	var failed []models.Failure
+	var toolRuns []models.ToolRun
 	var collector sync.WaitGroup
 	collector.Add(1)
 	go func() {
 		defer collector.Done()
 		for f := range findings {
+			if f.Category == "toolrun" { // raw tool output: stored whole, never counted as a finding
+				toolRuns = append(toolRuns, toolRunFrom(f))
+				continue
+			}
 			c := perModule[f.Module]
 			c.checked++
 			switch f.Status {
@@ -367,9 +372,10 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 	rep.Modules = append(rep.Modules, runs...)
 	rep.Findings = append(rep.Findings, kept...)
 	rep.Failures = append(rep.Failures, failed...)
+	rep.ToolRuns = append(rep.ToolRuns, toolRuns...)
 }
 
-const maxFailures = 400
+const maxFailures = 100000 // effectively unlimited: every check that could not complete is listed
 
 type pivot struct {
 	target  models.Target
@@ -487,4 +493,16 @@ func intersect(a, b []string) []string {
 		}
 	}
 	return out
+}
+
+// toolRunFrom converts a Category "toolrun" finding (emitted by syswrap and by
+// checks that keep a full table) into a ToolRun.
+func toolRunFrom(f models.Finding) models.ToolRun {
+	d := f.Details
+	var ms int64
+	fmt.Sscan(d["duration_ms"], &ms)
+	var n int
+	fmt.Sscan(d["bytes"], &n)
+	return models.ToolRun{Tool: f.Source, Command: d["command"], Output: d["output"], Stderr: d["stderr"], Error: d["error"],
+		Via: f.Via, Bytes: n, Truncated: d["truncated"] == "yes", Millis: ms}
 }

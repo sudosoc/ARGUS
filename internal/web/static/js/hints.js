@@ -84,8 +84,8 @@ UI.HINTS = {
 
   // ---------------------------------------------------------------- modules
   site_tier: {
-    en: "How many username sites the social collector probes. Core: about 1,100 well-known sites (fast). Extended (default): about 3,300 sites. All: about 10,600 sites (much slower, many more requests, more false leads to verify).",
-    ar: "عدد مواقع اليوزرنيم اللي بيفحصها collector السوشيال. Core: حوالي 1,100 موقع معروف (سريع). Extended (الافتراضي): حوالي 3,300 موقع. All: حوالي 10,600 موقع (أبطأ بكتير وطلبات أكتر ونتايج محتاجة تحقق أكتر).",
+    en: "How many username sites the social collector probes. Core: about 1,100 well-known sites (fast). Extended: about 3,200 sites. All (default): about 10,600 sites, nothing left out (slower, many more requests, more false leads to verify).",
+    ar: "عدد مواقع اليوزرنيم اللي بيفحصها collector السوشيال. Core: حوالي 1,100 موقع معروف (سريع). Extended: حوالي 3,200 موقع. All (الافتراضي): حوالي 10,600 موقع من غير ما نسيب حاجة (أبطأ وطلبات أكتر ونتايج محتاجة تحقق أكتر).",
   },
   "mod:iddecode": {
     en: "Needs a username, e-mail or an ID found in a profile. Decodes platform IDs (Discord, X, Instagram…) into creation timestamps and other embedded facts.",

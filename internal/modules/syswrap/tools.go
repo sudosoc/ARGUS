@@ -77,16 +77,16 @@ func builtinTools() []*Tool {
 		{
 			// Maigret's own JSON report carries the profile data it extracts
 			// (names, bios, pictures, linked accounts), not just "found" lines.
-			Name: "maigret", Binary: "maigret", Requires: []string{"username"}, Timeout: 600 * time.Second,
+			Name: "maigret", Binary: "maigret", Requires: []string{"username"}, Timeout: 30 * time.Minute,
 			ArgsDir: func(in Inputs, dir string) [][]string {
 				return [][]string{{"--no-color", "--no-progressbar", "--timeout", "10", "--retries", "1", "-n", "60",
-					"--top-sites", "1500", "--no-recursion", "--json", "ndjson", "--folderoutput", dir, in.Username}}
+					"-a", "--json", "ndjson", "--folderoutput", dir, in.Username}}
 			},
 			ParseDir: parseMaigretDir,
 		},
 		{
-			Name: "holehe", Binary: "holehe", Requires: []string{"email"}, Timeout: 240 * time.Second,
-			Args:  func(in Inputs) [][]string { return [][]string{{"--only-used", "--no-color", in.Email}} },
+			Name: "holehe", Binary: "holehe", Requires: []string{"email"}, Timeout: 600 * time.Second,
+			Args:  func(in Inputs) [][]string { return [][]string{{"--no-color", in.Email}} },
 			Parse: parseHolehe,
 		},
 		{

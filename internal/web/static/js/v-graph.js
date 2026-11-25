@@ -22,7 +22,7 @@
     sitefiles: ["domain"], bizreg: ["organisation"], devtrace: ["username", "email"], mentions: ["name"], docmeta: ["domain"],
     records: ["name", "domain", "ip"], crypto: ["wallet"], syswrap: ["domain", "username"], dorks: [],
   };
-  const MAX_NODES = 320;
+  const MAX_NODES = 800;
 
   let canvas = null, ctx = null, tip = null;
   let nodes = [], edges = [], byId = new Map();
@@ -331,7 +331,7 @@
     for (const e of edges) { if (e.a === n) list.push([e.b, e.label]); else if (e.b === n) list.push([e.a, e.label]); }
     if (!list.length) return;
     const chips = el("div", { class: "chips" });
-    for (const [m, via] of list.slice(0, 40)) {
+    for (const [m, via] of list) {
       const b = el("button", { type: "button", class: "chip", title: "via " + via }, UI.icon(UI.type(m.type).icon), el("span", { class: "k", text: m.type }), el("span", { class: "chip-v", text: (m.type === "subject" ? m.label : m.value).slice(0, 48) }));
       b.addEventListener("click", () => { selected = m; draw(); if (m.type !== "subject") UI.showEntity({ type: m.type, value: m.value, strong: m.strong, source: m.source }); });
       chips.append(b);

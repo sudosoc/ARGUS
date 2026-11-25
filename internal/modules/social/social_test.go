@@ -1,13 +1,20 @@
 package social
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/pool"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 func resp(code int, body string) *httpx.Response {
@@ -229,6 +236,52 @@ func TestEmbeddedSitesAreWellFormed(t *testing.T) {
 		}
 		if bad > 20 {
 			t.Fatal("too many malformed sites")
+		}
+	}
+}
+
+func TestScanKeepsTheFullTableOfOutcomes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/found/"):
+			_, _ = w.Write([]byte("profile-of-user"))
+		case strings.HasPrefix(r.URL.Path, "/absent/"):
+			w.WriteHeader(404)
+		case strings.HasPrefix(r.URL.Path, "/limited/"):
+			w.WriteHeader(429)
+		default:
+			w.WriteHeader(418) // matches no signature and is not a success code
+		}
+	}))
+	defer srv.Close()
+	list := `[{"name":"Found","uri_check":"` + srv.URL + `/found/{account}","e_code":200,"e_string":"profile-of","m_code":404},
+	 {"name":"Absent","uri_check":"` + srv.URL + `/absent/{account}","e_code":200,"m_code":404},
+	 {"name":"Limited","uri_check":"` + srv.URL + `/limited/{account}","e_code":200,"m_code":404},
+	 {"name":"Odd","uri_check":"` + srv.URL + `/odd/{account}","e_code":200,"m_code":404}]`
+	path := filepath.Join(t.TempDir(), "sites.json")
+	_ = os.WriteFile(path, []byte(list), 0o600)
+	sm, err := New(Config{SitesFile: path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := httpx.New(httpx.Options{Retries: 0})
+	p := pool.New(4, 4)
+	defer p.Close()
+	var got []models.Finding
+	var mu sync.Mutex
+	err = sm.Scan(context.Background(), models.Target{Username: "bob"}, scanner.Deps{HTTP: c, Pool: p}, func(f models.Finding) { mu.Lock(); got = append(got, f); mu.Unlock() })
+	if err != nil {
+		t.Fatal(err)
+	}
+	var table string
+	for _, f := range got {
+		if f.Category == "toolrun" && f.Source == "social: every check" {
+			table = f.Details["output"]
+		}
+	}
+	for _, want := range []string{"Found\tbob\tfound\t200", "Absent\tbob\tnot found\t404", "Limited\tbob\tblocked or rate-limited\t429", "Odd\tbob\tinconclusive: the response matched no signature\t418"} {
+		if !strings.Contains(table, want) {
+			t.Errorf("table lacks %q:\n%s", want, table)
 		}
 	}
 }

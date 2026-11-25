@@ -300,9 +300,7 @@ func (m *manager) start(req ScanRequest) (*scan, error) {
 	eng.OnFinding = func(f models.Finding) {
 		sc.mu.Lock()
 		sc.hits++
-		if len(sc.all) < 6000 {
-			sc.all = append(sc.all, f)
-		}
+		sc.all = append(sc.all, f)
 		sc.mu.Unlock()
 		for _, ent := range f.Entities {
 			if ent.Type == models.EntImage {

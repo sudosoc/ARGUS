@@ -64,10 +64,9 @@
     for (const [title, d] of [["Entities (e-mails, domains, accounts…)", diff(a.entities || [], b.entities || [], entKey)], ["Findings", diff(hits(a), hits(b), finKey)]]) {
       body.append(el("h4", { class: "dsec-title" }, title, el("span", { class: "count", text: `+${d.added.length} / −${d.removed.length}` })));
       const ul = el("ul", { class: "difflist" });
-      d.added.slice(0, 80).forEach((x) => ul.append(el("li", { class: "add" }, el("span", { class: "dmark", text: "+" }), x)));
-      d.removed.slice(0, 80).forEach((x) => ul.append(el("li", { class: "del" }, el("span", { class: "dmark", text: "−" }), x)));
+      d.added.forEach((x) => ul.append(el("li", { class: "add" }, el("span", { class: "dmark", text: "+" }), x)));
+      d.removed.forEach((x) => ul.append(el("li", { class: "del" }, el("span", { class: "dmark", text: "−" }), x)));
       if (!d.added.length && !d.removed.length) ul.append(el("li", { class: "muted", text: "no change" }));
-      if (d.added.length > 80 || d.removed.length > 80) ul.append(el("li", { class: "muted", text: "Only the first 80 of each are shown." }));
       body.append(ul);
     }
   }
