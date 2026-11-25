@@ -1,3 +1,7 @@
+<p align="center"><img src="docs/assets/argus-logo.png" alt="SUDOSOC ARGUS: OSINT intelligence platform. See more. Know more." width="340"></p>
+
+<p align="center"><img src="docs/assets/argus-banner.jpg" alt="" width="100%"></p>
+
 # SUDOSOC ARGUS
 
 API-less OSINT reconnaissance in Go. Give it any combination of full name, username, email, phone, domain, IP address, company, ASN, crypto wallet and location; it decides which modules apply, runs them concurrently on a shared worker pool, follows the strongest new leads it discovers, resolves everything it finds into separate people (never blending two people who share a name), and exports reports in 13 formats.
@@ -12,7 +16,7 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 
 | | |
 |---|---|
-| ![First-use notice](docs/screenshots/01-first-use-notice.png)<br>**1. First start:** a short notice about lawful use. | ![New investigation](docs/screenshots/02-new-investigation.png)<br>**2. New investigation:** one clue is enough; every field has an ⓘ hint in English and Arabic. |
+| ![First-use notice](docs/screenshots/01-first-use-notice.png)<br>**1. First start:** the emblem and a short notice about lawful use. | ![New investigation](docs/screenshots/02-new-investigation.png)<br>**2. Start page:** one clue is enough; every field has an ⓘ hint in English and Arabic. |
 | ![Live collectors](docs/screenshots/03-live-collectors.png)<br>**3. Live scan:** every collector with progress, hits, errors and time. | ![Identity](docs/screenshots/04-identity.png)<br>**4. Identity:** who the findings add up to, scored; other candidates kept apart. |
 | ![Overview](docs/screenshots/05-overview.png)<br>**5. Overview:** key facts, risk signals ranked by severity, coverage. | ![Relationship graph](docs/screenshots/06-relationship-graph.png)<br>**6. Relationship graph:** how each lead was found. |
 | ![Location](docs/screenshots/07-location.png)<br>**7. Location:** evidence clustered, with conflicts called out. | ![Findings](docs/screenshots/08-findings.png)<br>**8. Findings:** sortable, filterable, paginated, exportable. |
