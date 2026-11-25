@@ -34,7 +34,7 @@ func newTestServerWith(t *testing.T) (*httptest.Server, *Server) {
 	base.DorkDelay = 10 * time.Millisecond
 	base.Timeout = 3 * time.Second
 	base.Retries = 0
-	s, err := New(ctx, Config{Addr: "127.0.0.1:0", Token: testToken, Base: base})
+	s, err := New(ctx, Config{Addr: "127.0.0.1:0", Token: testToken, Base: base, SettingsDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}

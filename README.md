@@ -30,6 +30,10 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![Exports](docs/screenshots/21-exports.png)<br>**23. Exports:** HTML, JSON, CSV, Markdown, SQL, JSONL, GraphML; a local export history. | ![Command palette](docs/screenshots/22-command-palette.png)<br>**24. Command palette:** `Ctrl+K`: search the case or run any command. |
 | ![Light theme](docs/screenshots/23-light-theme.png)<br>**25. Light theme:** `t` switches; the emblem keeps its round shape. | ![Phone](docs/screenshots/24-phone.png)<br>**26. Phone:** the same views on a narrow screen: tabs and sections scroll sideways. |
 
+## API settings
+
+The **API settings** button (top bar, or `Ctrl+K` → API settings) holds keys for model providers (Claude, OpenAI, Gemini, a local Ollama or OpenAI-compatible server) and for tools that need one (a Google API key for The 3rd Eye). Each provider has a masked field, an Enabled switch and **Test connection**; pick the provider and type the exact model name under *Model*. Keys are saved in an AES-256-GCM encrypted file under your config directory (`~/.config/argus/settings.enc`, mode 0600; the key sits next to it, or set `ARGUS_SETTINGS_KEY`), are never sent back to the browser (only the last four characters) and never enter reports or cases. Environment variables (`GOOGLE_API_KEY`, `OPENAI_API_KEY`, …) are read when nothing is stored. A tool that needs a key is skipped, with a note in the report, when its provider is off or has no key; otherwise the key is passed to it in its environment variable only. The encryption protects the file from accidental exposure (backups, a stray copy); it cannot protect against someone who already controls your user account. ARGUS has no model-powered feature yet: the model choice is stored and tested for when one is added.
+
 ## Install (Linux)
 
 SUDOSOC ARGUS targets Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine; amd64 and arm64). One command does everything:
@@ -216,6 +220,7 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 | `syswrap` | domain, username | Runs `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, `sherlock`, `maigret`, `holehe`, `phoneinfoga` and your custom tools through `os/exec` (those installed). Maigret is read from its own JSON report (names, bios, pictures, linked usernames). |
 | `spiderfoot` | domain, e-mail, username, phone | Optional: runs the SpiderFoot CLI (`-u passive`) when installed and keeps every event it returns, grouped by type with the SpiderFoot modules that produced it. |
 | `h8mail` | e-mail | Optional: runs h8mail when installed. Only the breach/source names and the number of records are shown; credential values are never stored or displayed. |
+| `facebook-scraper`, `instagram-osint`, `insta-osint-engine`, `open-nami`, `the-3rd-eye` | username | Optional social-media collectors, each a separate program you install (`facebook-scraper`, `igosint`, `insta-osint-engine`, `nami`, `the3rdeye`). Their command lines differ between versions, so override with `ARGUS_TOOL_<NAME>_BIN` and `ARGUS_TOOL_<NAME>_ARGS` (for example `ARGUS_TOOL_OPEN_NAMI_ARGS="-u {username}"`). The complete output is kept; URLs, e-mails and phones in it are listed. `the-3rd-eye` runs only when the Google API key is enabled in **API settings**. Use only on public accounts you may examine and within each platform's terms. |
 
 Select modules with `-modules domain,ip`. Modules whose required input is missing are skipped and listed in the summary.
 

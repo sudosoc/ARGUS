@@ -22,6 +22,7 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
+	"github.com/sudosoc/argus/internal/settings"
 	"github.com/sudosoc/argus/internal/web"
 )
 
@@ -144,6 +145,9 @@ func run() int {
 		return runWeb(ctx, ui, opts, *webAddr, *webToken, *webMax, *outDir)
 	}
 
+	if st, serr := settings.Open(settings.DefaultDir()); serr == nil {
+		opts.Keys = st.Resolve // API keys saved in the web UI settings (or environment variables) for tools that need them
+	}
 	built, err := app.Build(opts)
 	if err != nil {
 		ui.Error("%v", err)
