@@ -117,7 +117,7 @@
     if (p.camera) meta.camera = p.camera;
     if (p.taken) meta["taken"] = p.taken;
     if (p.gps) meta.gps = p.gps;
-    for (const [k, v] of Object.entries(p.meta || {})) meta[k] = v; // exiftool: Software, Artist, SerialNumber, Make, Model…
+    for (const [k, v] of Object.entries(p.meta || {})) meta[k === "OCRText" ? "text read in the picture (OCR)" : k] = v; // exiftool / OCR: Software, Artist, SerialNumber, Make, Model…
     if (p.sha256) meta.sha256 = p.sha256;
     if (p.dhash) meta["perceptual hash"] = p.dhash;
     body.append(section("Details", UI.kvTable(meta)));
@@ -126,6 +126,7 @@
       ["Google Lens", "https://lens.google.com/uploadbyurl?url=" + u],
       ["Yandex Images", "https://yandex.com/images/search?rpt=imageview&url=" + u],
       ["TinEye", "https://tineye.com/search?url=" + u],
+      ["SauceNAO", "https://saucenao.com/search.php?url=" + u],
       ["Bing Visual Search", "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:" + u],
     ];
     const row = el("div", { class: "chips" });

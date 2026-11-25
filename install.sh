@@ -33,7 +33,7 @@ AUTO=""            # "", daily, weekly: schedule update.sh
 SUDO="" PSUDO="" PRIV="" CAN_PKG=1
 PM="" TMP="" GO_BIN="" DIED=0
 ORIG_ARGS=("$@")
-HELPERS=(maigret sherlock holehe theHarvester)   # tools installed into private virtualenvs
+HELPERS=(maigret sherlock holehe h8mail theHarvester)   # tools installed into private virtualenvs
 
 # ------------------------------------------------------------------ output --
 if [[ -t 1 ]]; then B=$'\e[1m' G=$'\e[32m' Y=$'\e[33m' R=$'\e[31m' N=$'\e[0m'; else B="" G="" Y="" R="" N=""; fi
@@ -72,7 +72,7 @@ Options:
   --system            force a system-wide install (/usr/local)
   --prefix DIR        custom prefix (binary in DIR/bin, data in DIR/share/argus)
   --no-deps           skip OS package installation (also skips the helper tools)
-  --no-extras         skip maigret / sherlock / holehe / phoneinfoga / subfinder / theHarvester / whatweb
+  --no-extras         skip maigret / sherlock / holehe / h8mail / tesseract / phoneinfoga / subfinder / theHarvester / whatweb
   --no-browser        skip the Chrome/Chromium package (needed only for -browser and PDF reports)
   --no-path           do not edit your shell start-up files
   --auto-update[=daily|weekly]   schedule update.sh (default daily)
@@ -211,6 +211,8 @@ pkg_names() { # echo package list for role $1
     exiftool:dnf|exiftool:yum|exiftool:zypper) echo "perl-Image-ExifTool" ;;
     exiftool:pacman)   echo "perl-image-exiftool" ;;
     exiftool:apk)      echo "exiftool" ;;
+    tesseract:apt-get) echo "tesseract-ocr" ;;
+    tesseract:dnf|tesseract:yum|tesseract:zypper|tesseract:pacman|tesseract:apk) echo "tesseract" ;;
     sqlite:apt-get|sqlite:apk) echo "sqlite3" ;;
     sqlite:*)          echo "sqlite" ;;
   esac
@@ -378,6 +380,7 @@ install_extras() {
   have whois    || install_roles optional whois
   have dig      || install_roles optional dig
   have exiftool || install_roles optional exiftool
+  have tesseract || install_roles optional tesseract   # reads text printed in downloaded pictures (OCR)
   have sqlite3  || install_roles optional sqlite
   have python3  || install_roles optional python
 
@@ -386,6 +389,7 @@ install_extras() {
     py_install maigret maigret || true
     py_install sherlock sherlock-project || true
     py_install holehe holehe || true
+    py_install h8mail h8mail || true   # breach lookup (source names only are shown, never credentials)
   else
     warn "Python >= 3.10 is not available: skipping maigret, sherlock and holehe"
   fi
