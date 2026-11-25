@@ -7,16 +7,15 @@ package bizreg
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 type Scanner struct{}
@@ -48,20 +47,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 	return ctx.Err()
 }
 
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 25 * time.Second, MaxBody: 4 << 20, Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, out) == nil
-}
-
-func put(d map[string]string, k, v string) {
-	if v = strings.TrimSpace(v); v != "" {
-		d[k] = v
-	}
-}
-
 func france(ctx context.Context, c *httpx.Client, name string, emit func(models.Finding)) {
 	var r struct {
 		Results []struct {
@@ -85,7 +70,7 @@ func france(ctx context.Context, c *httpx.Client, name string, emit func(models.
 			} `json:"dirigeants"`
 		} `json:"results"`
 	}
-	if !getJSON(ctx, c, "https://recherche-entreprises.api.gouv.fr/search?per_page=5&q="+url.QueryEscape(name), &r) {
+	if !util.GetJSON(ctx, c, "https://recherche-entreprises.api.gouv.fr/search?per_page=5&q="+url.QueryEscape(name), &r) {
 		return
 	}
 	for _, co := range r.Results {
@@ -93,12 +78,12 @@ func france(ctx context.Context, c *httpx.Client, name string, emit func(models.
 			continue
 		}
 		d := map[string]string{"register": "France (recherche-entreprises)", "SIREN": co.Siren}
-		put(d, "name", co.Name)
-		put(d, "created", co.Created)
-		put(d, "activity code (NAF)", co.Activity)
-		put(d, "head office", co.Siege.Address)
-		put(d, "status", map[string]string{"A": "active", "C": "ceased"}[co.Siege.Active])
-		put(d, "staff band code", co.Size)
+		util.Put(d, "name", co.Name)
+		util.Put(d, "created", co.Created)
+		util.Put(d, "activity code (NAF)", co.Activity)
+		util.Put(d, "head office", co.Siege.Address)
+		util.Put(d, "status", map[string]string{"A": "active", "C": "ceased"}[co.Siege.Active])
+		util.Put(d, "staff band code", co.Size)
 		var officers []string
 		var ents []models.Entity
 		for _, o := range co.Dirigeants {
@@ -116,7 +101,7 @@ func france(ctx context.Context, c *httpx.Client, name string, emit func(models.
 				break
 			}
 		}
-		put(d, "officers", strings.Join(officers, "; "))
+		util.Put(d, "officers", strings.Join(officers, "; "))
 		if co.Siege.Address != "" {
 			ents = append(ents, models.Entity{Type: models.EntLocation, Value: co.Siege.Address})
 		}
@@ -148,7 +133,7 @@ func norway(ctx context.Context, c *httpx.Client, name string, emit func(models.
 			} `json:"enheter"`
 		} `json:"_embedded"`
 	}
-	if !getJSON(ctx, c, "https://data.brreg.no/enhetsregisteret/api/enheter?size=5&navn="+url.QueryEscape(name), &r) {
+	if !util.GetJSON(ctx, c, "https://data.brreg.no/enhetsregisteret/api/enheter?size=5&navn="+url.QueryEscape(name), &r) {
 		return
 	}
 	for _, u := range r.Embedded.Units {
@@ -156,16 +141,16 @@ func norway(ctx context.Context, c *httpx.Client, name string, emit func(models.
 			continue
 		}
 		d := map[string]string{"register": "Norway (Brønnøysund)", "organisation number": u.Number}
-		put(d, "name", u.Name)
-		put(d, "legal form", u.Form.Desc)
-		put(d, "industry", u.Industry.Desc)
-		put(d, "founded", u.Founded)
-		put(d, "website", u.Site)
+		util.Put(d, "name", u.Name)
+		util.Put(d, "legal form", u.Form.Desc)
+		util.Put(d, "industry", u.Industry.Desc)
+		util.Put(d, "founded", u.Founded)
+		util.Put(d, "website", u.Site)
 		if u.Staff > 0 {
 			d["employees"] = fmt.Sprint(u.Staff)
 		}
 		addr := strings.TrimSpace(strings.Join(append(append([]string{}, u.Addr.Lines...), u.Addr.Postal+" "+u.Addr.Town), ", "))
-		put(d, "address", addr)
+		util.Put(d, "address", addr)
 		var ents []models.Entity
 		if addr != "" {
 			ents = append(ents, models.Entity{Type: models.EntLocation, Value: u.Addr.Town + ", Norway"})

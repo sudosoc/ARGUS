@@ -7,6 +7,7 @@ package phone
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/nyaruka/phonenumbers"
@@ -66,7 +67,7 @@ func (s *Scanner) Scan(_ context.Context, t models.Target, _ scanner.Deps, emit 
 	} else {
 		d["valid"] = "no — impossible length for this country"
 	}
-	set("country code", "+"+itoa(int(num.GetCountryCode())))
+	set("country code", "+"+strconv.Itoa(int(num.GetCountryCode())))
 	set("region (ISO)", phonenumbers.GetRegionCodeForNumber(num))
 	set("line type", numberTypes[phonenumbers.GetNumberType(num)])
 	if geo, err := phonenumbers.GetGeocodingForNumber(num, "en"); err == nil {
@@ -95,20 +96,6 @@ func (s *Scanner) Scan(_ context.Context, t models.Target, _ scanner.Deps, emit 
 	emit(models.Finding{Source: "Phone number intelligence", Category: "phone", Status: models.StatusFound,
 		Confidence: conf, Details: d})
 	return nil
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [10]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(b[i:])
 }
 
 // guessRegion maps a few common country names in the location hint to ISO

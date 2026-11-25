@@ -6,13 +6,11 @@ package profiles
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/intel"
@@ -109,21 +107,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 }
 
 // ---- helpers ---------------------------------------------------------------
-
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 15 * time.Second,
-		Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, &out) == nil
-}
-
-func put(d map[string]string, k, v string) {
-	if v = strings.TrimSpace(v); v != "" {
-		d[k] = v
-	}
-}
 
 func profile(source, link string, conf float64, d map[string]string, ents ...models.Entity) models.Finding {
 	return models.Finding{Source: source, Category: "profile", URL: link, Status: models.StatusFound,

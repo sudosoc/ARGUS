@@ -6,7 +6,6 @@ package company
 
 import (
 	"context"
-	"encoding/json"
 	"net"
 	"net/url"
 	"regexp"
@@ -23,6 +22,7 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/probe"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Scanner is the company module.
@@ -184,20 +184,6 @@ func fnd(source, category, link string, conf float64, d map[string]string, ents 
 		Status: models.StatusFound, Confidence: conf, Details: d, Entities: ents}
 }
 
-func put(d map[string]string, k, v string) {
-	if v = strings.TrimSpace(v); v != "" {
-		d[k] = v
-	}
-}
-
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 15 * time.Second, Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, out) == nil
-}
-
 // candidateSite checks whether a guessed domain exists and really belongs to
 // the company (its title/description/site name mentions the name).
 func candidateSite(ctx context.Context, c *httpx.Client, host string, tokens []string, emit func(models.Finding)) {
@@ -219,8 +205,8 @@ func candidateSite(ctx context.Context, c *httpx.Client, host string, tokens []s
 		}
 	}
 	d := map[string]string{"final URL": w.FinalURL, "status": strconv.Itoa(w.Status)}
-	put(d, "title", w.Meta.Title)
-	put(d, "description", w.Meta.Description)
+	util.Put(d, "title", w.Meta.Title)
+	util.Put(d, "description", w.Meta.Description)
 	conf := 0.3
 	if match {
 		conf = 0.75
@@ -251,18 +237,18 @@ func wikipedia(ctx context.Context, c *httpx.Client, name string, emit func(mode
 		} `json:"content_urls"`
 	}
 	title := strings.ReplaceAll(strings.TrimSpace(name), " ", "_")
-	if !getJSON(ctx, c, "https://en.wikipedia.org/api/rest_v1/page/summary/"+url.PathEscape(title), &r) ||
+	if !util.GetJSON(ctx, c, "https://en.wikipedia.org/api/rest_v1/page/summary/"+url.PathEscape(title), &r) ||
 		r.Type == "disambiguation" || r.Extract == "" {
 		return
 	}
 	d := map[string]string{}
-	put(d, "title", r.Title)
-	put(d, "description", r.Description)
+	util.Put(d, "title", r.Title)
+	util.Put(d, "description", r.Description)
 	ex := r.Extract
 	if len(ex) > 500 {
 		ex = ex[:500] + "…"
 	}
-	put(d, "summary", ex)
+	util.Put(d, "summary", ex)
 	emit(fnd("Wikipedia article", "reference", r.ContentURLs.Desktop.Page, 0.6, d))
 }
 
@@ -274,7 +260,7 @@ func wikidata(ctx context.Context, c *httpx.Client, name string, emit func(model
 			Description string `json:"description"`
 		} `json:"search"`
 	}
-	if !getJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=5&search="+url.QueryEscape(name), &r) ||
+	if !util.GetJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=5&search="+url.QueryEscape(name), &r) ||
 		len(r.Search) == 0 {
 		return
 	}
@@ -301,17 +287,17 @@ func githubOrg(ctx context.Context, c *httpx.Client, slug string, emit func(mode
 		Followers   int    `json:"followers"`
 		CreatedAt   string `json:"created_at"`
 	}
-	if !getJSON(ctx, c, "https://api.github.com/orgs/"+url.PathEscape(slug), &r) || r.Login == "" {
+	if !util.GetJSON(ctx, c, "https://api.github.com/orgs/"+url.PathEscape(slug), &r) || r.Login == "" {
 		return
 	}
 	d := map[string]string{"public repos": strconv.Itoa(r.PublicRepos), "followers": strconv.Itoa(r.Followers)}
-	put(d, "name", r.Name)
-	put(d, "description", r.Description)
-	put(d, "website", r.Blog)
-	put(d, "location", r.Location)
-	put(d, "public email", r.Email)
-	put(d, "twitter", r.Twitter)
-	put(d, "created", r.CreatedAt)
+	util.Put(d, "name", r.Name)
+	util.Put(d, "description", r.Description)
+	util.Put(d, "website", r.Blog)
+	util.Put(d, "location", r.Location)
+	util.Put(d, "public email", r.Email)
+	util.Put(d, "twitter", r.Twitter)
+	util.Put(d, "created", r.CreatedAt)
 	var ents []models.Entity
 	if dom, ok := intel.NormalizeDomain(r.Blog); ok {
 		ents = append(ents, models.Entity{Type: models.EntDomain, Value: dom, Strong: true})

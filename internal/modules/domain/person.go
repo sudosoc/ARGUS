@@ -11,6 +11,7 @@ import (
 	"github.com/sudosoc/argus/internal/jsonld"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // personData reads a personal or portfolio site as a *profile of the person
@@ -42,14 +43,14 @@ func personData(ctx context.Context, c *httpx.Client, w *probe.Web, links []stri
 		}
 		siteName = rec.Name
 		d := map[string]string{"name": rec.Name}
-		put(d, "headline", rec.Headline)
-		put(d, "employers", strings.Join(rec.Employers, "; "))
-		put(d, "education", strings.Join(rec.Education, "; "))
-		put(d, "location", rec.Location)
-		put(d, "emails", strings.Join(rec.Emails, ", "))
-		put(d, "profiles linked from the site", strings.Join(rec.Websites, ", "))
-		put(d, "about", truncate(rec.Bio, 400))
-		put(d, "avatar", rec.Photo)
+		util.Put(d, "headline", rec.Headline)
+		util.Put(d, "employers", strings.Join(rec.Employers, "; "))
+		util.Put(d, "education", strings.Join(rec.Education, "; "))
+		util.Put(d, "location", rec.Location)
+		util.Put(d, "emails", strings.Join(rec.Emails, ", "))
+		util.Put(d, "profiles linked from the site", strings.Join(rec.Websites, ", "))
+		util.Put(d, "about", truncate(rec.Bio, 400))
+		util.Put(d, "avatar", rec.Photo)
 		r := rec
 		emit(models.Finding{Source: "Person data published on the website", Category: "identity", URL: w.FinalURL,
 			Status: models.StatusFound, Confidence: 0.85, Details: d, Record: &r})
@@ -80,13 +81,13 @@ func personData(ctx context.Context, c *httpx.Client, w *probe.Web, links []stri
 			Location: cv.Location, Employers: cv.Employers, Education: cv.Education, Bio: cv.Summary,
 			Interests: append(append([]string{}, cv.Interests...), cv.Skills...), Websites: cv.Links}
 		d := map[string]string{"document": l}
-		put(d, "name", rec.Name)
-		put(d, "location", rec.Location)
-		put(d, "employers", strings.Join(rec.Employers, "; "))
-		put(d, "education", strings.Join(rec.Education, "; "))
-		put(d, "skills & interests", strings.Join(rec.Interests, ", "))
-		put(d, "emails", strings.Join(rec.Emails, ", "))
-		put(d, "phones", strings.Join(rec.Phones, ", "))
+		util.Put(d, "name", rec.Name)
+		util.Put(d, "location", rec.Location)
+		util.Put(d, "employers", strings.Join(rec.Employers, "; "))
+		util.Put(d, "education", strings.Join(rec.Education, "; "))
+		util.Put(d, "skills & interests", strings.Join(rec.Interests, ", "))
+		util.Put(d, "emails", strings.Join(rec.Emails, ", "))
+		util.Put(d, "phones", strings.Join(rec.Phones, ", "))
 		r := rec
 		emit(models.Finding{Source: "CV / resume on the website", Category: "identity", URL: l,
 			Status: models.StatusFound, Confidence: 0.85, Details: d, Record: &r})

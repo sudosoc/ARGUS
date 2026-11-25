@@ -3,6 +3,7 @@ package people
 import (
 	"context"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -94,7 +95,7 @@ func linkedIn(ctx context.Context, c *httpx.Client, t models.Target, emit func(m
 			}
 			blocked++
 			if tg.explicit || blocked == 1 {
-				emit(errFinding("LinkedIn public profile", "LinkedIn blocks automated access (HTTP "+itoa(resp.StatusCode)+", "+tg.url+"). argus does not evade this: open the profile yourself and paste its text into the Notes box, or use the manual link"))
+				emit(errFinding("LinkedIn public profile", "LinkedIn blocks automated access (HTTP "+strconv.Itoa(resp.StatusCode)+", "+tg.url+"). argus does not evade this: open the profile yourself and paste its text into the Notes box, or use the manual link"))
 			}
 			if blocked >= 2 {
 				return // never hammer a service that is saying no
@@ -186,18 +187,4 @@ func appendUniq(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [10]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(b[i:])
 }

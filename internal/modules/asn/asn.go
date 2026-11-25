@@ -16,6 +16,7 @@ import (
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/rdap"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Scanner is the ASN module.
@@ -164,7 +165,7 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		seen := map[string]bool{}
 		for _, ct := range n.Contacts {
 			role := strings.Join(ct.Roles, "/")
-			label := strings.Join(nonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
+			label := strings.Join(util.NonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
 			if label != "" {
 				det[role] = label
 			}
@@ -179,14 +180,4 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 
 	wg.Wait()
 	return ctx.Err()
-}
-
-func nonEmpty(s ...string) []string {
-	var out []string
-	for _, v := range s {
-		if v != "" {
-			out = append(out, v)
-		}
-	}
-	return out
 }

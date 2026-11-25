@@ -8,6 +8,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // greyNoiseJob asks GreyNoise's community endpoint whether the address is
@@ -29,10 +30,10 @@ func greyNoiseJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(
 		return
 	}
 	d := map[string]string{"internet noise (mass scanner)": yesNo(r.Noise), "known benign service (RIOT)": yesNo(r.Riot)}
-	put(d, "classification", r.Classification)
-	put(d, "actor / service", r.Name)
-	put(d, "last seen", r.LastSeen)
-	put(d, "message", r.Message)
+	util.Put(d, "classification", r.Classification)
+	util.Put(d, "actor / service", r.Name)
+	util.Put(d, "last seen", r.LastSeen)
+	util.Put(d, "message", r.Message)
 	conf := 0.8
 	if !r.Noise && !r.Riot {
 		conf = 0.5 // "not observed" is weak evidence either way

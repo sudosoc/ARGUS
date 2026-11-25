@@ -17,6 +17,7 @@ import (
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Config tunes the module.
@@ -212,14 +213,14 @@ func (s *Scanner) check(ctx context.Context, c *httpx.Client, site *Site, user s
 		// Profile pages usually carry Open Graph metadata: the display name,
 		// bio and avatar are useful for matching the account to the subject.
 		if m := extract.ParseMeta(string(resp.Body)); m.Title != "" || m.Description != "" {
-			if t := firstNonEmpty(m.OGTitle, m.Title); t != "" && !strings.EqualFold(t, site.Name) {
-				f.Details["page title"] = clip(t, 140)
+			if t := util.FirstNonEmpty(m.OGTitle, m.Title); t != "" && !strings.EqualFold(t, site.Name) {
+				f.Details["page title"] = util.Clip(t, 140)
 			}
 			if m.Description != "" {
-				f.Details["description"] = clip(m.Description, 220)
+				f.Details["description"] = util.Clip(m.Description, 220)
 			}
 			if m.OGImage != "" {
-				f.Details["avatar"] = clip(m.OGImage, 300)
+				f.Details["avatar"] = util.Clip(m.OGImage, 300)
 			}
 		}
 		emit(f)
@@ -306,21 +307,6 @@ func minF(a, b float64) float64 {
 		return a
 	}
 	return b
-}
-
-func firstNonEmpty(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
-}
-
-func clip(s string, n int) string {
-	s = strings.TrimSpace(s)
-	if len(s) > n {
-		return s[:n] + "…"
-	}
-	return s
 }
 
 func isNSFW(cat string) bool { return strings.Contains(cat, "nsfw") }

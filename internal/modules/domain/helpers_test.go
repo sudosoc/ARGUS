@@ -2,6 +2,7 @@ package domain
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -9,8 +10,8 @@ import (
 
 func TestItoa(t *testing.T) {
 	for n, want := range map[int]string{0: "0", 7: "7", 120: "120", -45: "-45", 1234567890: "1234567890"} {
-		if got := itoa(n); got != want {
-			t.Errorf("itoa(%d) = %q", n, got)
+		if got := strconv.Itoa(n); got != want {
+			t.Errorf("strconv.Itoa(%d) = %q", n, got)
 		}
 	}
 }

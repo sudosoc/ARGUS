@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/probe"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 var contactPage = regexp.MustCompile(`(?i)/(contact|contact-us|contactus|about|about-us|team|impressum|legal|imprint|kontakt|company)(/|\.html?|\.php)?$`)
@@ -43,14 +45,14 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 	if u, err := url.Parse(w.FinalURL); err == nil && u.Host != "" {
 		host = u.Hostname()
 	}
-	site := map[string]string{"requested": w.URL, "final URL": w.FinalURL, "status": itoa(w.Status)}
-	put(site, "title", w.Meta.Title)
-	put(site, "description", w.Meta.Description)
-	put(site, "og:site_name", w.Meta.OGSiteName)
-	put(site, "author", w.Meta.Author)
-	put(site, "keywords", w.Meta.Keywords)
-	put(site, "canonical", w.Meta.Canonical)
-	put(site, "server", w.Header.Get("Server"))
+	site := map[string]string{"requested": w.URL, "final URL": w.FinalURL, "status": strconv.Itoa(w.Status)}
+	util.Put(site, "title", w.Meta.Title)
+	util.Put(site, "description", w.Meta.Description)
+	util.Put(site, "og:site_name", w.Meta.OGSiteName)
+	util.Put(site, "author", w.Meta.Author)
+	util.Put(site, "keywords", w.Meta.Keywords)
+	util.Put(site, "canonical", w.Meta.Canonical)
+	util.Put(site, "server", w.Header.Get("Server"))
 	emit(fnd("Website", "web", w.FinalURL, 0.95, site))
 
 	if tech := extract.Tech(w.Header, w.Body); len(tech) > 0 {
@@ -60,8 +62,8 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 	https := strings.HasPrefix(w.FinalURL, "https://")
 	present, missing := probe.SecurityHeaders(w.Header, https)
 	sec := map[string]string{}
-	put(sec, "present", strings.Join(present, ", "))
-	put(sec, "missing", strings.Join(missing, ", "))
+	util.Put(sec, "present", strings.Join(present, ", "))
+	util.Put(sec, "missing", strings.Join(missing, ", "))
 	if !https {
 		sec["transport"] = "site does not redirect to HTTPS"
 	}
@@ -111,7 +113,7 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 		}
 	}
 	if len(emails) > 0 || len(phones) > 0 {
-		d := map[string]string{"pages scanned": itoa(len(pages))}
+		d := map[string]string{"pages scanned": strconv.Itoa(len(pages))}
 		var ents []models.Entity
 		var el, pl []string
 		for e := range emails {
@@ -125,8 +127,8 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 		}
 		sort.Strings(el)
 		sort.Strings(pl)
-		put(d, "emails", strings.Join(el, ", "))
-		put(d, "phones", strings.Join(pl, ", "))
+		util.Put(d, "emails", strings.Join(el, ", "))
+		util.Put(d, "phones", strings.Join(pl, ", "))
 		emit(fnd("Contact details on the website", "contact", w.FinalURL, 0.85, d, ents...))
 	}
 
@@ -163,8 +165,8 @@ func webJob(ctx context.Context, c *httpx.Client, domain string, emit func(model
 			}
 		}
 		d := map[string]string{}
-		put(d, "interesting Disallow paths", list(dis, 30))
-		put(d, "sitemaps", strings.Join(maps, ", "))
+		util.Put(d, "interesting Disallow paths", list(dis, 30))
+		util.Put(d, "sitemaps", strings.Join(maps, ", "))
 		if len(d) > 0 {
 			emit(fnd("robots.txt", "web", base+"/robots.txt", 0.8, d))
 		}

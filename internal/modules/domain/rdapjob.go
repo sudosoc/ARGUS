@@ -2,12 +2,14 @@ package domain
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/rdap"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 func rdapJob(ctx context.Context, c *httpx.Client, domain string, emit func(models.Finding)) {
@@ -22,12 +24,12 @@ func rdapJob(ctx context.Context, c *httpx.Client, domain string, emit func(mode
 	if rec.Queried != domain {
 		d["note"] = "record found for parent domain " + rec.Queried
 	}
-	put(d, "registrar", rec.Registrar)
-	put(d, "created", rec.Created)
-	put(d, "expires", rec.Expires)
-	put(d, "last changed", rec.Updated)
-	put(d, "status", strings.Join(rec.Status, ", "))
-	put(d, "nameservers", strings.Join(rec.Nameservers, ", "))
+	util.Put(d, "registrar", rec.Registrar)
+	util.Put(d, "created", rec.Created)
+	util.Put(d, "expires", rec.Expires)
+	util.Put(d, "last changed", rec.Updated)
+	util.Put(d, "status", strings.Join(rec.Status, ", "))
+	util.Put(d, "nameservers", strings.Join(rec.Nameservers, ", "))
 	if rec.DNSSEC {
 		d["DNSSEC"] = "signed"
 	}
@@ -43,10 +45,10 @@ func rdapJob(ctx context.Context, c *httpx.Client, domain string, emit func(mode
 			role = "contact"
 		}
 		if role == "registrar" {
-			put(d, "registrar contact email", ct.Email)
+			util.Put(d, "registrar contact email", ct.Email)
 			continue
 		}
-		label := strings.TrimSpace(strings.Join(nonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · "))
+		label := strings.TrimSpace(strings.Join(util.NonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · "))
 		if label != "" {
 			d[role] = label
 		}
@@ -61,23 +63,13 @@ func rdapJob(ctx context.Context, c *httpx.Client, domain string, emit func(mode
 	emit(fnd("WHOIS / RDAP registration", "whois", "https://rdap.org/domain/"+rec.Queried, 0.95, d, ents...))
 }
 
-func nonEmpty(s ...string) []string {
-	var out []string
-	for _, v := range s {
-		if v != "" {
-			out = append(out, v)
-		}
-	}
-	return out
-}
-
 func humanAge(d time.Duration) string {
 	days := int(d.Hours() / 24)
 	if days < 60 {
-		return itoa(days) + " days"
+		return strconv.Itoa(days) + " days"
 	}
 	if days < 730 {
-		return itoa(days/30) + " months"
+		return strconv.Itoa(days/30) + " months"
 	}
-	return itoa(days/365) + " years"
+	return strconv.Itoa(days/365) + " years"
 }
