@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func ghJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
@@ -32,7 +32,7 @@ func githubByEmail(ctx context.Context, c *httpx.Client, email string, emit func
 			HTMLURL string `json:"html_url"`
 		} `json:"items"`
 	}
-	if ghJSON(ctx, c, "https://api.github.com/search/users?per_page=3&q="+url.QueryEscape(email+" in:email"), &users) && len(users.Items) > 0 {
+	if ghJSON(ctx, c, "https://api.github.com/search/users?per_page=10&q="+url.QueryEscape(email+" in:email"), &users) && len(users.Items) > 0 {
 		// GitHub's e-mail search is fuzzy: confirm each hit really publishes
 		// exactly this address before treating it as the owner's account.
 		var logins []string
@@ -74,7 +74,7 @@ func githubByEmail(ctx context.Context, c *httpx.Client, email string, emit func
 		} `json:"items"`
 	}
 	resp, err := c.Do(ctx, httpx.Request{
-		URL:     "https://api.github.com/search/commits?per_page=5&q=" + url.QueryEscape("author-email:"+email),
+		URL:     "https://api.github.com/search/commits?per_page=30&q=" + url.QueryEscape("author-email:"+email),
 		Timeout: 20 * time.Second,
 		Headers: map[string]string{"Accept": "application/vnd.github+json"},
 	})

@@ -20,8 +20,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Place is a geocoded location.
@@ -97,7 +98,7 @@ func (g *Geocoder) Geocode(ctx context.Context, q string) (*Place, bool) {
 		u = "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&accept-language=en&q=" + url.QueryEscape(q)
 	}
 	resp, err := g.c.Do(ctx, httpx.Request{URL: u, Timeout: 20 * time.Second,
-		Headers: map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)", "Accept": "application/json"}})
+		Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)", "Accept": "application/json"}})
 	var p *Place
 	if err == nil && resp.StatusCode == 200 {
 		p = parseNominatim(resp.Body)
@@ -213,7 +214,7 @@ func Analyse(points []models.GeoPoint, given string, givenPlace *Place) *models.
 		}
 		lbl := p.City
 		if lbl == "" {
-			lbl = firstNonEmpty(p.Region, p.Country, p.Label)
+			lbl = util.FirstNonEmpty(p.Region, p.Country, p.Label)
 		}
 		if p.City != "" && p.Country != "" {
 			lbl += ", " + p.Country
@@ -275,15 +276,6 @@ func addUniq(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
-}
-
-func firstNonEmpty(v ...string) string {
-	for _, x := range v {
-		if x != "" {
-			return x
-		}
-	}
-	return ""
 }
 
 // ------------------------------------------------------------- timezone

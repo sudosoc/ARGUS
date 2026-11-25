@@ -10,9 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // More social and creative platforms. None offers a keyless API, but every
@@ -96,7 +97,7 @@ func pageFor(ctx context.Context, c *httpx.Client, link, user string) (string, e
 	}
 	body := string(resp.Body)
 	meta := extract.ParseMeta(body)
-	title := firstNonEmpty(meta.OGTitle, meta.Title)
+	title := util.FirstNonEmpty(meta.OGTitle, meta.Title)
 	if title == "" || notFoundTitle.MatchString(title) {
 		return "", meta, "", false
 	}
@@ -111,15 +112,6 @@ func pageFor(ctx context.Context, c *httpx.Client, link, user string) (string, e
 		}
 	}
 	return body, meta, resp.FinalURL, true
-}
-
-func firstNonEmpty(v ...string) string {
-	for _, s := range v {
-		if s = strings.TrimSpace(s); s != "" {
-			return s
-		}
-	}
-	return ""
 }
 
 // cleanTitle strips the site name from "Jane Roe | Medium" style titles.
@@ -145,15 +137,15 @@ func ogProfile(ctx context.Context, c *httpx.Client, s ogSite, user string, emit
 	if !ok {
 		return
 	}
-	name := cleanTitle(firstNonEmpty(meta.OGTitle, meta.Title), s.name)
+	name := cleanTitle(util.FirstNonEmpty(meta.OGTitle, meta.Title), s.name)
 	d := map[string]string{"area": s.area}
-	put(d, "display name", name)
-	put(d, "about", html.UnescapeString(firstNonEmpty(meta.Description)))
+	util.Put(d, "display name", name)
+	util.Put(d, "about", html.UnescapeString(util.FirstNonEmpty(meta.Description)))
 	if img := meta.OGImage; img != "" && !strings.Contains(strings.ToLower(img), "default") {
-		put(d, "avatar", img)
+		util.Put(d, "avatar", img)
 	}
 	if strings.Contains(name, " ") && !strings.EqualFold(name, user) && len(name) < 60 {
-		put(d, "name", name)
+		util.Put(d, "name", name)
 	}
 	var ents []models.Entity
 	if n := d["name"]; n != "" {
@@ -199,17 +191,17 @@ func linkHubs(ctx context.Context, c *httpx.Client, user string, emit func(model
 			continue
 		}
 		d := map[string]string{"hub": h.name, "area": "link hub"}
-		name := cleanTitle(firstNonEmpty(meta.OGTitle, meta.Title), h.name)
-		put(d, "display name", name)
+		name := cleanTitle(util.FirstNonEmpty(meta.OGTitle, meta.Title), h.name)
+		util.Put(d, "display name", name)
 		if strings.Contains(name, " ") && len(name) < 60 {
-			put(d, "name", name)
+			util.Put(d, "name", name)
 		}
-		put(d, "about", html.UnescapeString(firstNonEmpty(meta.Description)))
+		util.Put(d, "about", html.UnescapeString(util.FirstNonEmpty(meta.Description)))
 		if img := meta.OGImage; img != "" {
-			put(d, "avatar", img)
+			util.Put(d, "avatar", img)
 		}
-		put(d, "linked accounts", strings.Join(accts, ", "))
-		put(d, "websites", strings.Join(append(social, sites...), ", "))
+		util.Put(d, "linked accounts", strings.Join(accts, ", "))
+		util.Put(d, "websites", strings.Join(append(social, sites...), ", "))
 		var ents []models.Entity
 		for _, p := range extract.Social(urls) {
 			if x, ok := userEnt(p.Handle, false); ok {
@@ -295,13 +287,13 @@ func hashnode(ctx context.Context, c *httpx.Client, user string, emit func(model
 	}
 	u := r.Data.User
 	d := map[string]string{"area": "writing"}
-	put(d, "display name", u.Name)
+	util.Put(d, "display name", u.Name)
 	if strings.Contains(u.Name, " ") {
-		put(d, "name", u.Name)
+		util.Put(d, "name", u.Name)
 	}
-	put(d, "about", u.Bio.Text)
-	put(d, "location", u.Location)
-	put(d, "avatar", u.Picture)
+	util.Put(d, "about", u.Bio.Text)
+	util.Put(d, "location", u.Location)
+	util.Put(d, "avatar", u.Picture)
 	var links []string
 	var ents []models.Entity
 	for _, v := range u.Social {
@@ -319,7 +311,7 @@ func hashnode(ctx context.Context, c *httpx.Client, user string, emit func(model
 			ents = append(ents, x)
 		}
 	}
-	put(d, "websites", strings.Join(links, ", "))
+	util.Put(d, "websites", strings.Join(links, ", "))
 	emit(profile("Hashnode profile", "https://hashnode.com/@"+esc(user), 0.65, d, ents...))
 }
 

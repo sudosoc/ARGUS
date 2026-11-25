@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // takeoverServices are third-party platforms where an unclaimed hostname can

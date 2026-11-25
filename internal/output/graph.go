@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // The entity/relationship view of a report, shared by GraphML and STIX.
@@ -117,7 +117,7 @@ func writeGraphML(w io.Writer, r *models.Report) error {
 	b.WriteString(`<key id="label" for="node" attr.name="label" attr.type="string"/>` + "\n")
 	b.WriteString(`<key id="strong" for="node" attr.name="strong" attr.type="boolean"/>` + "\n")
 	b.WriteString(`<key id="rel" for="edge" attr.name="relation" attr.type="string"/>` + "\n")
-	b.WriteString(`<graph id="rectool" edgedefault="directed">` + "\n")
+	b.WriteString(`<graph id="argus" edgedefault="directed">` + "\n")
 	for _, n := range nodes {
 		fmt.Fprintf(&b, `<node id="%s"><data key="type">%s</data><data key="label">%s</data><data key="strong">%t</data></node>`+"\n",
 			n.ID, xmlEsc(n.Type), xmlEsc(n.Label), n.Strong)
@@ -157,7 +157,7 @@ func writeEntitiesCSV(w io.Writer, r *models.Report) error {
 func writeSTIX(w io.Writer, r *models.Report) error {
 	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 	uuidOf := func(key string) string {
-		h := sha1.Sum([]byte("rectool:" + key))
+		h := sha1.Sum([]byte("argus:" + key))
 		x := hex.EncodeToString(h[:16])
 		return x[0:8] + "-" + x[8:12] + "-5" + x[13:16] + "-a" + x[17:20] + "-" + x[20:32]
 	}

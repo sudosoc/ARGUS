@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 // Saved cases: every finished scan is stored as a JSON report (0600) so a
@@ -25,11 +25,11 @@ type caseStore struct{ dir string }
 
 // DefaultCaseDir picks the per-user data directory for saved cases.
 func DefaultCaseDir() string {
-	if d := os.Getenv("RECTOOL_CASES"); d != "" {
+	if d := os.Getenv("ARGUS_CASES"); d != "" {
 		return d
 	}
 	if d, err := os.UserConfigDir(); err == nil {
-		return filepath.Join(d, "rectool", "cases")
+		return filepath.Join(d, "argus", "cases")
 	}
 	return ""
 }
@@ -101,8 +101,8 @@ func (c *caseStore) list() []caseInfo {
 		}
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(names)))
-	if len(names) > 100 {
-		names = names[:100]
+	if len(names) > 2000 {
+		names = names[:2000]
 	}
 	for _, id := range names {
 		rep, err := c.load(id)

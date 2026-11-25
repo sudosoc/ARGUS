@@ -17,11 +17,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Config tunes the module.
@@ -194,7 +195,7 @@ func finding(source, category string, conf float64, rec models.Record, t models.
 	set("emails", strings.Join(rec.Emails, ", "))
 	set("phones", strings.Join(rec.Phones, ", "))
 	set("websites", strings.Join(rec.Websites, ", "))
-	set("about", clip(rec.Bio, 400))
+	set("about", util.Clip(rec.Bio, 400))
 	set("avatar", rec.Photo)
 	for k, v := range rec.IDs {
 		set(k+" id", v)
@@ -243,14 +244,6 @@ func domainOf(raw string) string {
 		return ""
 	}
 	return h
-}
-
-func clip(s string, n int) string {
-	s = strings.TrimSpace(s)
-	if len(s) > n {
-		return s[:n] + "…"
-	}
-	return s
 }
 
 func errFinding(source string, msg string) models.Finding {

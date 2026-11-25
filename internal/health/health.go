@@ -1,14 +1,15 @@
-// Package health probes the public services rectool depends on, so an empty
+// Package health probes the public services argus depends on, so an empty
 // result can be told apart from a source that is down or blocking.
 package health
 
 import (
 	"context"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
+	"github.com/sudosoc/argus/internal/httpx"
 )
 
 // Source is one service and a cheap request that shows it is working.
@@ -40,7 +41,8 @@ var Sources = []Source{
 	{"XposedOrNot", "breach", "https://api.xposedornot.com/v1/check-email/test@example.com"},
 	{"GLEIF", "company", "https://api.gleif.org/api/v1/lei-records?page%5Bsize%5D=1"},
 	{"crt.sh", "domain", "https://crt.sh/?q=example.com&output=json&exclude=expired"},
-	{"WhatsMyName list", "social", "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"},
+	{"keys.openpgp.org", "keys (PGP)", "https://keys.openpgp.org/"},
+	{"grep.app", "codesearch", "https://grep.app/api/search?q=argus"},
 }
 
 // Result is the outcome of one probe.
@@ -66,7 +68,7 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 			start := time.Now()
 			r := Result{Name: s.Name, Used: s.Used}
 			resp, err := c.Do(ctx, httpx.Request{URL: s.URL, Timeout: 15 * time.Second, MaxBody: 64 << 10,
-				Headers: map[string]string{"User-Agent": "rectool/1.0 (+https://github.com/sudosoc/rectool)"}})
+				Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)"}})
 			r.MS = time.Since(start).Milliseconds()
 			switch {
 			case err != nil:
@@ -76,7 +78,7 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 				// 404 from lookup-style APIs (e.g. no breaches) still proves the service answers
 				r.OK = resp.StatusCode < 400 || resp.StatusCode == 404
 				if !r.OK {
-					r.Error = "HTTP " + itoa(resp.StatusCode)
+					r.Error = "HTTP " + strconv.Itoa(resp.StatusCode)
 				}
 			}
 			out[i] = r
@@ -85,18 +87,4 @@ func Check(ctx context.Context, c *httpx.Client) []Result {
 	wg.Wait()
 	sort.SliceStable(out, func(a, b int) bool { return !out[a].OK && out[b].OK })
 	return out
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [10]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(b[i:])
 }

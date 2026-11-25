@@ -12,10 +12,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // fake is a scripted module.
@@ -393,4 +393,39 @@ func TestLocalVariants(t *testing.T) {
 	if !found["johndoe"] || !found["john_doe"] {
 		t.Fatalf("got %v", got)
 	}
+}
+
+func TestToolRunsAreStoredWholeAndNotCounted(t *testing.T) {
+	long := strings.Repeat("line of tool output\n", 5000)
+	eng := New(Config{Workers: 2, Modules: []string{"fake"}}, nil)
+	eng.Register(fakeToolRunModule{out: long})
+	rep, err := eng.Run(context.Background(), models.Target{Username: "bob"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.ToolRuns) != 1 || rep.ToolRuns[0].Output != long || rep.ToolRuns[0].Tool != "faketool" || rep.ToolRuns[0].Command != "faketool -x" {
+		t.Fatalf("raw output must be kept in full: %+v", rep.ToolRuns)
+	}
+	for _, f := range rep.Findings {
+		if f.Category == "toolrun" {
+			t.Error("raw output must not appear as a finding")
+		}
+	}
+	for _, m := range rep.Modules {
+		if m.Name == "fake" && (m.Checked != 1 || m.Found != 1) {
+			t.Errorf("the raw record must not be counted as a check or a hit: %+v", m)
+		}
+	}
+}
+
+type fakeToolRunModule struct{ out string }
+
+func (fakeToolRunModule) Name() string              { return "fake" }
+func (fakeToolRunModule) Description() string       { return "" }
+func (fakeToolRunModule) CanRun(models.Target) bool { return true }
+func (m fakeToolRunModule) Scan(_ context.Context, _ models.Target, _ scanner.Deps, emit func(models.Finding)) error {
+	emit(models.Finding{Source: "faketool", Category: "toolrun", Status: models.StatusFound,
+		Details: map[string]string{"command": "faketool -x", "output": m.out, "bytes": "100000"}})
+	emit(models.Finding{Source: "real", Category: "x", Status: models.StatusFound})
+	return nil
 }

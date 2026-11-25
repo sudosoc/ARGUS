@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/media"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/media"
 )
 
 const testToken = "0123456789abcdef0123456789abcdef"
@@ -58,7 +58,7 @@ func do(t *testing.T, method, url, body string, hdr map[string]string) *http.Res
 }
 
 func authed() map[string]string {
-	return map[string]string{"Cookie": cookieName + "=" + testToken, "X-Requested-With": "rectool", "Content-Type": "application/json"}
+	return map[string]string{"Cookie": cookieName + "=" + testToken, "X-Requested-With": "argus", "Content-Type": "application/json"}
 }
 
 func TestAuthAndCSRF(t *testing.T) {

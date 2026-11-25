@@ -87,8 +87,24 @@ type Report struct {
 	Geo         *GeoSummary       `json:"geo,omitempty"`   // where the subject probably is, with evidence
 	ManualLeads []Lead            `json:"manual_leads,omitempty"`
 	Failures    []Failure         `json:"failures,omitempty"`
-	Settings    map[string]string `json:"settings,omitempty"` // how the run was configured, for reproducibility
+	ToolRuns    []ToolRun         `json:"tool_runs,omitempty"` // the complete, unparsed output of every external tool and raw check list
+	Settings    map[string]string `json:"settings,omitempty"`  // how the run was configured, for reproducibility
 	Integrity   *Integrity        `json:"integrity,omitempty"`
+}
+
+// ToolRun is the complete, unfiltered output of one external tool run (or the
+// full table of a built-in check). Parsers turn output into findings, but the
+// raw text is always kept so nothing a tool printed is ever lost.
+type ToolRun struct {
+	Tool      string `json:"tool"`
+	Command   string `json:"command,omitempty"`
+	Output    string `json:"output"`
+	Stderr    string `json:"stderr,omitempty"`
+	Error     string `json:"error,omitempty"`
+	Via       string `json:"via,omitempty"`
+	Bytes     int    `json:"bytes"`
+	Truncated bool   `json:"truncated,omitempty"` // the tool printed more than the capture limit
+	Millis    int64  `json:"duration_ms,omitempty"`
 }
 
 // Failure is one check that did not complete.
@@ -123,19 +139,20 @@ func (r *Report) Hits() []Finding {
 // perceptual hashes match share a Group number (> 0): the same picture is used
 // in several places, which is strong evidence that the accounts belong together.
 type Photo struct {
-	URL         string   `json:"url"`
-	Sources     []string `json:"sources"`
-	ContentType string   `json:"content_type,omitempty"`
-	Bytes       int      `json:"bytes"`
-	Width       int      `json:"width"`
-	Height      int      `json:"height"`
-	SHA256      string   `json:"sha256"`
-	DHash       string   `json:"dhash,omitempty"`
-	GPS         string   `json:"gps,omitempty"`    // "lat,lon" read from the file's EXIF
-	Taken       string   `json:"taken,omitempty"`  // EXIF capture time
-	Camera      string   `json:"camera,omitempty"` // EXIF make and model
-	Group       int      `json:"group,omitempty"`
-	Error       string   `json:"error,omitempty"`
+	URL         string            `json:"url"`
+	Sources     []string          `json:"sources"`
+	ContentType string            `json:"content_type,omitempty"`
+	Bytes       int               `json:"bytes"`
+	Width       int               `json:"width"`
+	Height      int               `json:"height"`
+	SHA256      string            `json:"sha256"`
+	DHash       string            `json:"dhash,omitempty"`
+	GPS         string            `json:"gps,omitempty"`    // "lat,lon" read from the file's EXIF
+	Taken       string            `json:"taken,omitempty"`  // EXIF capture time
+	Camera      string            `json:"camera,omitempty"` // EXIF make and model
+	Meta        map[string]string `json:"meta,omitempty"`   // extra tags read with exiftool (software, author, serial numbers…)
+	Group       int               `json:"group,omitempty"`
+	Error       string            `json:"error,omitempty"`
 }
 
 // Lead is a manual follow-up: a source that cannot be queried automatically

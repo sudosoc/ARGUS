@@ -1,4 +1,4 @@
-// Package web serves rectool's browser UI: a small JSON API, live results over
+// Package web serves argus's browser UI: a small JSON API, live results over
 // Server-Sent Events, and an embedded single-page front end (no CDN, no
 // external assets).
 //
@@ -26,19 +26,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/app"
-	"github.com/sudosoc/rectool/internal/engine"
-	"github.com/sudosoc/rectool/internal/health"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/output"
+	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/engine"
+	"github.com/sudosoc/argus/internal/health"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/modules/social"
+	"github.com/sudosoc/argus/internal/output"
 )
 
 //go:embed static
 var staticFS embed.FS
 
-const cookieName = "rectool_session"
+const cookieName = "argus_session"
 
 // Config configures the server.
 type Config struct {
@@ -58,6 +59,7 @@ type Server struct {
 	cases    *caseStore
 	modules  []moduleInfo
 	siteCnt  int
+	tiers    map[string]int // username sites per depth: core, extended, all
 	loopback bool
 	handler  http.Handler
 	img      *httpx.Client // fetches profile pictures for the image proxy
@@ -111,6 +113,12 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 		s.modules = append(s.modules, moduleInfo{sc.Name(), sc.Description()})
 	}
 	s.siteCnt = built.SocialSites
+	s.tiers = map[string]int{}
+	for name, tier := range map[string]int{"core": 1, "extended": 2, "all": 3} {
+		if sm, err := social.New(social.Config{SitesFile: app.ResolveSites(cfg.Base.SitesFile), Tier: tier}); err == nil {
+			s.tiers[name] = sm.SiteCount()
+		}
+	}
 	s.mgr = newManager(ctx, cfg.Base, cfg.MaxRunning, cfg.ReportDir)
 	s.cases = &caseStore{dir: cfg.CaseDir}
 	s.mgr.cases = s.cases
@@ -228,10 +236,10 @@ func (s *Server) secure(next http.Handler) http.Handler {
 		}
 
 		c, err := r.Cookie(cookieName)
-		if (err != nil || !s.tokenOK(c.Value)) && !s.tokenOK(r.Header.Get("X-Rectool-Token")) {
+		if (err != nil || !s.tokenOK(c.Value)) && !s.tokenOK(r.Header.Get("X-Argus-Token")) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintln(w, "rectool: unauthorized. Open the URL printed in the terminal (it contains ?token=…).")
+			fmt.Fprintln(w, "argus: unauthorized. Open the URL printed in the terminal (it contains ?token=…).")
 			return
 		}
 
@@ -244,7 +252,7 @@ func (s *Server) secure(next http.Handler) http.Handler {
 					return
 				}
 			}
-			if r.Header.Get("X-Requested-With") != "rectool" {
+			if r.Header.Get("X-Requested-With") != "argus" {
 				http.Error(w, "missing X-Requested-With header", http.StatusForbidden)
 				return
 			}
@@ -285,7 +293,7 @@ func writeErr(w http.ResponseWriter, status int, msg string) {
 
 func (s *Server) handleInfo(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt,
+		"version": engine.Version, "modules": s.modules, "social_sites": s.siteCnt, "site_tiers": s.tiers,
 	})
 }
 
@@ -361,7 +369,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", ct+"; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="rectool_`+sc.ID+"."+ext+`"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="argus_`+sc.ID+"."+ext+`"`)
 	_ = output.Render(w, rep, format)
 }
 

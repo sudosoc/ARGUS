@@ -1,4 +1,4 @@
-// Package models holds the data structures shared by every layer of rectool.
+// Package models holds the data structures shared by every layer of argus.
 package models
 
 import "strings"

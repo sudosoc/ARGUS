@@ -4,9 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sudosoc/rectool/internal/geo"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/geo"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // blueskySearch looks people up by name among Bluesky's public profiles.
@@ -22,7 +23,7 @@ func blueskySearch(ctx context.Context, c *httpx.Client, t models.Target, emit f
 			Avatar      string `json:"avatar"`
 		} `json:"actors"`
 	}
-	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors?limit=15&q="+esc(t.FullName), nil, &r) {
+	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors?limit=100&q="+esc(t.FullName), nil, &r) {
 		return
 	}
 	n := 0
@@ -31,7 +32,7 @@ func blueskySearch(ctx context.Context, c *httpx.Client, t models.Target, emit f
 			continue
 		}
 		n++
-		rec := models.Record{Platform: "Bluesky", URL: "https://bsky.app/profile/" + a.Handle, Name: a.DisplayName, Bio: clip(a.Description, 400),
+		rec := models.Record{Platform: "Bluesky", URL: "https://bsky.app/profile/" + a.Handle, Name: a.DisplayName, Bio: util.Clip(a.Description, 400),
 			Photo: a.Avatar, Usernames: []string{"bluesky:" + a.Handle}, Self: true}
 		if ps := geo.PlacesInText(a.Description); len(ps) > 0 {
 			rec.Location = ps[0]
@@ -60,7 +61,7 @@ func mastodonSearch(ctx context.Context, c *httpx.Client, t models.Target, emit 
 			Bot bool `json:"bot"`
 		} `json:"accounts"`
 	}
-	if !getJSON(ctx, c, "https://mastodon.social/api/v2/search?type=accounts&limit=10&q="+esc(t.FullName), nil, &r) {
+	if !getJSON(ctx, c, "https://mastodon.social/api/v2/search?type=accounts&limit=40&q="+esc(t.FullName), nil, &r) {
 		return
 	}
 	n := 0
@@ -69,7 +70,7 @@ func mastodonSearch(ctx context.Context, c *httpx.Client, t models.Target, emit 
 			continue
 		}
 		n++
-		rec := models.Record{Platform: "Mastodon", URL: a.URL, Name: a.Display, Bio: clip(stripHTML(a.Note), 400), Photo: a.Avatar,
+		rec := models.Record{Platform: "Mastodon", URL: a.URL, Name: a.Display, Bio: util.Clip(stripHTML(a.Note), 400), Photo: a.Avatar,
 			Usernames: []string{"mastodon:" + a.Acct}, Self: true}
 		for _, f := range a.Fields {
 			v := stripHTML(f.Value)

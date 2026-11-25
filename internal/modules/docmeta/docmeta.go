@@ -17,9 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 type Scanner struct{}
@@ -45,7 +45,7 @@ func (s *Scanner) CanRun(t models.Target) bool {
 }
 
 const (
-	maxDocs  = 12
+	maxDocs  = 100
 	maxBytes = 8 << 20
 )
 

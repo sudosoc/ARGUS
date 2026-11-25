@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 func ent(typ, v string, strong bool) models.Entity {

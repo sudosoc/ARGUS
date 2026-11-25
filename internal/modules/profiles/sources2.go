@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/extract"
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/extract"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 func init() {
@@ -47,17 +48,17 @@ func gravatarUser(ctx context.Context, c *httpx.Client, user string, emit func(m
 			} `json:"accounts"`
 		} `json:"entry"`
 	}
-	if !getJSON(ctx, c, "https://gravatar.com/"+esc(user)+".json", &r) || len(r.Entry) == 0 {
+	if !util.GetJSON(ctx, c, "https://gravatar.com/"+esc(user)+".json", &r) || len(r.Entry) == 0 {
 		return
 	}
 	e := r.Entry[0]
 	d := map[string]string{}
-	put(d, "display name", e.DisplayName)
-	put(d, "name", e.Name.Formatted)
-	put(d, "location", e.CurrentLocation)
-	put(d, "about", e.AboutMe)
+	util.Put(d, "display name", e.DisplayName)
+	util.Put(d, "name", e.Name.Formatted)
+	util.Put(d, "location", e.CurrentLocation)
+	util.Put(d, "about", e.AboutMe)
 	if e.ThumbnailURL != "" {
-		put(d, "avatar", e.ThumbnailURL+"?s=512")
+		util.Put(d, "avatar", e.ThumbnailURL+"?s=512")
 	}
 	var ents []models.Entity
 	var acc, sites []string
@@ -73,8 +74,8 @@ func gravatarUser(ctx context.Context, c *httpx.Client, user string, emit func(m
 			ents = append(ents, x)
 		}
 	}
-	put(d, "linked accounts", strings.Join(acc, ", "))
-	put(d, "websites", strings.Join(sites, ", "))
+	util.Put(d, "linked accounts", strings.Join(acc, ", "))
+	util.Put(d, "websites", strings.Join(sites, ", "))
 	if strings.Contains(e.Name.Formatted, " ") {
 		ents = append(ents, models.Entity{Type: models.EntName, Value: e.Name.Formatted})
 	}
@@ -96,14 +97,14 @@ func bluesky(ctx context.Context, c *httpx.Client, user string, emit func(models
 		Posts       int    `json:"postsCount"`
 		CreatedAt   string `json:"createdAt"`
 	}
-	if !getJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor="+esc(handle), &r) || r.Handle == "" {
+	if !util.GetJSON(ctx, c, "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor="+esc(handle), &r) || r.Handle == "" {
 		return
 	}
 	d := map[string]string{"followers": strconv.Itoa(r.Followers), "following": strconv.Itoa(r.Follows), "posts": strconv.Itoa(r.Posts)}
-	put(d, "display name", r.DisplayName)
-	put(d, "bio", r.Description)
-	put(d, "created", r.CreatedAt)
-	put(d, "avatar", r.Avatar)
+	util.Put(d, "display name", r.DisplayName)
+	util.Put(d, "bio", r.Description)
+	util.Put(d, "created", r.CreatedAt)
+	util.Put(d, "avatar", r.Avatar)
 	var ents []models.Entity
 	for _, e := range emailsIn(r.Description) {
 		ents = append(ents, models.Entity{Type: models.EntEmail, Value: e, Strong: true})
@@ -124,13 +125,13 @@ func wikipediaUser(ctx context.Context, c *httpx.Client, user string, emit func(
 			} `json:"users"`
 		} `json:"query"`
 	}
-	if !getJSON(ctx, c, "https://en.wikipedia.org/w/api.php?action=query&list=users&format=json&usprop=registration%7Ceditcount%7Cgroups&ususers="+esc(user), &r) ||
+	if !util.GetJSON(ctx, c, "https://en.wikipedia.org/w/api.php?action=query&list=users&format=json&usprop=registration%7Ceditcount%7Cgroups&ususers="+esc(user), &r) ||
 		len(r.Query.Users) == 0 || r.Query.Users[0].Missing != nil || r.Query.Users[0].Invalid != nil {
 		return
 	}
 	u := r.Query.Users[0]
 	d := map[string]string{"edits": strconv.Itoa(u.EditCount), "registered": u.Registration}
-	put(d, "groups", strings.Join(u.Groups, ", "))
+	util.Put(d, "groups", strings.Join(u.Groups, ", "))
 	emit(profile("Wikipedia user", "https://en.wikipedia.org/wiki/User:"+esc(user), 0.75, d))
 }
 
@@ -154,11 +155,11 @@ func steam(ctx context.Context, c *httpx.Client, user string, emit func(models.F
 		return
 	}
 	d := map[string]string{"steam id": r.SteamID64, "member since": r.MemberSince}
-	put(d, "display name", r.SteamID)
-	put(d, "real name", r.RealName)
-	put(d, "location", r.Location)
-	put(d, "summary", stripTags(r.Summary))
-	put(d, "avatar", r.AvatarFull)
+	util.Put(d, "display name", r.SteamID)
+	util.Put(d, "real name", r.RealName)
+	util.Put(d, "location", r.Location)
+	util.Put(d, "summary", stripTags(r.Summary))
+	util.Put(d, "avatar", r.AvatarFull)
 	var ents []models.Entity
 	if strings.Contains(r.RealName, " ") {
 		ents = append(ents, models.Entity{Type: models.EntName, Value: r.RealName})
@@ -185,19 +186,19 @@ func codeforces(ctx context.Context, c *httpx.Client, user string, emit func(mod
 			TitlePhoto   string `json:"titlePhoto"`
 		} `json:"result"`
 	}
-	if !getJSON(ctx, c, "https://codeforces.com/api/user.info?handles="+esc(user), &r) || r.Status != "OK" || len(r.Result) == 0 {
+	if !util.GetJSON(ctx, c, "https://codeforces.com/api/user.info?handles="+esc(user), &r) || r.Status != "OK" || len(r.Result) == 0 {
 		return
 	}
 	u := r.Result[0]
 	d := map[string]string{"rating": strconv.Itoa(u.Rating), "registered": time.Unix(u.Registered, 0).UTC().Format("2006-01-02")}
-	put(d, "name", strings.TrimSpace(u.FirstName+" "+u.LastName))
-	put(d, "location", strings.TrimSpace(strings.Trim(u.City+", "+u.Country, ", ")))
-	put(d, "company", u.Organization)
-	put(d, "rank", u.Rank)
+	util.Put(d, "name", strings.TrimSpace(u.FirstName+" "+u.LastName))
+	util.Put(d, "location", strings.TrimSpace(strings.Trim(u.City+", "+u.Country, ", ")))
+	util.Put(d, "company", u.Organization)
+	util.Put(d, "rank", u.Rank)
 	if strings.HasPrefix(u.TitlePhoto, "//") {
 		u.TitlePhoto = "https:" + u.TitlePhoto
 	}
-	put(d, "avatar", u.TitlePhoto)
+	util.Put(d, "avatar", u.TitlePhoto)
 	var ents []models.Entity
 	if n := strings.TrimSpace(u.FirstName + " " + u.LastName); strings.Contains(n, " ") {
 		ents = append(ents, models.Entity{Type: models.EntName, Value: n})
@@ -218,17 +219,17 @@ func codeberg(ctx context.Context, c *httpx.Client, user string, emit func(model
 		HTMLURL     string `json:"html_url"`
 		AvatarURL   string `json:"avatar_url"`
 	}
-	if !getJSON(ctx, c, "https://codeberg.org/api/v1/users/"+esc(user), &r) || r.Login == "" {
+	if !util.GetJSON(ctx, c, "https://codeberg.org/api/v1/users/"+esc(user), &r) || r.Login == "" {
 		return
 	}
 	d := map[string]string{"followers": strconv.Itoa(r.Followers)}
-	put(d, "name", r.FullName)
-	put(d, "location", r.Location)
-	put(d, "website", r.Website)
-	put(d, "bio", r.Description)
-	put(d, "created", r.Created)
-	put(d, "avatar", r.AvatarURL)
-	put(d, "public email", r.Email)
+	util.Put(d, "name", r.FullName)
+	util.Put(d, "location", r.Location)
+	util.Put(d, "website", r.Website)
+	util.Put(d, "bio", r.Description)
+	util.Put(d, "created", r.Created)
+	util.Put(d, "avatar", r.AvatarURL)
+	util.Put(d, "public email", r.Email)
 	var ents []models.Entity
 	if e, ok := emailEnt(r.Email, true); ok {
 		ents = append(ents, e)
@@ -253,13 +254,13 @@ func huggingFace(ctx context.Context, c *httpx.Client, user string, emit func(mo
 		Datasets  int    `json:"numDatasets"`
 		Spaces    int    `json:"numSpaces"`
 	}
-	if !getJSON(ctx, c, "https://huggingface.co/api/users/"+esc(user)+"/overview", &r) || r.Name == "" {
+	if !util.GetJSON(ctx, c, "https://huggingface.co/api/users/"+esc(user)+"/overview", &r) || r.Name == "" {
 		return
 	}
 	d := map[string]string{"models": strconv.Itoa(r.Models), "datasets": strconv.Itoa(r.Datasets), "spaces": strconv.Itoa(r.Spaces)}
-	put(d, "name", r.FullName)
-	put(d, "created", r.Created)
-	put(d, "avatar", r.AvatarURL)
+	util.Put(d, "name", r.FullName)
+	util.Put(d, "created", r.Created)
+	util.Put(d, "avatar", r.AvatarURL)
 	var ents []models.Entity
 	if strings.Contains(r.FullName, " ") {
 		ents = append(ents, models.Entity{Type: models.EntName, Value: r.FullName})
@@ -275,12 +276,12 @@ func cratesIO(ctx context.Context, c *httpx.Client, user string, emit func(model
 			URL   string `json:"url"`
 		} `json:"user"`
 	}
-	if !getJSON(ctx, c, "https://crates.io/api/v1/users/"+esc(user), &r) || r.User.Login == "" {
+	if !util.GetJSON(ctx, c, "https://crates.io/api/v1/users/"+esc(user), &r) || r.User.Login == "" {
 		return
 	}
 	d := map[string]string{}
-	put(d, "name", r.User.Name)
-	put(d, "profile", r.User.URL)
+	util.Put(d, "name", r.User.Name)
+	util.Put(d, "profile", r.User.URL)
 	var ents []models.Entity
 	if strings.Contains(r.User.Name, " ") {
 		ents = append(ents, models.Entity{Type: models.EntName, Value: r.User.Name})
@@ -300,8 +301,8 @@ func telegram(ctx context.Context, c *httpx.Client, user string, emit func(model
 		return
 	}
 	d := map[string]string{"display name": title}
-	put(d, "bio", m.Description)
-	put(d, "avatar", m.OGImage)
+	util.Put(d, "bio", m.Description)
+	util.Put(d, "avatar", m.OGImage)
 	var ents []models.Entity
 	for _, e := range emailsIn(m.Description) {
 		ents = append(ents, models.Entity{Type: models.EntEmail, Value: e, Strong: true})

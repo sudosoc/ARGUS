@@ -6,18 +6,16 @@ package profiles
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/intel"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/intel"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Scanner is the profile-enrichment module.
@@ -56,10 +54,7 @@ var enrichers = []enricher{
 }
 
 func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emit func(models.Finding)) error {
-	users := t.Usernames()
-	if len(users) > 3 {
-		users = users[:3]
-	}
+	users := t.Usernames() // every username and alias, not just the first few
 	total := len(users) * len(enrichers)
 
 	// Findings are buffered per username so they can be cross-checked (and
@@ -109,21 +104,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 }
 
 // ---- helpers ---------------------------------------------------------------
-
-func getJSON(ctx context.Context, c *httpx.Client, u string, out any) bool {
-	resp, err := c.Do(ctx, httpx.Request{URL: u, Timeout: 15 * time.Second,
-		Headers: map[string]string{"Accept": "application/json"}})
-	if err != nil || resp.StatusCode != 200 {
-		return false
-	}
-	return json.Unmarshal(resp.Body, &out) == nil
-}
-
-func put(d map[string]string, k, v string) {
-	if v = strings.TrimSpace(v); v != "" {
-		d[k] = v
-	}
-}
 
 func profile(source, link string, conf float64, d map[string]string, ents ...models.Entity) models.Finding {
 	return models.Finding{Source: source, Category: "profile", URL: link, Status: models.StatusFound,

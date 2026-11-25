@@ -13,10 +13,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/modules/dorks"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/modules/dorks"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 // Config tunes the module.
@@ -74,9 +74,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		pi := parsePhone(t.Phone)
 		m := pi.matcher()
 		vs := pi.variants()
-		if len(vs) > 3 {
-			vs = vs[:3]
-		}
 		for _, v := range vs {
 			jobs = append(jobs, func() { s.mentions(ctx, d.HTTP, "phone", `"`+v+`"`, m, seen, emit) })
 		}

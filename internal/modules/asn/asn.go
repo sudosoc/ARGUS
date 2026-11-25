@@ -12,10 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/rdap"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/rdap"
+	"github.com/sudosoc/argus/internal/scanner"
+	"github.com/sudosoc/argus/internal/util"
 )
 
 // Scanner is the ASN module.
@@ -96,9 +97,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		sort.Strings(v4)
 		sort.Strings(v6)
 		show := func(l []string) string {
-			if len(l) > 40 {
-				return strings.Join(l[:40], ", ") + " … (+" + strconv.Itoa(len(l)-40) + " more)"
-			}
 			return strings.Join(l, ", ")
 		}
 		det := map[string]string{"IPv4 prefixes": strconv.Itoa(len(v4)), "IPv6 prefixes": strconv.Itoa(len(v6))}
@@ -133,9 +131,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 			}
 		}
 		cut := func(l []string) string {
-			if len(l) > 25 {
-				return strings.Join(l[:25], ", ") + " …"
-			}
 			return strings.Join(l, ", ")
 		}
 		emit(models.Finding{Source: asn + " BGP neighbours", Category: "network", Status: models.StatusFound, Confidence: 0.85,
@@ -164,7 +159,7 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		seen := map[string]bool{}
 		for _, ct := range n.Contacts {
 			role := strings.Join(ct.Roles, "/")
-			label := strings.Join(nonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
+			label := strings.Join(util.NonEmpty(ct.Name, ct.Org, ct.Email, ct.Phone), " · ")
 			if label != "" {
 				det[role] = label
 			}
@@ -179,14 +174,4 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 
 	wg.Wait()
 	return ctx.Err()
-}
-
-func nonEmpty(s ...string) []string {
-	var out []string
-	for _, v := range s {
-		if v != "" {
-			out = append(out, v)
-		}
-	}
-	return out
 }

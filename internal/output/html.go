@@ -1,6 +1,7 @@
 package output
 
 import (
+	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -9,9 +10,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/media"
-	"github.com/sudosoc/rectool/internal/models"
+	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
 )
+
+//go:embed assets/argus-head.webp
+var logoHead []byte
+
+// logoURI is the emblem as a data: URL so the report stays one self-contained file.
+// html/template only allows data: URLs that are typed template.URL.
+var logoURI = template.URL("data:image/webp;base64," + base64.StdEncoding.EncodeToString(logoHead))
 
 // maxEmbedded caps the total size of pictures inlined into the HTML report.
 const maxEmbedded = 8 << 20
@@ -40,6 +48,7 @@ type htmlCategory struct {
 }
 
 type htmlData struct {
+	Logo       template.URL
 	R          *models.Report
 	Started    string
 	Duration   string
@@ -50,7 +59,6 @@ type htmlData struct {
 	Gallery    []htmlPhoto
 	Categories []htmlCategory
 	Failures   []models.Failure
-	MoreFail   int
 	Settings   [][2]string
 }
 
@@ -77,7 +85,7 @@ func dataURI(img *media.Image, budget *int) (template.URL, bool) {
 
 func writeHTML(w io.Writer, r *models.Report) error {
 	budget := maxEmbedded
-	d := htmlData{R: r, Started: r.StartedAt.Format(time.RFC1123), Duration: r.FinishedAt.Sub(r.StartedAt).Round(time.Second).String()}
+	d := htmlData{Logo: logoURI, R: r, Started: r.StartedAt.Format(time.RFC1123), Duration: r.FinishedAt.Sub(r.StartedAt).Round(time.Second).String()}
 	t := r.Target
 	for _, kv := range [][2]string{{"Full name", t.FullName}, {"Username", t.Username}, {"E-mail", t.Email}, {"Phone", t.Phone},
 		{"Domain", t.Domain}, {"IP", t.IP}, {"ASN", t.ASN}, {"Company", t.Company}, {"Wallet", t.Wallet}, {"Location", t.Location},
@@ -154,10 +162,6 @@ func writeHTML(w io.Writer, r *models.Report) error {
 		d.Notes = append(d.Notes, [2]string{noteTitle(k), r.Notes[k]})
 	}
 	d.Failures = r.Failures
-	if len(d.Failures) > 80 {
-		d.MoreFail = len(d.Failures) - 80
-		d.Failures = d.Failures[:80]
-	}
 	skeys := make([]string, 0, len(r.Settings))
 	for k := range r.Settings {
 		skeys = append(skeys, k)
@@ -185,26 +189,31 @@ var reportTmpl = template.Must(template.New("report").Funcs(template.FuncMap{
 }).Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>rectool report</title>
+<title>SUDOSOC ARGUS report</title>
 <style>
-:root{--bg:#0e1116;--fg:#d7dde5;--mut:#8b96a5;--card:#161b22;--line:#262e38;--acc:#3fb6a8;--ok:#3fb950;--warn:#d29922}
-@media print{:root{--bg:#fff;--fg:#111;--mut:#555;--card:#fff;--line:#ccc;--acc:#0a6;--ok:#070;--warn:#a60}a{color:#000}}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
-main{max-width:960px;margin:0 auto;padding:24px 16px}
-h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 10px;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
+:root{--bg:#0a0a0b;--well:#0e0e10;--card:#17171a;--card2:#1e1e22;--line:#2f2f35;--fg:#e8e6e1;--mut:#9a9aa2;--sec:#b4b4ba;--acc:#8a141b;--emph:#e2686e;--emph2:#c8353d}
+@media (prefers-color-scheme:light){:root{--bg:#e8e6e1;--well:#dedcd6;--card:#f3f1ed;--card2:#eae8e3;--line:#cdcac3;--fg:#17171a;--mut:#5a5a62;--sec:#45454c;--acc:#8a141b;--emph:#a3212a;--emph2:#8a141b}}
+@media print{:root{--bg:#fff;--well:#f4f2ee;--card:#fff;--card2:#f4f2ee;--line:#bdbbb5;--fg:#111;--mut:#555;--sec:#333;--emph:#8a141b;--emph2:#8a141b}a{color:#111}body{font-size:11px}h2{break-after:avoid}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans","Noto Sans Arabic",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:960px;margin:0 auto;padding:24px 16px;border-top:3px solid var(--acc)}
+.brandrow{display:flex;align-items:center;gap:12px;margin-bottom:10px}.emblem{display:grid;place-items:center;height:48px;padding:0 6px;background:#0a0a0b;border-radius:8px;border:1px solid var(--line)}.emblem img{height:40px;width:auto;display:block}.brandrow .brand{margin:0}
+.brand{font-size:12px;letter-spacing:.2em;color:var(--sec);margin:0 0 6px}.brand b{font-size:15px;letter-spacing:.16em;color:var(--fg);font-weight:800;margin-left:6px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin:28px 0 10px;color:var(--sec);border-bottom:1px solid var(--line);padding-bottom:5px}
 h3{font-size:14px;margin:14px 0 6px}
-.mut{color:var(--mut)}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;break-inside:avoid}
+.mut{color:var(--mut)}.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:10px 0;break-inside:avoid}
 table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:3px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--mut);font-weight:600;width:150px}
-.pill{display:inline-block;padding:1px 8px;border-radius:99px;border:1px solid var(--line);font-size:12px;margin-left:6px}
-.ok{color:var(--ok)}.warn{color:var(--warn)}
-.fact{margin:2px 0}.src{color:var(--mut);font-size:12px}
-.photos img{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line);margin:0 8px 8px 0}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;border:1px solid var(--line);font-size:12px;margin-left:6px;background:var(--card2)}
+.ok{font-weight:600}.warn{color:var(--emph);border-left:3px solid var(--emph2);padding-left:10px}
+.fact{margin:2px 0}.src{color:var(--mut);font-size:12px;white-space:pre-line;overflow-wrap:anywhere}
+.photos img{width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--line);margin:0 8px 8px 0}
 .gal{display:inline-block;margin:0 10px 10px 0;text-align:center;font-size:11px;color:var(--mut);max-width:130px}
-.gal img{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
-a{color:var(--acc);word-break:break-all}code{font-size:12px;word-break:break-all}
+.gal img{width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+a{color:var(--fg);text-decoration-color:var(--emph);word-break:break-all}a:hover{color:var(--emph)}code{font-size:12px;word-break:break-all}
 </style></head><body><main>
-<h1>rectool reconnaissance report</h1>
+<div class="brandrow"><span class="emblem"><img src="{{.Logo}}" alt="" width="54" height="40"></span><div class="brand">SUDOSOC<b>ARGUS</b></div></div>
+<h1>Reconnaissance report</h1>
 <div class="mut">{{.R.Tool}} v{{.R.Version}} · {{.Started}} · duration {{.Duration}}{{if .R.Interrupted}} · <span class="warn">interrupted: results are partial</span>{{end}}</div>
 
 <h2>Target</h2>
@@ -243,11 +252,11 @@ a{color:var(--acc);word-break:break-all}code{font-size:12px;word-break:break-all
 
 {{if .Notes}}<h2>Analyst notes</h2>{{range .Notes}}<div class="card"><b>{{index . 0}}</b><div style="white-space:pre-wrap">{{index . 1}}</div></div>{{end}}{{end}}
 
-{{if .R.ManualLeads}}<h2>Manual leads</h2><div class="card"><div class="mut">Sources that need a login, CAPTCHA or payment. rectool does not bypass those; open them yourself.</div>
+{{if .R.ManualLeads}}<h2>Manual leads</h2><div class="card"><div class="mut">Sources that need a login, CAPTCHA or payment. SUDOSOC ARGUS does not bypass those; open them yourself.</div>
 {{range .R.ManualLeads}}<div class="fact"><b>{{.Group}}</b> · {{if safe .URL}}<a href="{{safe .URL}}">{{.Label}}</a>{{else}}{{.Label}}{{end}} <span class="src">{{.Why}}</span></div>{{end}}</div>{{end}}
 
 {{if .Failures}}<h2>Coverage gaps</h2><div class="card"><div class="mut">Checks that could not complete. A missing result is not evidence of absence.</div>
-{{range .Failures}}<div class="src">{{.Module}} / {{.Source}}: {{.Error}}</div>{{end}}{{if .MoreFail}}<div class="src">… and {{.MoreFail}} more (see the JSON report)</div>{{end}}</div>{{end}}
+{{range .Failures}}<div class="src">{{.Module}} / {{.Source}}: {{.Error}}</div>{{end}}</div>{{end}}
 
 {{if .Settings}}<h2>Run settings</h2><div class="card"><table>{{range .Settings}}<tr><th>{{index . 0}}</th><td>{{index . 1}}</td></tr>{{end}}</table></div>{{end}}
 {{if .R.Integrity}}<h2>Integrity</h2><div class="card"><code>{{.R.Integrity.Algorithm}} {{.R.Integrity.Digest}}</code><div class="mut">Digest of target + entities + findings in the JSON report; recompute it to verify nothing was edited.</div></div>{{end}}

@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sudosoc/rectool/internal/httpx"
-	"github.com/sudosoc/rectool/internal/identity"
-	"github.com/sudosoc/rectool/internal/models"
-	"github.com/sudosoc/rectool/internal/scanner"
+	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
+	"github.com/sudosoc/argus/internal/models"
+	"github.com/sudosoc/argus/internal/scanner"
 )
 
 type Scanner struct{}
@@ -35,7 +35,7 @@ func (s *Scanner) CanRun(t models.Target) bool {
 	return len(strings.Fields(t.FullName)) >= 2 || t.Domain != "" || t.IP != ""
 }
 
-var hdr = map[string]string{"User-Agent": "rectool research (+https://github.com/sudosoc/rectool)", "Accept": "application/json"}
+var hdr = map[string]string{"User-Agent": "argus research (+https://github.com/sudosoc/argus)", "Accept": "application/json"}
 
 func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emit func(models.Finding)) error {
 	var jobs []func()
@@ -65,13 +65,13 @@ func edgar(ctx context.Context, c *httpx.Client, name string, emit func(models.F
 	// The SEC refuses anonymous automated clients: its fair-access policy asks
 	// every client to identify itself with a contact address, which is the
 	// operator's to give.
-	contact := strings.TrimSpace(os.Getenv("RECTOOL_CONTACT"))
+	contact := strings.TrimSpace(os.Getenv("ARGUS_CONTACT"))
 	if !strings.Contains(contact, "@") {
 		emit(models.Finding{Source: "SEC EDGAR filings", Category: "registry", Status: models.StatusError, Details: map[string]string{
-			"error": "skipped: the SEC requires clients to identify themselves. Set your contact e-mail with -contact you@example.com or RECTOOL_CONTACT, and it is sent only to sec.gov in the User-Agent header"}})
+			"error": "skipped: the SEC requires clients to identify themselves. Set your contact e-mail with -contact you@example.com or ARGUS_CONTACT, and it is sent only to sec.gov in the User-Agent header"}})
 		return
 	}
-	h := map[string]string{"User-Agent": "rectool/1.0 " + contact, "Accept": "application/json"}
+	h := map[string]string{"User-Agent": "argus/1.0 " + contact, "Accept": "application/json"}
 	resp, err := c.Do(ctx, httpx.Request{URL: "https://efts.sec.gov/LATEST/search-index?q=" + url.QueryEscape(`"`+name+`"`), Timeout: 30 * time.Second, Headers: h})
 	if err != nil || resp.StatusCode != 200 {
 		return
