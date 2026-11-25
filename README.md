@@ -124,7 +124,7 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 
 | Module | Needs | What it does |
 |---|---|---|
-| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,300, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
+| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,270, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
 | `phone` | phone | libphonenumber analysis: validity, country, region/area, line type (mobile / landline / VoIP), original carrier, time zones, all formats. |
 | `crypto` | wallet | Bitcoin (mempool.space) and Ethereum/EVM (Blockscout): balance, tx counts, activity window, contract status, ENS name. |
 | `asn` | ASN | RIPEstat + RDAP: holder, announced prefixes, BGP neighbours, contacts. |
@@ -213,7 +213,7 @@ The binary embeds one merged list of 10,600+ sites built from [WhatsMyName](http
 | `-site-tier` | Sites | Use |
 |---|---|---|
 | `core` | about 1,100 | quick checks; popular, well-maintained platforms |
-| `extended` (default) | about 3,300 | normal investigations |
+| `extended` (default) | about 3,270 | normal investigations |
 | `all` | about 10,600 | adds thousands of template-based forums and small communities; slow, more noise |
 
 `-categories` accepts the platform categories and Maigret's tags (`coding`, `gaming`, `forum`, `ru`…). `-sites FILE` loads your own list (WhatsMyName JSON, a bare array, or `.gz`); a `sites.json` in the data directory (`$ARGUS_DATA`, `$XDG_DATA_HOME/argus`, `~/.local/share/argus`, `/usr/local/share/argus`) overrides the embedded list.

@@ -360,8 +360,8 @@ func Merge(lists ...[]social.Site) []social.Site {
 	var out []social.Site
 	for _, list := range lists {
 		for _, s := range list {
-			if s.Name == "" || !strings.Contains(s.URICheck+s.PostBody, "{account}") {
-				continue
+			if s.Name == "" || !strings.Contains(s.URICheck+s.PostBody, "{account}") || !isHTTP(s.URICheck) {
+				continue // also drops Maigret's "{username}.com" domain-availability pseudo sites
 			}
 			// The same platform shows up under its API URL in one list and its
 			// profile URL in another: match on either.
@@ -439,6 +439,11 @@ func Merge(lists ...[]social.Site) []social.Site {
 		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
 	})
 	return out
+}
+
+func isHTTP(u string) bool {
+	l := strings.ToLower(u)
+	return strings.HasPrefix(l, "https://") || strings.HasPrefix(l, "http://")
 }
 
 func union(a, b []string) []string {

@@ -28,6 +28,7 @@ const maigretJSON = `{"engines":{"XenForo":{"name":"XenForo","site":{"checkType"
  "TLS":{"url":"https://tls.example/{username}","urlMain":"https://tls.example","checkType":"status_code","protection":["tls_fingerprint"]},
  "Adult":{"url":"https://adult.example/{username}","urlMain":"https://adult.example","checkType":"status_code","tags":["porn"]},
  "GitHubDup":{"url":"https://github.com/{username}","urlMain":"https://github.com","checkType":"status_code","alexaRank":80,"tags":["coding"],"usernameClaimed":"octocat"},
+ "TLDCheck":{"url":"{username}.biz","urlMain":"{username}.biz","checkType":"status_code"},
  "Post":{"url":"https://post.example/","urlMain":"https://post.example","requestMethod":"POST","requestPayload":{"username":"{username}"},"checkType":"message","absenceStrs":["no"]}
  }}`
 
@@ -112,6 +113,9 @@ func TestMergePrioritiesAndDedupe(t *testing.T) {
 	known := strings.Join(gh.Known, ",")
 	if !strings.Contains(known, "torvalds") || !strings.Contains(known, "octocat") {
 		t.Errorf("known accounts must be merged: %v", gh.Known)
+	}
+	if byName(out, "TLDCheck") != nil {
+		t.Error("domain-availability pseudo sites (no http scheme) must be dropped")
 	}
 	names := map[string]bool{}
 	for _, s := range out {
