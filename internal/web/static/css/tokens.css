@@ -1,0 +1,101 @@
+/*
+ * SUDOSOC ARGUS design tokens.
+ *
+ * One restrained family: black, dark charcoal, soft off-white, light grey, and
+ * two blood reds. Nothing else. Meaning (confidence, trust, severity, status)
+ * is carried by luminance steps, red intensity, shape, weight and words, never
+ * by an extra hue. Components use the semantic tokens at the bottom of each
+ * block; the raw palette is only defined here.
+ */
+:root {
+  /* ---- raw palette ---- */
+  --black-0: #0a0a0b;
+  --black-1: #0e0e10;
+  --char-1: #17171a;
+  --char-2: #1e1e22;
+  --char-3: #26262b;
+  --char-line: #2f2f35;
+  --char-line-strong: #3d3d44;
+  --off-white: #e8e6e1;
+  --gray-light: #b4b4ba;
+  --gray-mid: #9a9aa2;
+  --gray-deco: #6e6e76;
+  --red-dark: #6e0f15;
+  --red-blood: #8a141b;
+  --red-bright: #c8353d;
+  --red-light: #e2686e;
+
+  /* ---- semantic tokens: dark theme (default) ---- */
+  color-scheme: dark;
+  --bg: var(--black-0);          /* page */
+  --well: var(--black-1);        /* deepest wells: inputs, map, code */
+  --surface-1: var(--char-1);    /* panels, cards, table rows */
+  --surface-2: var(--char-2);    /* raised: hover, headers */
+  --surface-3: var(--char-3);    /* raised more: active, chips */
+  --line: var(--char-line);
+  --line-strong: var(--char-line-strong);
+  --text: var(--off-white);      /* primary text, key figures */
+  --text-2: var(--gray-light);   /* secondary text */
+  --text-3: var(--gray-mid);     /* labels, icons, disabled */
+  --text-4: var(--gray-deco);    /* decoration only (never for text) */
+  --accent: var(--red-blood);    /* primary buttons, active marker, header line */
+  --accent-hi: #9b1820;          /* primary button hover */
+  --accent-ink: #f4f2ee;         /* text on accent */
+  --accent-deep: var(--red-dark);
+  --emph: var(--red-light);      /* emphasis text, badges, important numbers */
+  --emph-strong: var(--red-bright); /* fills and large marks */
+  --sel: #2a1417;                /* selected row tint (dark blood red) */
+  --danger-bg: #2a1417;
+  --focus: var(--red-light);
+  --shadow: 0 10px 30px rgba(0, 0, 0, .55);
+  --scrim: rgba(5, 5, 6, .7);
+
+  /* ---- scales ---- */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+  --fs-xs: 11px; --fs-sm: 12px; --fs-base: 13px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 28px;
+  --r-sm: 3px; --r-md: 5px; --r-lg: 8px;
+  --topbar-h: 48px; --statusbar-h: 26px; --panel-w: 344px;
+  --z-top: 40; --z-drawer: 60; --z-pop: 70; --z-overlay: 80; --z-toast: 90;
+
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Noto Sans Arabic", "Segoe UI Arabic", Tahoma, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* ---- density ---- */
+  --row-py: 5px;
+  --cell-px: 10px;
+  --fs: var(--fs-base);
+  --lh: 1.45;
+}
+
+:root[data-density="comfortable"] {
+  --row-py: 10px;
+  --cell-px: 12px;
+  --fs: var(--fs-md);
+  --lh: 1.55;
+}
+
+/* ---- light theme: same family inverted: off-white page, charcoal text, blood-red accents ---- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #e8e6e1;
+  --well: #dedcd6;
+  --surface-1: #f3f1ed;
+  --surface-2: #eae8e3;
+  --surface-3: #dfddd7;
+  --line: #cdcac3;
+  --line-strong: #b0ada5;
+  --text: #17171a;
+  --text-2: #45454c;
+  --text-3: #5a5a62;
+  --text-4: #8a8a92;
+  --accent: var(--red-blood);
+  --accent-hi: var(--red-dark);
+  --accent-ink: #f4f2ee;
+  --emph: #a3212a;
+  --emph-strong: var(--red-blood);
+  --sel: #ecd9d6;
+  --danger-bg: #f0dcd9;
+  --focus: var(--red-blood);
+  --shadow: 0 10px 28px rgba(23, 23, 26, .18);
+  --scrim: rgba(23, 23, 26, .45);
+}

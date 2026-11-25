@@ -1,0 +1,24 @@
+/* Print: show the open tab on white paper, drop the application chrome. */
+@page { margin: 14mm; }
+:root, :root[data-theme="dark"], :root[data-theme="light"] {
+  --bg: #fff; --well: #f4f2ee; --surface-1: #fff; --surface-2: #f4f2ee; --surface-3: #e8e6e1;
+  --line: #cfcdc8; --line-strong: #9a9aa2; --text: #111; --text-2: #333; --text-3: #555; --text-4: #888;
+  --emph: #8a141b; --emph-strong: #8a141b; --accent: #8a141b; --sel: #f0e0de; --danger-bg: #f6e8e6;
+  --shadow: none;
+}
+html, body { height: auto !important; overflow: visible !important; display: block; font-size: 11px; }
+.topbar, .casepanel, .scrim, .statusbar, .drawer, .toasts, #overlays, .runstrip .btn, .livepanel, .tabs, .ch-actions, .ftool, .pager, .selbar, .skip,
+.graph-bar, .cmp-bar, .maptools, .btn.icon-btn.xs, .info { display: none !important; }
+.shell { display: block !important; }
+.workspace { overflow: visible !important; }
+.runhead { position: static; padding: 0 0 8px; border: 0; }
+.tabpanel { padding: 8px 0; }
+.panel, .callout, .ccard, details.fold-panel { break-inside: avoid; border-color: #bbb; }
+.tablewrap { overflow: visible; border-color: #bbb; }
+thead th { position: static; }
+tr { break-inside: avoid; }
+a { color: #111; text-decoration: underline; }
+.graph-wrap, .locmap { break-inside: avoid; }
+.dash { display: block; } .dash > .panel { margin-bottom: 8px; }
+.sev-high { color: #fff; }
+details:not([open]) > :not(summary) { display: none; }

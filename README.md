@@ -50,6 +50,8 @@ It prints a URL containing a random access token; open it in your browser (the t
 
 **Case panel (left).** Fill in whatever you know: every input, collector and option has an **ⓘ** hint (English and Arabic) explaining what turning it on will do. *Aggressive* is on by default; untick it for a quicker, lighter run. Proxies are optional.
 
+**Look and feel.** A restrained dark workstation (black, charcoal, off-white, light gray and two blood reds; no neon) with a matching light theme, a command palette (`Ctrl+K` or `/`: search the case or run any command), `?` for all keyboard shortcuts, `t` theme, `d` density, `1`-`8` tabs, and a print stylesheet. The HTML report uses the same palette.
+
 **Workspace (right).** Live progress per collector, then eight views of the same data:
 
 | View | What it gives you |
@@ -58,7 +60,7 @@ It prints a URL containing a random access token; open it in your browser (the t
 | **Overview** | KPI tiles, key facts about the subject (names, handles, e-mails, phones, domains, IPs, places), notable risk signals (expired TLS, spoofable mail, takeover candidates, stealer-log exposure…), a reliability distribution, findings per collector |
 | **Intelligence tree** | Everything organised as Subject → Identity / Contact points / Online accounts / Infrastructure / Organisation / Exposure / Crypto / Search leads, searchable, click any leaf for its evidence |
 | **Relationship graph** | Force-directed map of how leads were found: subject → inputs → what the first pass found → what following those leads found. Drag, zoom, click nodes, hide weak leads |
-| **Findings** | Filterable table (collector, category, minimum confidence); click a row for the full record |
+| **Findings** | Paginated, sortable table with collector / category / status / confidence facets, filter chips, group-by, row expansion, multi-select and CSV / JSON export of the selection; scales to thousands of rows |
 | **Location** | Where the subject probably is: geocoded evidence clustered on a map, EXIF GPS, activity-hours time zone |
 | **Photos** | Gallery of every profile picture found, with "same picture" groups, size/hash, and reverse-image-search links |
 | **Coverage & integrity** | Per-collector results, **every check that could not complete** (a coverage gap is not proof of absence), run settings, and a SHA-256 digest of the evidence |
@@ -124,7 +126,7 @@ A pasted **profile link** in the domain field (`-d https://x.com/handle`) is rec
 
 | Module | Needs | What it does |
 |---|---|---|
-| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,270, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
+| `social` | username / alias | Probes **10,600+ platforms** from the WhatsMyName, Sherlock and Maigret lists (embedded, merged and de-duplicated) in three tiers: `core` (about 1,100 popular, well-maintained sites), `extended` (about 3,200, the default) and `all` (adds about 7,400 template-based forums; slow). Several markers per outcome, redirect checks, username patterns and anti-bot error markers; adult sites are opt-in with `-categories nsfw`; adds page title / bio / avatar when present. |
 | `phone` | phone | libphonenumber analysis: validity, country, region/area, line type (mobile / landline / VoIP), original carrier, time zones, all formats. |
 | `crypto` | wallet | Bitcoin (mempool.space) and Ethereum/EVM (Blockscout): balance, tx counts, activity window, contract status, ENS name. |
 | `asn` | ASN | RIPEstat + RDAP: holder, announced prefixes, BGP neighbours, contacts. |
@@ -213,7 +215,7 @@ The binary embeds one merged list of 10,600+ sites built from [WhatsMyName](http
 | `-site-tier` | Sites | Use |
 |---|---|---|
 | `core` | about 1,100 | quick checks; popular, well-maintained platforms |
-| `extended` (default) | about 3,270 | normal investigations |
+| `extended` (default) | about 3,200 | normal investigations |
 | `all` | about 10,600 | adds thousands of template-based forums and small communities; slow, more noise |
 
 `-categories` accepts the platform categories and Maigret's tags (`coding`, `gaming`, `forum`, `ru`…). `-sites FILE` loads your own list (WhatsMyName JSON, a bare array, or `.gz`); a `sites.json` in the data directory (`$ARGUS_DATA`, `$XDG_DATA_HOME/argus`, `~/.local/share/argus`, `/usr/local/share/argus`) overrides the embedded list.

@@ -2,9 +2,9 @@
 
 // Help text shown next to every option. Each entry says, in English and
 // Arabic, what turning the option on (or filling the field in) will do.
-window.RT = window.RT || {};
+window.UI = window.UI || {};
 
-RT.HINTS = {
+UI.HINTS = {
   // ------------------------------------------------------------- identifiers
   full_name: {
     en: "The person's full name. Runs name look-ups (Wikidata, ORCID, OpenAlex, GitHub users), name dorks on search engines (profiles, documents, CVs), and raises the confidence of any profile whose name matches.",
@@ -31,7 +31,7 @@ RT.HINTS = {
     ar: "دومين أو رابط موقع أو رابط بروفايل. الدومين بيتفحص DNS وأمان الإيميل وWHOIS/RDAP والـsubdomains والتقنيات وبيانات التواصل في الموقع وشهادة TLS والأرشيف والتسريبات واحتمالات الاستيلاء. رابط البروفايل (x.com/handle) بيتحوّل ليوزرنيم.",
   },
   ip: {
-    en: "An IPv4/IPv6 address. Reverse DNS, ASN, registration owner, approximate location, ports/CVEs already indexed by Shodan (no scanning by argus), reputation, co-hosted domains and the TLS/web banner.",
+    en: "An IPv4/IPv6 address. Reverse DNS, ASN, registration owner, approximate location, ports/CVEs already indexed by Shodan (no scanning by SUDOSOC ARGUS), reputation, co-hosted domains and the TLS/web banner.",
     ar: "عنوان IP. بيطلّع الـreverse DNS والـASN وصاحب التسجيل والموقع التقريبي والبورتات والثغرات اللي مفهرسة عند Shodan (الأداة مش بتعمل scan)، والسمعة، والدومينات المشتركة، وبانر TLS والويب.",
   },
   asn: {
@@ -52,7 +52,7 @@ RT.HINTS = {
   },
 
   notes: {
-    en: "Paste any text you can see but argus cannot fetch: a LinkedIn page copied from your own logged-in browser, a LinkedIn 'Save to PDF' export, a CV, a bio. It is parsed into a profile (employers, education, location, e-mail, skills) and joins the identity matching. Nothing is sent anywhere.",
+    en: "Paste any text you can see but SUDOSOC ARGUS cannot fetch: a LinkedIn page copied from your own logged-in browser, a LinkedIn 'Save to PDF' export, a CV, a bio. It is parsed into a profile (employers, education, location, e-mail, skills) and joins the identity matching. Nothing is sent anywhere.",
     ar: "الصق أي نص تقدر تشوفه إنت لكن الأداة مش قادرة تجيبه: صفحة LinkedIn منسوخة من متصفحك وإنت عامل login، أو ملف 'Save to PDF' من LinkedIn، أو CV، أو نبذة. بيتحلل لبروفايل (شغل وتعليم ومكان وإيميل ومهارات) وبيدخل في مطابقة الهوية. مفيش حاجة بتتبعت لأي مكان.",
   },
 
@@ -70,7 +70,7 @@ RT.HINTS = {
     ar: "بيولّد يوزرنيمات محتملة من الاسم الكامل (jdoe وjohn.doe…) ويفحصها. بيزوّد طلبات كتير وممكن نتايج غلط إلا لو 'Verify' شغّال.",
   },
   browser: {
-    en: "When LinkedIn refuses argus's own HTTP client, open the same public profile page with the Chrome / Chromium / Edge installed on this machine (headless, logged out, default settings, no stealth). If LinkedIn shows a sign-in wall or CAPTCHA it stops. The public view has name, headline, location, roles, schools, about and photo, but NOT e-mail or CV; for those paste your own logged-in view into the Notes box.",
+    en: "When LinkedIn refuses SUDOSOC ARGUS's own HTTP client, open the same public profile page with the Chrome / Chromium / Edge installed on this machine (headless, logged out, default settings, no stealth). If LinkedIn shows a sign-in wall or CAPTCHA it stops. The public view has name, headline, location, roles, schools, about and photo, but NOT e-mail or CV; for those paste your own logged-in view into the Notes box.",
     ar: "لو LinkedIn رفض الـHTTP بتاع الأداة، بيفتح نفس صفحة البروفايل العامة بالـChrome/Chromium/Edge المثبت عندك (headless، من غير login، إعدادات عادية، من غير تخفّي). لو ظهر جدار تسجيل دخول أو CAPTCHA بيقف. الصفحة العامة فيها الاسم والعنوان والمكان والوظائف والتعليم والنبذة والصورة، لكن مفيهاش الإيميل ولا الـCV؛ دول الصقهم في خانة Notes من صفحتك وإنت عامل login.",
   },
   no_pivot: {
@@ -83,6 +83,38 @@ RT.HINTS = {
   },
 
   // ---------------------------------------------------------------- modules
+  site_tier: {
+    en: "How many username sites the social collector probes. Core: about 1,100 well-known sites (fast). Extended (default): about 3,300 sites. All: about 10,600 sites (much slower, many more requests, more false leads to verify).",
+    ar: "عدد مواقع اليوزرنيم اللي بيفحصها collector السوشيال. Core: حوالي 1,100 موقع معروف (سريع). Extended (الافتراضي): حوالي 3,300 موقع. All: حوالي 10,600 موقع (أبطأ بكتير وطلبات أكتر ونتايج محتاجة تحقق أكتر).",
+  },
+  "mod:iddecode": {
+    en: "Needs a username, e-mail or an ID found in a profile. Decodes platform IDs (Discord, X, Instagram…) into creation timestamps and other embedded facts.",
+    ar: "محتاج يوزرنيم أو إيميل أو ID متلاقي في بروفايل. بيفك شفرة IDs المنصات (Discord وX وInstagram…) لتواريخ إنشاء وبيانات تانية مدمجة فيها.",
+  },
+  "mod:keys": {
+    en: "Needs an e-mail or username. Looks for public PGP / SSH / signing keys tied to the identifier and lists their fingerprints and associated identities.",
+    ar: "محتاج إيميل أو يوزرنيم. بيدوّر على مفاتيح PGP وSSH وتوقيع عامة مرتبطة بالمعرّف وبيعرض البصمات والهويات المرتبطة.",
+  },
+  "mod:lookalike": {
+    en: "Needs a domain. Generates look-alike domains (typos, homoglyphs) and reports which are registered, to spot phishing or impersonation.",
+    ar: "محتاج دومين. بيولّد دومينات شبيهة (أخطاء كتابة وحروف متشابهة) وبيقول أنهي منها مسجّل، لكشف التصيّد أو انتحال الهوية.",
+  },
+  "mod:webhistory": {
+    en: "Needs a domain or URL. Reads web-archive history and analytics / tracking-ID history to show what a site was and which other sites share its IDs.",
+    ar: "محتاج دومين أو رابط. بيقرأ تاريخ الأرشيف وتاريخ معرّفات التتبع ليوضح كان إيه الموقع وأنهي مواقع تانية بتشاركه نفس المعرّفات.",
+  },
+  "mod:sanctions": {
+    en: "Needs a name or company. Screens public sanctions and watch-lists. A hit is only a possible match: always verify manually.",
+    ar: "محتاج اسم أو شركة. بيفحص قوائم العقوبات والمراقبة العامة. النتيجة مجرد تطابق محتمل: لازم تتأكد منها يدويًا.",
+  },
+  "mod:bskygraph": {
+    en: "Needs a username. Reads the public Bluesky social graph (followers, follows, mutuals) to show who the account is connected to.",
+    ar: "محتاج يوزرنيم. بيقرأ الشبكة الاجتماعية العامة على Bluesky (المتابعون والمتابَعون والمشتركون) ليوضح الحساب مرتبط بمين.",
+  },
+  "mod:codesearch": {
+    en: "Needs a username, e-mail or domain. Searches public code repositories for the identifier (config files, commits, leaked references).",
+    ar: "محتاج يوزرنيم أو إيميل أو دومين. بيدوّر في مستودعات الكود العامة عن المعرّف (ملفات إعدادات وcommits وإشارات مسرّبة).",
+  },
   "mod:social": {
     en: "Needs a username/alias. Checks 630+ platforms by status code and page content, and adds title/bio/avatar when the page has them. Sends one request per site.",
     ar: "محتاج يوزرنيم/لقب. بيفحص أكتر من 630 منصة بكود الاستجابة ومحتوى الصفحة، وبيضيف العنوان والبايو والصورة لو موجودين. طلب واحد لكل موقع.",
@@ -167,14 +199,4 @@ RT.HINTS = {
     en: "Runs installed external tools (whois, dig, theHarvester, subfinder, whatweb, sherlock, maigret, holehe, phoneinfoga) and parses their output. Tools that are not installed are reported, not failed. With an e-mail, holehe tests which sites have an account for that address by touching their sign-up / reset forms (it is built not to notify the owner, but it does contact those sites, so use it only on addresses you are entitled to check).",
     ar: "بيشغّل الأدوات الخارجية المتسطبة (whois وdig وtheHarvester وsubfinder وwhatweb وsherlock وmaigret وholehe وphoneinfoga) وبيحلل ناتجها. الأدوات غير المتسطبة بتتبلّغ بس.",
   },
-};
-
-// Plain-language names for finding categories (used in the tree and filters).
-RT.CATEGORY_LABELS = {
-  social: "Social accounts", profile: "Profiles", "email-account": "E-mail accounts", "social-links": "Social links on site",
-  dns: "DNS", whois: "Registration", subdomain: "Subdomains", web: "Website", tech: "Technology", tls: "TLS",
-  tracking: "Tracking IDs", contact: "Contacts", "email-security": "E-mail security", security: "Security headers",
-  archive: "Archive", exposure: "Exposure", takeover: "Takeover risk", reputation: "Reputation", network: "Network",
-  geo: "Geolocation", crypto: "Crypto", company: "Company", registry: "Official registry", reference: "Reference",
-  website: "Websites", identity: "Identity leads", phone: "Phone", "email-domain": "E-mail domain", ip: "IP",
 };
