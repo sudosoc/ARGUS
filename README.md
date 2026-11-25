@@ -12,7 +12,7 @@ At a glance: **10,600+ username sites** (WhatsMyName + Sherlock + Maigret, in th
 
 ## Screenshots
 
-All screenshots show a **synthetic demonstration case** (an invented person and `example` domains); nothing in them is real data. (Pictures are blurred in the screenshots for privacy; ARGUS shows them sharp.) The first three are the first-use flow, then one image per main view.
+All screenshots show a **synthetic demonstration case** (an invented person and `example` domains); nothing in them is real data. (Where a picture cannot be loaded, ARGUS shows its emblem as a placeholder; in the capture environment no pictures could be fetched, so the Media screenshot shows placeholders.) The first three are the first-use flow, then one image per main view.
 
 | | |
 |---|---|
