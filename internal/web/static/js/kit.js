@@ -116,7 +116,7 @@
   K.bars = (rows, { max, onClick } = {}) => {
     const m = max || Math.max(1, ...rows.map((r) => r[1]));
     return el("div", { class: "hbars" }, ...rows.map(([label, n, sub]) => {
-      const r = el("div", { class: "hbar" + (onClick ? " clickable" : ""), role: onClick ? "button" : null, tabindex: onClick ? 0 : null },
+      const r = el("div", { class: "kbar" + (onClick ? " clickable" : ""), role: onClick ? "button" : null, tabindex: onClick ? 0 : null },
         el("span", { class: "hb-l", text: label }), el("span", { class: "hb-t" }, el("span", { class: "hb-f", style: `width:${Math.round((n / m) * 100)}%` })), el("span", { class: "hb-n num", text: UI.n(n) + (sub ? " · " + sub : "") }));
       if (onClick) r.addEventListener("click", () => onClick(label));
       return r;
