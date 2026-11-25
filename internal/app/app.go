@@ -15,6 +15,8 @@ import (
 	"github.com/sudosoc/argus/internal/modules/asn"
 	"github.com/sudosoc/argus/internal/modules/bizreg"
 	"github.com/sudosoc/argus/internal/modules/breach"
+	"github.com/sudosoc/argus/internal/modules/bskygraph"
+	"github.com/sudosoc/argus/internal/modules/codesearch"
 	"github.com/sudosoc/argus/internal/modules/company"
 	"github.com/sudosoc/argus/internal/modules/crypto"
 	"github.com/sudosoc/argus/internal/modules/devtrace"
@@ -22,16 +24,21 @@ import (
 	"github.com/sudosoc/argus/internal/modules/domain"
 	"github.com/sudosoc/argus/internal/modules/dorks"
 	"github.com/sudosoc/argus/internal/modules/footprint"
+	"github.com/sudosoc/argus/internal/modules/iddecode"
 	"github.com/sudosoc/argus/internal/modules/images"
 	"github.com/sudosoc/argus/internal/modules/ip"
+	"github.com/sudosoc/argus/internal/modules/keys"
+	"github.com/sudosoc/argus/internal/modules/lookalike"
 	"github.com/sudosoc/argus/internal/modules/mentions"
 	"github.com/sudosoc/argus/internal/modules/people"
 	"github.com/sudosoc/argus/internal/modules/phone"
 	"github.com/sudosoc/argus/internal/modules/profiles"
 	"github.com/sudosoc/argus/internal/modules/records"
+	"github.com/sudosoc/argus/internal/modules/sanctions"
 	"github.com/sudosoc/argus/internal/modules/sitefiles"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/modules/syswrap"
+	"github.com/sudosoc/argus/internal/modules/webhistory"
 )
 
 // Options is the complete configuration of one engine.
@@ -159,6 +166,13 @@ func Build(o Options) (*Built, error) {
 	eng.Register(phone.New())
 	eng.Register(crypto.New())
 	eng.Register(asn.New())
+	eng.Register(iddecode.New())
+	eng.Register(keys.New())
+	eng.Register(lookalike.New())
+	eng.Register(webhistory.New())
+	eng.Register(sanctions.New())
+	eng.Register(bskygraph.New())
+	eng.Register(codesearch.New())
 
 	return &Built{Engine: eng, SocialSites: socialMod.SiteCount()}, nil
 }

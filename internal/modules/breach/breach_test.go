@@ -14,7 +14,7 @@ func TestClip(t *testing.T) {
 	if got := util.ClipList(in, 5); !reflect.DeepEqual(got, in) {
 		t.Errorf("clip longer: %v", got)
 	}
-	if got := util.ClipList(nil, 3); len(got) != 0 {
+	if got := util.ClipList[string](nil, 3); len(got) != 0 {
 		t.Errorf("clip nil: %v", got)
 	}
 }

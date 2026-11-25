@@ -23,7 +23,7 @@ func TestListHelpers(t *testing.T) {
 	if FirstNonEmpty("", " x ", "y") != "x" || FirstNonEmpty() != "" {
 		t.Error("FirstNonEmpty")
 	}
-	if !reflect.DeepEqual(ClipList([]string{"a", "b", "c"}, 2), []string{"a", "b"}) || len(ClipList(nil, 2)) != 0 {
+	if !reflect.DeepEqual(ClipList([]string{"a", "b", "c"}, 2), []string{"a", "b"}) || len(ClipList[string](nil, 2)) != 0 {
 		t.Error("ClipList")
 	}
 	d := map[string]string{}

@@ -67,7 +67,7 @@ func Clip(s string, n int) string {
 }
 
 // ClipList returns at most n items of s.
-func ClipList(s []string, n int) []string {
+func ClipList[T any](s []T, n int) []T {
 	if len(s) > n {
 		return s[:n]
 	}
