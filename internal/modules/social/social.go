@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package social implements the username-enumeration module: it probes a
 // large list of platforms concurrently and decides, from the HTTP status
 // code and page content, whether the account exists.

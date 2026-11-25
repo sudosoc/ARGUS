@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Exposure & breaches. Only metadata is ever collected: breach names, dates,
 // data types and counts. Never the leaked data or any credential.
 (function () {

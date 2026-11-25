@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Findings tab: a dense, filterable, sortable, paginated table that stays fast
 // with tens of thousands of rows. Filters are faceted (collector, category,
 // status, confidence, text) and shown as removable chips; rows expand in place

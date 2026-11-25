@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Infrastructure: everything learned about domains, hosts and networks.
 (function () {
   const K = UI.kit;

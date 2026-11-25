@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Coverage & integrity tab: what ran, what could not, what to open by hand,
 // how the run was configured and the digest that proves the data was not edited.
 (function () {

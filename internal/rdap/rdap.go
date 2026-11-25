@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package rdap queries the public RDAP registries (the JSON successor of
 // WHOIS) through the rdap.org bootstrap redirector. No account or key needed.
 package rdap

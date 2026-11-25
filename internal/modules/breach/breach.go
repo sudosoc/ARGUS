@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package breach reports which known data breaches an e-mail address appears
 // in, using the public XposedOrNot index (no key). Only the breach names,
 // dates and the kinds of data exposed are reported; never the data itself.

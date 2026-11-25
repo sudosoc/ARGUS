@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Identity tab: the dossier of the best-matching person (confirmed facts apart
 // from unconfirmed ones), other candidates side by side, accounts by area,
 // weak handle-only matches and the dated timeline.

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package iddecode reads the creation time hidden inside platform identifiers.
 // X/Twitter, Discord, TikTok, Instagram, Bluesky, LinkedIn and Mastodon all
 // build their IDs from a timestamp, so a pasted post, video or profile link

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package uploads turns files the operator supplied (pictures, documents, videos) into findings.
 // The files were analysed locally when they were uploaded (package files); nothing is fetched.
 package uploads

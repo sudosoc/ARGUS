@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package web serves argus's browser UI: a small JSON API, live results over
 // Server-Sent Events, and an embedded single-page front end (no CDN, no
 // external assets).

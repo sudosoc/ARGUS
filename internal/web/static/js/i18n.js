@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Interface language (English or Arabic). English is the source language of every string in the UI; in
 // Arabic mode a translator walks the page, replaces text and tooltips found in the dictionary (i18n-ar.js)
 // and keeps doing so as the page changes, and the layout switches to right-to-left. Data coming from

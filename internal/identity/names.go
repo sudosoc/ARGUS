@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package identity resolves a pile of per-source person records into distinct
 // people. Facts about different individuals who merely share a name or a handle
 // must never be merged, so records are clustered only on evidence (shared

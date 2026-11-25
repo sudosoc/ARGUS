@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package engine is the core controller. It enriches the operator's inputs,
 // picks which registered modules apply, runs them concurrently on a shared
 // worker pool, aggregates their findings into a Report, and then follows the

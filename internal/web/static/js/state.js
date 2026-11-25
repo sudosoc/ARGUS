@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Live scan state: Server-Sent Events feed it, the views read it. Also owns
 // the case header, the live collector rows, tabs and the render scheduler.
 (function () {

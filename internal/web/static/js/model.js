@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Derived data model: one cached object per (case, findings revision) that every
 // section of the two-level navigation reads. Nothing here touches the DOM.
 // It answers "what do we know?" (accounts, identifiers, shared values, graph,

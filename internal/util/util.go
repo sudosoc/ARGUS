@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package util holds the small helpers that every collector needs: tolerant
 // JSON fetching, string clipping and cleaning, and sorted map keys. Keeping
 // them here (instead of a private copy in each module) means a fix lands once.

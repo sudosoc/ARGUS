@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package records queries public record systems that few people think to
 // search: SEC EDGAR filings (a person who is an officer, director or major
 // shareholder of a listed company appears in filings by name) and urlscan.io's

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package doc downloads a document (PDF or HTML page) safely and returns its
 // text. Used to read CVs / resumes found on the web.
 package doc

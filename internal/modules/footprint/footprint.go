@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package footprint maps the public digital footprint of an email address or
 // phone number using only public, unauthenticated sources: DNS, Gravatar's
 // public avatar endpoint, and search-engine scraping whose hits are verified

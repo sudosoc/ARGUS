@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Relationship graph: the subject, the identifiers it was given and every
 // entity discovered, linked by where each lead came from. A small
 // force-directed layout on <canvas>, no libraries. Monochrome: node type is

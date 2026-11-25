@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package dorks implements the search-engine dorking module: it generates
 // operator-based queries from the target's identifiers, scrapes the result
 // pages (no API keys) and reports the hits as leads.

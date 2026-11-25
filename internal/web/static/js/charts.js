@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Small chart builders shared by several views. Everything is plain DOM/CSS or
 // inline SVG in the product palette: intensity is expressed by red level and
 // by size, never by extra hues.

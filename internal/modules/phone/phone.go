@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package phone extracts everything a phone number reveals by itself, offline,
 // using Google's libphonenumber metadata: validity, country, region, line type
 // (mobile / landline / VoIP / toll-free…), original carrier, time zones and

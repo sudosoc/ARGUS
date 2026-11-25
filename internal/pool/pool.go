@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package pool implements a bounded worker pool shared by all modules, so the
 // total number of in-flight tasks stays fixed no matter how many modules or
 // targets are queued.

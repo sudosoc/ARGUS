@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package contextual works from the circumstances of a case rather than from an identifier:
 // a place (coordinates) and a period (dates). It finds public, no-account material tied to them:
 // the place's name, geotagged pictures and articles nearby (Wikimedia Commons, Wikipedia), news in the

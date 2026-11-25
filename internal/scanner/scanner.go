@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package scanner defines the contract every reconnaissance module implements.
 // The engine depends only on this package, so new modules can be added by
 // implementing Scanner and registering it in main — no engine changes needed.

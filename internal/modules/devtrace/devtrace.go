@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package devtrace digs the metadata developers leave in public: the e-mail
 // addresses and names in their public commits, the e-mails on their verified
 // GPG keys, public organisations and languages, package-registry maintainer

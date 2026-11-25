@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package company researches an organisation name: likely web domains
 // (verified against the live site), Wikipedia/Wikidata entries and the
 // GitHub organisation, and hands the discovered domains and e-mail addresses

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package profiles goes beyond "does this username exist": for platforms that
 // publish structured public profile data it fetches the real name, location,
 // bio, linked accounts, websites and e-mail addresses, and reports every

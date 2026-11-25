@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Command argus is an API-less OSINT reconnaissance tool (CLI and web UI).
 package main
 
@@ -110,6 +113,7 @@ func run() int {
 			v += ")"
 		}
 		fmt.Println(v)
+		fmt.Println("Copyright (C) 2026 Seif, SUDOSOC. Licensed under the GNU AGPL-3.0-only. Source: https://github.com/sudosoc/ARGUS")
 		return 0
 	}
 	if *doctorFlag {

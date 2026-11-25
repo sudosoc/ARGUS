@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package openpgp reads just enough of an OpenPGP public key (RFC 4880 / 9580)
 // to say whose it is: fingerprint, algorithm, creation time and the user IDs
 // (names and e-mail addresses) it carries. It verifies nothing and never

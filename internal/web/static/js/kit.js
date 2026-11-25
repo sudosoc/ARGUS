@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Building blocks for the section pages of the two-level navigation: panels,
 // KPI strips, tables, finding lists, empty states. Sections are written as a
 // few calls to these, so every page looks and behaves the same.

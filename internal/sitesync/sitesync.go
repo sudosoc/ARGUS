@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package sitesync turns the community username-site lists (WhatsMyName,
 // Sherlock, Maigret) into one de-duplicated list in ARGUS's own schema, and
 // assigns each site a tier so scans can start with the best-maintained

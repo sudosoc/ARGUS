@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Location tab: best-supported place, an evidence map (schematic outline, or
 // real OpenStreetMap tiles fetched through this server), the evidence table and
 // the timezone estimated from activity hours. Evidence kinds are told apart by

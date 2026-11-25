@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Start-up: load server info, build the form, restore the last case.
 (async function boot() {
   const { $ } = UI;

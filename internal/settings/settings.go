@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package settings stores API keys and the LLM choice. Keys live in an
 // AES-256-GCM encrypted file under the user's config directory, never in the
 // front end, never in reports or cases. Environment variables are also read,

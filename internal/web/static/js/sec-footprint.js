@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Footprint: the public trace of the subject on the web and on social platforms.
 (function () {
   const { el } = UI;

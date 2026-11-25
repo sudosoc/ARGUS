@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package sanctions screens a person's or company's name against the public
 // sanctions lists that can be downloaded without an account: the US OFAC
 // Specially Designated Nationals list and the UN Security Council

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package images hunts for pictures of the subject beyond what the profile
 // collectors already return:
 //

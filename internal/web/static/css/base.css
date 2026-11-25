@@ -1,3 +1,4 @@
+/* Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only */
 /* Reset, typography and form controls. */
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }

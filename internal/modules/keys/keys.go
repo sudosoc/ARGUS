@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package keys looks for the public OpenPGP key published for an e-mail
 // address and reads who it belongs to: the names and other addresses on its
 // user IDs, its fingerprint and when it was made. It asks the places a key is
