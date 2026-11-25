@@ -28,7 +28,7 @@
   let nodes = [], edges = [], byId = new Map();
   let view = { x: 0, y: 0, k: 1 };
   let alpha = 1, raf = null, hover = null, selected = null, drag = null, showWeak = true, fitted = false, touched = false;
-  let layoutMode = "force", settling = false, coreMode = false, capNote = "", shell = null, mini = null, mctx = null, mmap = null, showMini = null;
+  let groupLabels = [], layoutMode = "force", settling = false, coreMode = false, capNote = "", shell = null, mini = null, mctx = null, mmap = null, showMini = null;
   const ptrs = new Map();
   let pinch = null, lastStats = "";
   const hiddenTypes = new Set();
@@ -276,6 +276,11 @@
       if (matches(n)) { ctx.strokeStyle = T.emph; ctx.lineWidth = 2.5 / view.k; ctx.beginPath(); ctx.arc(n.x, n.y, r + 8, 0, Math.PI * 2); ctx.stroke(); }
       if (n === selected || n === hover) { ctx.strokeStyle = T.text; ctx.lineWidth = 2 / view.k; ctx.beginPath(); ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2); ctx.stroke(); }
     }
+    if (layoutMode === "clusters" && groupLabels.length) {
+      ctx.font = `600 ${14 / Math.max(0.6, Math.min(1.6, view.k))}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = T.text2;
+      for (const g of groupLabels) ctx.fillText(g.text, g.x, g.y);
+      ctx.textAlign = "start";
+    }
     ctx.font = `${11 / Math.max(0.7, Math.min(1.4, view.k))}px ui-monospace, Menlo, Consolas, monospace`;
     ctx.textBaseline = "middle";
     for (const n of nodes) {
@@ -309,11 +314,14 @@
     const adj = new Map(nodes.map((n) => [n, []]));
     for (const e of edges) { adj.get(e.a).push(e.b); adj.get(e.b).push(e.a); }
     const root = nodes.find((n) => n.type === "subject") || nodes[0];
-    const lvl = new Map([[root, 0]]), par = new Map(), q = [root];
-    for (let i = 0; i < q.length; i++) for (const b of adj.get(q[i])) if (!lvl.has(b)) { lvl.set(b, lvl.get(q[i]) + 1); par.set(b, q[i]); q.push(b); }
+    const lvl = new Map([[root, 0]]), par = new Map(), order = [root];
+    for (let i = 0; i < order.length; i++) for (const b of adj.get(order[i])) if (!lvl.has(b)) { lvl.set(b, lvl.get(order[i]) + 1); par.set(b, order[i]); order.push(b); }
     let max = 0; for (const v of lvl.values()) max = Math.max(max, v);
-    if (q.length < nodes.length) { max++; for (const n of nodes) if (!lvl.has(n)) lvl.set(n, max); }
-    return { lvl, par, root, max };
+    const loose = nodes.filter((n) => !lvl.has(n));
+    for (const n of loose) lvl.set(n, max + 1);
+    const kids = new Map(nodes.map((n) => [n, []]));
+    for (const [c, pr] of par) kids.get(pr).push(c);
+    return { lvl, par, root, max: loose.length ? max + 1 : max, order, kids, loose };
   }
   /** mode "all": every node on screen. mode "core": the subject and what is within two hops, at a readable size. */
   function fit(mode, quiet) {
@@ -357,47 +365,110 @@
   const zoom = (f) => zoomAt(canvas.clientWidth / 2, canvas.clientHeight / 2, f);
 
   // ---------------------------------------------------------------- layouts
+  /** Nodes not connected to the subject: a tidy block off to one side (radial: below, tree: under the tree). */
+  function placeLoose(list, r, set, byType, y0, flat) {
+    if (!list.length) return;
+    const sorted = [...list].sort(byType), cols = Math.max(1, Math.ceil(Math.sqrt(sorted.length / 2)));
+    sorted.forEach((n, i) => {
+      const cx = (i % cols) * 150 - ((cols - 1) * 75), cy = Math.floor(i / cols) * 28;
+      if (flat) set(n, cx, y0 + cy); else set(n, cx, r + cy);
+    });
+  }
   /** Static layouts compute a target for every node; nodes glide there. "force" keeps the live physics. */
   function applyLayout(mode) {
     layoutMode = mode;
     for (const n of nodes) { n.tx = n.ty = null; }
-    if (mode === "force") { for (const n of nodes) if (n.type !== "subject") n.fixed = false; fitted = false; touched = false; kick(0.8); return; }
-    const { lvl, par, root, max } = hops();
-    const cx = 0, cy = 0;
+    if (mode === "force") { groupLabels = []; for (const n of nodes) if (n.type !== "subject") n.fixed = false; fitted = false; touched = false; kick(0.8); return; }
+    const { lvl, root, order, kids, loose } = hops();
     const set = (n, x, y) => { n.tx = x; n.ty = y; };
-    const byType = (a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : String(a.value).localeCompare(String(b.value)));
-    if (mode === "radial" || mode === "tree") {
-      const levels = [];
-      for (let i = 0; i <= max + 1; i++) levels.push([]);
-      for (const n of nodes) levels[lvl.get(n)].push(n);
-      set(root, cx, cy);
-      const pos = new Map([[root, mode === "radial" ? 0 : 0]]); // angle (radial) or y (tree)
-      let prevR = 0;
-      for (let l = 1; l < levels.length; l++) {
-        const list = levels[l];
-        if (!list.length) continue;
-        list.sort((a, b) => ((pos.get(par.get(a)) ?? 0) - (pos.get(par.get(b)) ?? 0)) || byType(a, b));
-        if (mode === "radial") {
-          const r = Math.max(prevR + (l === 1 ? 170 : 120), (list.length * 30) / (2 * Math.PI));
-          prevR = r;
-          list.forEach((n, i) => { const a = (i / list.length) * Math.PI * 2 - Math.PI / 2; pos.set(n, a); set(n, cx + Math.cos(a) * r, cy + Math.sin(a) * r); });
-        } else {
-          list.forEach((n, i) => { const y = (i - (list.length - 1) / 2) * 30; pos.set(n, y); set(n, cx + l * 250, cy + y); });
-        }
+    const typeRank = (n) => (n.input ? 0 : n.strong ? 1 : 2);
+    const byType = (a, b) => (typeRank(a) - typeRank(b)) || (a.type < b.type ? -1 : a.type > b.type ? 1 : String(a.value).localeCompare(String(b.value)));
+    for (const list of kids.values()) list.sort(byType);
+    const weight = new Map();
+    const wOf = (n) => { if (weight.has(n)) return weight.get(n); const ks = kids.get(n); const w = ks.length ? ks.reduce((t, k) => t + wOf(k), 0) : 1; weight.set(n, w); return w; };
+    groupLabels = [];
+    if (mode === "radial") {
+      // each subtree owns an angular sector sized by its leaves; rings are spaced so no ring is crowded
+      const levels = new Map();
+      for (const n of order) levels.set(lvl.get(n), (levels.get(lvl.get(n)) || 0) + 1);
+      const R = new Map([[0, 0]]), tracks = new Map();
+      let prev = 0;
+      for (let l = 1; l <= Math.max(...levels.keys(), 1); l++) {
+        const cnt = levels.get(l) || 0, t = Math.min(4, Math.max(1, Math.ceil(cnt / 90)));
+        tracks.set(l, t);
+        prev = Math.max(prev + (l === 1 ? 190 : 140), (cnt * 26) / (2 * Math.PI * t));
+        R.set(l, prev);
       }
+      const seen = new Map();
+      const go = (n, a0, a1) => {
+        const l = lvl.get(n), a = (a0 + a1) / 2;
+        if (l === 0) set(n, 0, 0);
+        else {
+          const i = seen.get(l) || 0; seen.set(l, i + 1);
+          const t = tracks.get(l), r = R.get(l) + (t > 1 ? ((i % t) - (t - 1) / 2) * 22 : 0);
+          set(n, Math.cos(a) * r, Math.sin(a) * r);
+        }
+        const ks = kids.get(n), tot = ks.reduce((t, k) => t + wOf(k), 0);
+        let c = a0;
+        for (const k of ks) { const span = ((a1 - a0) * wOf(k)) / tot; go(k, c, c + span); c += span; }
+      };
+      go(root, -Math.PI / 2, (3 * Math.PI) / 2);
+      placeLoose(loose, (R.get(Math.max(...R.keys())) || 300) + 160, set, byType);
+    } else if (mode === "tree") {
+      // left to right; a hub's many leaves are laid out as a block of columns, not one tall line
+      const COLW = 250, ROWH = 26;
+      // place(n, x, y0) -> [height, width]; a node's leaves form a block of columns, and many branches are wrapped into several columns too
+      const place = (n, x, y0) => {
+        const ks = kids.get(n);
+        if (!ks.length) { set(n, x, y0 + ROWH / 2); return [ROWH, 0]; }
+        const leaves = ks.filter((k) => !kids.get(k).length), branches = ks.filter((k) => kids.get(k).length);
+        let y = y0, wid = COLW; const ys = [];
+        if (leaves.length) {
+          const cols = Math.max(1, Math.ceil(leaves.length / 12)), rows = Math.ceil(leaves.length / cols);
+          leaves.forEach((k, i) => set(k, x + COLW + Math.floor(i / rows) * 190, y + (i % rows) * ROWH + ROWH / 2));
+          ys.push(y + ROWH / 2, y + (rows - 1) * ROWH + ROWH / 2); y += rows * ROWH + 12;
+          wid = COLW + (cols - 1) * 190 + 150;
+        }
+        if (branches.length) {
+          const K = Math.min(6, Math.max(1, Math.ceil(branches.length / 8)));
+          const colY = new Array(K).fill(y), colX = new Array(K).fill(0);
+          // first pass sizes, masonry second: shortest column gets the next branch
+          let cellW = 0;
+          const sized = branches.map((b) => { const r = place(b, x + COLW, 0); cellW = Math.max(cellW, r[1] + COLW); return [b, r[0]]; });
+          sized.forEach(([b, h], i) => {
+            let c = 0; for (let j = 1; j < K; j++) if (colY[j] < colY[c]) c = j;
+            const dx = c * cellW, dy = colY[c];
+            // re-place at the final spot (cheap: subtrees are small)
+            place(b, x + COLW + dx, dy);
+            ys.push(b.ty); colY[c] += h + 12; wid = Math.max(wid, COLW + dx + cellW);
+          });
+          y = Math.max(...colY);
+        }
+        set(n, x, (Math.min(...ys) + Math.max(...ys)) / 2);
+        return [Math.max(ROWH, y - y0 - 12), wid];
+      };
+      const [h] = place(root, 0, 0);
+      const dy = -(h / 2);
+      for (const n of order) n.ty += dy;
+      if (loose.length) placeLoose(loose, 0, set, byType, h / 2 + 90, true);
     } else if (mode === "circle") {
-      const rest = nodes.filter((n) => n !== root).sort(byType), r = Math.max(220, (rest.length * 24) / (2 * Math.PI));
-      set(root, cx, cy);
-      rest.forEach((n, i) => { const a = (i / rest.length) * Math.PI * 2 - Math.PI / 2; set(n, cx + Math.cos(a) * r, cy + Math.sin(a) * r); });
+      // BFS order keeps a node next to what it was found from
+      const ring = order.slice(1).concat([...loose].sort(byType)), r = Math.max(240, (ring.length * 26) / (2 * Math.PI));
+      set(root, 0, 0);
+      ring.forEach((n, i) => { const a = (i / ring.length) * Math.PI * 2 - Math.PI / 2; set(n, Math.cos(a) * r, Math.sin(a) * r); });
     } else if (mode === "clusters") {
       const groups = new Map();
       for (const n of nodes) if (n !== root) (groups.get(n.type) || groups.set(n.type, []).get(n.type)).push(n);
-      const order = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
-      const R = Math.max(300, order.length * 90);
-      set(root, cx, cy);
-      order.forEach(([, list], gi) => {
-        const a = (gi / order.length) * Math.PI * 2 - Math.PI / 2, gx = cx + Math.cos(a) * R, gy = cy + Math.sin(a) * R;
+      const order2 = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+      const gr = order2.map(([, l]) => 26 * Math.sqrt(l.length) + 34);
+      const circ = gr.reduce((t, g) => t + g * 2 + 30, 0), Rg = Math.max(300, circ / (2 * Math.PI) + Math.max(0, ...gr) * 0.6);
+      set(root, 0, 0);
+      let acc = 0;
+      order2.forEach(([type, list], gi) => {
+        const share = (gr[gi] * 2 + 30) / circ, a = (acc + share / 2) * Math.PI * 2 - Math.PI / 2; acc += share;
+        const gx = Math.cos(a) * Rg, gy = Math.sin(a) * Rg;
         list.sort(byType).forEach((n, i) => { const t = i * 2.39996, d = 24 * Math.sqrt(i + 0.5); set(n, gx + Math.cos(t) * d, gy + Math.sin(t) * d); });
+        groupLabels.push({ x: gx, y: gy - gr[gi] - 4, text: `${type} · ${list.length}` });
       });
     }
     for (const n of nodes) if (n.fixed && n.type !== "subject") { /* dragged by hand: stays where the analyst put it */ n.tx = n.x; n.ty = n.y; }
@@ -631,7 +702,7 @@
     const layoutSel = el("select", { "aria-label": "Layout" },
       ...[["force", "Layout: organic (live)"], ["radial", "Layout: rings by hops"], ["tree", "Layout: tree, left to right"], ["circle", "Layout: circle"], ["clusters", "Layout: grouped by type"]].map(([v, t]) => el("option", { value: v, text: t })));
     layoutSel.addEventListener("change", () => applyLayout(layoutSel.value));
-    const miniBtn = UI.btn("Map", { icon: "map", title: "Show or hide the minimap", on: () => setMini(!(mini && !mini.hidden)) });
+    const miniBtn = UI.btn("Map", { cls: "lbl-hide", icon: "map", title: "Show or hide the minimap", on: () => setMini(!(mini && !mini.hidden)) });
     miniBtn.id = "graphMiniBtn";
     const bar = el("div", { class: "graph-bar" },
       el("div", { class: "searchbox" }, UI.icon("search"), find), shade, layoutSel,
@@ -644,10 +715,10 @@
         UI.btn("Core", { icon: "user", title: "Zoom to the subject and what is within two hops, at a readable size", on: () => fit("core") }),
         miniBtn,
         UI.btn("", { icon: "expand", cls: "icon-btn", title: "Full screen ( f )", on: toggleFull }),
-        UI.btn("Re-layout", { icon: "graph", title: "Release pinned nodes and settle the layout again", on: () => { nodes.forEach((n) => { if (n.type !== "subject") n.fixed = false; }); applyLayout(layoutMode); } })),
+        UI.btn("Re-layout", { cls: "lbl-hide", icon: "graph", title: "Release pinned nodes and settle the layout again", on: () => { nodes.forEach((n) => { if (n.type !== "subject") n.fixed = false; }); applyLayout(layoutMode); } })),
       el("div", { class: "btn-group", role: "group", "aria-label": "Export" },
-        UI.btn("PNG", { icon: "download", title: "Save the current view as a PNG picture", on: exportPNG }),
-        UI.btn("SVG", { icon: "download", title: "Save the whole graph as an SVG drawing", on: exportSVG })));
+        UI.btn("PNG", { cls: "lbl-hide", icon: "download", title: "Save the current view as a PNG picture", on: exportPNG }),
+        UI.btn("SVG", { cls: "lbl-hide", icon: "download", title: "Save the whole graph as an SVG drawing", on: exportSVG })));
     canvas = el("canvas", { id: "graph", tabindex: "0", role: "img", "aria-label": "Relationship graph of discovered entities. The intelligence tree lists the same items as text." });
     tip = el("div", { class: "graph-tip", hidden: true });
     mini = el("canvas", { class: "graph-mini", "aria-hidden": "true", hidden: true });
