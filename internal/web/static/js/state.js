@@ -5,17 +5,6 @@
 (function () {
   const { $, el } = UI;
 
-  UI.TABS = [
-    { id: "identity", label: "Identity", icon: "id" },
-    { id: "overview", label: "Overview", icon: "layers" },
-    { id: "tree", label: "Intelligence tree", icon: "tree" },
-    { id: "graph", label: "Relationship graph", icon: "graph" },
-    { id: "location", label: "Location", icon: "map" },
-    { id: "photos", label: "Photos", icon: "image" },
-    { id: "findings", label: "Findings", icon: "list" },
-    { id: "coverage", label: "Coverage & integrity", icon: "shield" },
-  ];
-
   // Every view registers itself here: UI.views.<tab>() redraws that tab.
   UI.views = {};
 
@@ -230,20 +219,7 @@
   };
   setInterval(() => { if (UI.S && UI.S.state === "running") UI.paintRun(); }, 1000);
 
-  // -------------------------------------------------------------------- tabs
-  UI.selectTab = function selectTab(name, silent) {
-    UI.tab = name;
-    document.querySelectorAll(".tab").forEach((t) => {
-      const on = t.dataset.tab === name;
-      t.classList.toggle("active", on);
-      t.setAttribute("aria-selected", on ? "true" : "false");
-      t.tabIndex = on ? 0 : -1;
-    });
-    document.querySelectorAll(".tabpanel").forEach((p) => (p.hidden = p.id !== "tab-" + name));
-    UI.session.set("tab", name);
-    if (!silent) $("workspace").scrollTop = 0;
-    UI.scheduleRender(true);
-  };
+  // Tabs and sections are handled by nav.js (two-level navigation).
 
   // Rendering is debounced while findings stream in; explicit actions render now.
   UI.scheduleRender = (() => {
@@ -258,16 +234,8 @@
   UI.render = function render() {
     const S = UI.S;
     if (!S) return;
-    const set = (id, n, hideZero) => { const e = $(id); e.textContent = UI.n(n); if (hideZero) e.hidden = !n; };
-    set("cnt-findings", S.findings.length);
-    set("cnt-photos", UI.photoList().length);
-    set("cnt-identity", (S.identities || []).filter((i) => !i.weak).length);
-    set("cnt-coverage", UI.gapCount(), true);
-    const geo = S.report && S.report.geo;
-    set("cnt-location", geo ? (geo.points || []).length : 0, true);
     UI.paintRun();
-    const v = UI.views[UI.tab];
-    if (v) v();
+    UI.navRender();
   };
 
   // ------------------------------------------------------------------ photos
@@ -320,17 +288,6 @@
   UI.resetHooks = [];
 
   // ----------------------------------------------------------------- wiring
-  document.querySelectorAll(".tab").forEach((t, i, all) => {
-    t.addEventListener("click", () => UI.selectTab(t.dataset.tab));
-    t.addEventListener("keydown", (e) => {
-      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (!d) return;
-      e.preventDefault();
-      const n = all[(i + d + all.length) % all.length];
-      n.focus();
-      UI.selectTab(n.dataset.tab, true);
-    });
-  });
   $("cancelBtn").addEventListener("click", async () => {
     if (!UI.S) return;
     try { await UI.api("/api/scans/" + UI.S.id + "/cancel", { method: "POST", body: "{}" }); UI.toast("Stopping collectors…"); } catch (e) { UI.toast(e.message); }
@@ -344,8 +301,10 @@
     if (!UI.S || $("exportBtn").disabled) return;
     const list = el("div", { class: "menu", role: "menu" });
     for (const [fmt, label, title, ext] of UI.EXPORTS) {
-      list.append(el("a", { class: "menu-item", role: "menuitem", href: `/api/scans/${UI.S.id}/export?format=${fmt}`, download: "", title },
-        UI.icon("download"), el("span", { text: label }), el("span", { class: "menu-sub", text: "." + ext })));
+      const item = el("a", { class: "menu-item", role: "menuitem", href: `/api/scans/${UI.S.id}/export?format=${fmt}`, download: "", title },
+        UI.icon("download"), el("span", { text: label }), el("span", { class: "menu-sub", text: "." + ext }));
+      item.addEventListener("click", () => UI.exportLog && UI.exportLog.add(fmt, label));
+      list.append(item);
     }
     UI.popover($("exportBtn"), list, { alignRight: true, role: "menu" });
   });
