@@ -4,15 +4,19 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/sudosoc/argus/internal/app"
+	"github.com/sudosoc/argus/internal/doctor"
 	"github.com/sudosoc/argus/internal/engine"
 	"github.com/sudosoc/argus/internal/httpx"
 	"github.com/sudosoc/argus/internal/models"
@@ -49,6 +53,8 @@ func run() int {
 
 		modules    = flag.String("modules", "", "comma-separated modules to run (default: all applicable)")
 		showVer    = flag.Bool("version", false, "print version and exit")
+		doctorFlag = flag.Bool("doctor", false, "check the optional external tools and report what is missing")
+		updateFlag = flag.Bool("update", false, "update this installation (runs update.sh from the source checkout) and exit")
 		listMods   = flag.Bool("list-modules", false, "list modules and exit")
 		selfTest   = flag.Bool("selftest-sites", false, "test every social site against a known account, disable unreliable ones, and exit")
 		allSites   = flag.Bool("all-sites", false, "use every social site, including ones a self-test disabled")
@@ -88,8 +94,22 @@ func run() int {
 	}
 
 	if *showVer {
-		fmt.Println("argus", engine.Version)
+		v := "SUDOSOC ARGUS " + engine.Version
+		if engine.Commit != "" {
+			v += " (" + engine.Commit
+			if engine.BuildDate != "" {
+				v += ", built " + engine.BuildDate
+			}
+			v += ")"
+		}
+		fmt.Println(v)
 		return 0
+	}
+	if *doctorFlag {
+		return runDoctor()
+	}
+	if *updateFlag {
+		return runUpdate(flag.Args())
 	}
 
 	ui := output.NewConsole(*noColor)
@@ -309,4 +329,42 @@ func parseTier(s string) int {
 		return 3
 	}
 	return 2
+}
+
+// runDoctor reports the optional tools and the data the binary found.
+func runDoctor() int {
+	fmt.Printf("SUDOSOC ARGUS %s", engine.Version)
+	if engine.Commit != "" {
+		fmt.Printf(" (%s)", engine.Commit)
+	}
+	fmt.Println()
+	if sm, err := social.New(social.Config{SitesFile: app.ResolveSites("")}); err == nil {
+		fmt.Printf("username sites loaded: %d (extended depth; -site-tier all adds the template forums)\n", sm.SiteCount())
+	}
+	if src, err := doctor.FindSource(); err == nil {
+		fmt.Println("installed from:       ", src)
+	}
+	fmt.Println()
+	doctor.Print(os.Stdout, doctor.Check(doctor.LookPath))
+	return 0
+}
+
+// runUpdate hands over to update.sh in the source checkout recorded at install time.
+func runUpdate(args []string) int {
+	src, err := doctor.FindSource()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "argus:", err)
+		return 1
+	}
+	cmd := exec.Command("bash", append([]string{filepath.Join(src, "update.sh")}, args...)...)
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	if err := cmd.Run(); err != nil {
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			return ee.ExitCode()
+		}
+		fmt.Fprintln(os.Stderr, "argus:", err)
+		return 1
+	}
+	return 0
 }
