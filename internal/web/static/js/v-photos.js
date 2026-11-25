@@ -13,7 +13,7 @@
     const ph = el("div", { class: "ph" }, el("span", { class: "ph-load", text: "loading…" }));
     const img = el("img", { src: UI.imgSrc(p.url), alt: "picture" });
     img.addEventListener("load", () => ph.replaceChildren(img));
-    img.addEventListener("error", () => ph.replaceChildren(el("span", { class: "ph-off", title: "The picture could not be loaded right now; open it for its source and fingerprint" }, UI.icon("image", "big"))));
+    img.addEventListener("error", () => ph.replaceChildren(el("img", { class: "ph-off", src: "/img/argus-placeholder.webp", alt: "", title: "The picture could not be loaded right now; open it for its source and fingerprint" })));
     const cap = el("div", { class: "cap" }, el("div", { class: "src", text: UI.clip((p.sources && p.sources[0]) || "picture", 70).replace(/^[a-z]+: /, "") }));
     const tags = el("div", { class: "tags" });
     if (p.group) tags.append(el("span", { class: "tag same" }, UI.icon("link"), "same picture · G" + p.group));
