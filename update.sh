@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
 # SUDOSOC ARGUS updater: pulls the latest source, rebuilds, reinstalls and refreshes the helper tools.
 #
 #   ./update.sh                    update everything now (same install mode and options as before)

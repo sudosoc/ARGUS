@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package files analyses what the operator uploads as an input: pictures,
 // documents and videos. Everything is read locally; nothing is sent to any
 // service. The result is kept in a process-wide registry so a scan can refer to

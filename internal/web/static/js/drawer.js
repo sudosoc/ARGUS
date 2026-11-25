@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // The details drawer (findings, entities, pictures, saved cases, search…),
 // analyst notes and the small renderers they share.
 (function () {

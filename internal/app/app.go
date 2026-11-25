@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package app assembles a ready-to-run engine (HTTP client, shared searcher,
 // all modules) from one Options value. The CLI and the web UI both build
 // engines through it, so they always behave identically.

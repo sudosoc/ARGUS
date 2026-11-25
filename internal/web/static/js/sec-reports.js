@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Reports: the investigation written up as a document, in four forms, plus the
 // server-side exports and a local history of what was exported.
 (function () {

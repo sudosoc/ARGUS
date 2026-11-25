@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package browser renders a public web page with the operator's own installed
 // Chrome / Chromium / Edge in headless mode and returns the resulting DOM.
 //

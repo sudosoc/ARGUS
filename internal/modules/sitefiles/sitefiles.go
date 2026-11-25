@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package sitefiles reads the small public files and feeds a website serves
 // about itself and its people: humans.txt (credits), ads.txt (advertising
 // accounts and thus owner links), WordPress author lists, and RSS/Atom feeds.

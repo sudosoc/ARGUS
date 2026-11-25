@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
 # SUDOSOC ARGUS installer for Linux (Debian/Ubuntu/Kali, Fedora/RHEL, Arch, openSUSE, Alpine).
 #
 #   ./install.sh                   system-wide install (/usr/local; uses sudo when not root)

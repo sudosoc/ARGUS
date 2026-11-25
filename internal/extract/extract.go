@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package extract pulls structured intelligence out of untrusted HTML/text:
 // e-mail addresses, phone numbers, social-profile links, page metadata,
 // analytics/tracking IDs and technology fingerprints.

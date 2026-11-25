@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package httpx provides the hardened HTTP client used by every module:
 // tuned timeouts and connection reuse, per-request User-Agent rotation,
 // browser-like header spoofing, retry with jittered backoff, and HTTP/SOCKS5

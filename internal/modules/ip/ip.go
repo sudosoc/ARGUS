@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package ip investigates an IP address from public sources only: reverse
 // DNS, ASN (Team Cymru over DNS), RDAP registration, geolocation, passively
 // indexed open ports / CVEs (Shodan InternetDB), co-hosted domains, and the

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package cvparse pulls structured facts out of the plain text of a CV /
 // resume: contact points, education, employers, skills, interests and a
 // location. It is heuristic by nature (CV layouts are free-form), so callers

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package mentions finds press and web-news articles that name the person
 // (GDELT's open news index, no key). A name is not an identity, so every
 // article is checked against what the operator supplied: ones whose headline

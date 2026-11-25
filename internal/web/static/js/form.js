@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Case panel: the "new investigation" form, the list of investigations in this
 // session and the most recent saved cases.
 (function () {

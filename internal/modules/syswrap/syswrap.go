@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package syswrap runs external Linux/CLI OSINT tools via os/exec (never
 // through a shell) and converts their output into the engine's Findings.
 package syswrap

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package domain investigates a domain name from every public angle that
 // needs no account: DNS and e-mail configuration, registration (RDAP),
 // subdomains (certificate transparency and passive DNS), the website itself

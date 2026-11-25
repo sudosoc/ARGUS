@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // API settings: keys for the model providers and for tools that need one. The server keeps keys in an
 // encrypted file and never sends one back: this page only ever sees whether a key exists and its last four characters.
 (function () {

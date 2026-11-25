@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package health probes the public services argus depends on, so an empty
 // result can be told apart from a source that is down or blocking.
 package health

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package webhistory reads what a site used to say about its owner. It picks
 // archived copies of the home page across the years (Internet Archive) and
 // extracts the analytics, advertising and pixel IDs embedded in each. An ID

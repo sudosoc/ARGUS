@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Command sitesync builds ARGUS's embedded username-site list from the
 // WhatsMyName, Sherlock and Maigret datasets.
 //

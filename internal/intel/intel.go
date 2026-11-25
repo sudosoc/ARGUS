@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package intel holds small, dependency-free helpers shared by the planner and
 // the modules: input normalisation and static knowledge lists.
 package intel

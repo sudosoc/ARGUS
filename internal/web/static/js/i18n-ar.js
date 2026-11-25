@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Arabic translations of the interface. Keys are the exact English strings used in the UI;
 // a "{}" in a key stands for any text (a number, a name) that is carried over into the translation.
 (function () {
@@ -799,6 +801,8 @@
 "Social profiles": "ملفات التواصل الاجتماعي",
 "Software / author": "البرنامج / المؤلف",
 "Source": "المصدر",
+"Source code · AGPL-3.0": "الكود المصدري · AGPL-3.0",
+"SUDOSOC ARGUS is free software under the GNU AGPL-3.0: this is its complete source code": "SUDOSOC ARGUS برنامج حر بموجب رخصة GNU AGPL-3.0: هذا هو كوده المصدري الكامل",
 "Source coverage": "تغطية المصادر",
 "Source registry": "سجل المصادر",
 "Source reliability": "موثوقية المصدر",

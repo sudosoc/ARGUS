@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package probe contains the active-but-ordinary checks shared by the domain
 // and IP modules: fetch a site the way a browser would, and read the TLS
 // certificate a server presents.

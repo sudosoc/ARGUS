@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Findings & analysis: the full table, plus the same evidence cut by how much it can be trusted.
 (function () {
   const { el } = UI;

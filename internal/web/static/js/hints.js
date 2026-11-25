@@ -1,5 +1,7 @@
 "use strict";
 
+// Copyright (C) 2026 Seif, SUDOSOC. SPDX-License-Identifier: AGPL-3.0-only
+
 // Help text shown next to every option. Each entry says, in English and
 // Arabic, what turning the option on (or filling the field in) will do.
 window.UI = window.UI || {};

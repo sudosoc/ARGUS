@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Seif, SUDOSOC
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Package leads lists, for each identifier, the sources that matter but cannot
 // be queried automatically without an account, a CAPTCHA, or payment. argus
 // never works around those barriers; instead it hands the operator ready-made
