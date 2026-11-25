@@ -41,5 +41,8 @@
       for (const n of g.notes || []) page.append(K.hint(n));
     } };
 
-  UI.defineTab({ id: "location", label: "Location", icon: "map", count: (M) => (M.geo ? (M.geo.points || []).length : 0), sections: [geo, exif, correlation] });
+  const place = K.section("place", "Place you gave & nearby", "pin", (M) => M.hits.filter((f) => f.module === "context" && (f.category === "geo" || f.category === "geo-media")), { showModule: false,
+    intro: "The coordinates you supplied: the place's name, geotagged pictures and landmarks near it, and links to open map and photo searches. This is context about the place, not evidence about the subject.",
+    empty: "No coordinates were supplied.", unlock: "enter Coordinates (lat, lon) in the form, or use -coords on the command line." });
+  UI.defineTab({ id: "location", label: "Location", icon: "map", count: (M) => (M.geo ? (M.geo.points || []).length : 0), sections: [geo, place, exif, correlation] });
 })();
