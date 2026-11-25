@@ -28,6 +28,9 @@
   let nodes = [], edges = [], byId = new Map();
   let view = { x: 0, y: 0, k: 1 };
   let alpha = 1, raf = null, hover = null, selected = null, drag = null, showWeak = true, fitted = false, touched = false;
+  let layoutMode = "force", settling = false, coreMode = false, capNote = "", shell = null, mini = null, mctx = null, mmap = null, showMini = null;
+  const ptrs = new Map();
+  let pinch = null, lastStats = "";
   const hiddenTypes = new Set();
   let shadeBy = "type", findText = "", typesPresent = new Map();
   let T = {}; // design tokens resolved for canvas drawing
@@ -120,7 +123,7 @@
         const ang = (i / Math.max(1, list.length)) * Math.PI * 2, r = n.input ? 60 : 160 + Math.random() * 80;
         n.x = w / 2 + Math.cos(ang) * r; n.y = h / 2 + Math.sin(ang) * r; n.vx = 0; n.vy = 0;
       }
-      if (n.type === "subject") { n.x = w / 2; n.y = h / 2; n.fixed = true; }
+      if (n.type === "subject") { if (!p) { n.x = w / 2; n.y = h / 2; } n.fixed = true; }
     });
     nodes = list; edges = ed; byId = new Map(list.map((n) => [n.id, n]));
     legend(capped);
@@ -143,22 +146,40 @@
     box.append(el("span", { class: "chip static" }, el("span", { class: "subjdot" }), el("span", { class: "chip-v", text: "subject" })),
       el("span", { class: "chip static" }, UI.shapeIcon("circle"), el("span", { class: "chip-v", text: "filled = strong lead" })),
       el("span", { class: "chip static" }, UI.shapeIcon("circle", true), el("span", { class: "chip-v", text: "outline = weak lead" })));
-    $("graphStats").textContent = `${nodes.length} nodes · ${edges.length} links` + (capped ? " · strongest shown" : "");
+    capNote = capped ? " · strongest shown" : "";
+    stats();
+  }
+  function stats() {
+    const el2 = $("graphStats");
+    if (!el2) return;
+    const t = `${nodes.length} nodes · ${edges.length} links${capNote} · zoom ${Math.round(view.k * 100)}%`;
+    if (t !== lastStats) { lastStats = t; el2.textContent = t; }
   }
 
   // ---------------------------------------------------------------- physics
   function step() {
     const n = nodes.length;
+    const CELL = 300, grid = new Map();
+    const hk = (cx, cy) => (cx + 4096) * 8192 + (cy + 4096);
     for (let i = 0; i < n; i++) {
-      const a = nodes[i];
-      for (let j = i + 1; j < n; j++) {
-        const b = nodes[j];
-        let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
-        if (d2 < 0.01) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 0.5; }
-        if (d2 > 90000) continue;
-        const f = (2600 * alpha) / d2, d = Math.sqrt(d2);
-        dx = (dx / d) * f; dy = (dy / d) * f;
-        a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
+      const a = nodes[i]; a.i = i;
+      const k = hk(Math.floor(a.x / CELL), Math.floor(a.y / CELL));
+      const c = grid.get(k); if (c) c.push(a); else grid.set(k, [a]);
+    }
+    for (let i = 0; i < n; i++) {
+      const a = nodes[i], cx = Math.floor(a.x / CELL), cy = Math.floor(a.y / CELL);
+      for (let gx = -1; gx <= 1; gx++) for (let gy = -1; gy <= 1; gy++) {
+        const c = grid.get(hk(cx + gx, cy + gy));
+        if (!c) continue;
+        for (const b of c) {
+          if (b.i <= i) continue;
+          let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
+          if (d2 < 0.01) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 0.5; }
+          if (d2 > 90000) continue;
+          const f = (2600 * alpha) / d2, d = Math.sqrt(d2);
+          dx = (dx / d) * f; dy = (dy / d) * f;
+          a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
+        }
       }
     }
     for (const e of edges) {
@@ -172,18 +193,31 @@
       a.vx += (cx - a.x) * 0.0016 * alpha * 4; a.vy += (cy - a.y) * 0.0016 * alpha * 4;
       if (a.fixed) { a.vx = a.vy = 0; continue; }
       a.vx *= 0.82; a.vy *= 0.82;
-      a.x += Math.max(-30, Math.min(30, a.vx)); a.y += Math.max(-30, Math.min(30, a.vy));
+      a.x = Math.max(-3500, Math.min(3500, a.x + Math.max(-30, Math.min(30, a.vx)))); a.y = Math.max(-3500, Math.min(3500, a.y + Math.max(-30, Math.min(30, a.vy))));
     }
     alpha *= 0.985;
   }
 
   function loop() {
     raf = null;
-    if (alpha > 0.02) { step(); step(); }
-    // Frame the whole graph once the layout has mostly settled, unless the analyst already moved the view.
-    if (!fitted && !touched && alpha < 0.25) { fit(true); fitted = true; }
+    let busy = false;
+    if (layoutMode === "force") {
+      if (alpha > 0.02) { step(); step(); busy = true; }
+    } else if (settling) {
+      let moved = 0;
+      for (const n of nodes) {
+        if (n.tx == null) continue;
+        const dx = n.tx - n.x, dy = n.ty - n.y;
+        n.x += dx * 0.2; n.y += dy * 0.2;
+        moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
+      }
+      if (moved < 0.6) { for (const n of nodes) if (n.tx != null) { n.x = n.tx; n.y = n.ty; } settling = false; } else busy = true;
+    }
+    // Frame the graph once the layout has settled, unless the analyst already moved the view.
+    const calm = layoutMode === "force" ? alpha < 0.25 : !settling;
+    if (!fitted && !touched && calm) { autoFit(); fitted = true; }
     draw();
-    if (alpha > 0.02 || drag) raf = requestAnimationFrame(loop);
+    if (busy || drag) raf = requestAnimationFrame(loop);
   }
   const kick = (a) => { alpha = Math.max(alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
 
@@ -193,7 +227,7 @@
   const pathFor = (shape, r) => { const k = shape + Math.round(r * 2); let p = pathCache.get(k); if (!p) { p = new Path2D(UI.shapePath(shape, r)); pathCache.set(k, p); } return p; };
 
   function drawNode(g, n, dim, k) {
-    const r = radius(n);
+    const r = Math.max(radius(n), Math.round(3.2 / k));
     g.save();
     g.translate(n.x, n.y);
     g.globalAlpha = dim ? 0.15 : 1;
@@ -255,30 +289,181 @@
       ctx.fillStyle = T.text; ctx.fillText(text, x, n.y);
     }
     ctx.restore();
+    stats();
+    drawMini();
   }
 
   // --------------------------------------------------------------- view ops
-  function fit(quiet) {
-    if (!nodes.length) return;
-    const w = canvas.clientWidth, h = canvas.clientHeight;
+  const labelOf = (n) => (n.type === "subject" ? n.label : String(n.value || ""));
+  /** Bounding box of the nodes, including the room their labels need on the right. */
+  function bounds(list) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const n of nodes) { x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y); }
-    const pad = 60, bw = Math.max(40, x1 - x0), bh = Math.max(40, y1 - y0);
-    const k = Math.max(0.3, Math.min(2, Math.min((w - pad * 2) / bw, (h - pad * 2) / bh)));
-    view.k = k; view.x = w / 2 - ((x0 + x1) / 2) * k; view.y = h / 2 - ((y0 + y1) / 2) * k;
+    for (const n of list) {
+      const r = radius(n) + 6;
+      const lw = n.input || n.strong || n.type === "subject" ? Math.min(34, labelOf(n).length) * 6.6 + 10 : 0;
+      x0 = Math.min(x0, n.x - r); y0 = Math.min(y0, n.y - r); x1 = Math.max(x1, n.x + r + lw); y1 = Math.max(y1, n.y + r);
+    }
+    return { x0, y0, x1, y1 };
+  }
+  function hops() {
+    const adj = new Map(nodes.map((n) => [n, []]));
+    for (const e of edges) { adj.get(e.a).push(e.b); adj.get(e.b).push(e.a); }
+    const root = nodes.find((n) => n.type === "subject") || nodes[0];
+    const lvl = new Map([[root, 0]]), par = new Map(), q = [root];
+    for (let i = 0; i < q.length; i++) for (const b of adj.get(q[i])) if (!lvl.has(b)) { lvl.set(b, lvl.get(q[i]) + 1); par.set(b, q[i]); q.push(b); }
+    let max = 0; for (const v of lvl.values()) max = Math.max(max, v);
+    if (q.length < nodes.length) { max++; for (const n of nodes) if (!lvl.has(n)) lvl.set(n, max); }
+    return { lvl, par, root, max };
+  }
+  /** mode "all": every node on screen. mode "core": the subject and what is within two hops, at a readable size. */
+  function fit(mode, quiet) {
+    if (!nodes.length || !canvas) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    let list = nodes;
+    if (mode === "core") {
+      // the subject and the ~45 nodes nearest to it, whatever the layout
+      const root = nodes.find((n) => n.type === "subject") || nodes[0];
+      list = [...nodes].sort((p, q) => Math.hypot(p.x - root.x, p.y - root.y) - Math.hypot(q.x - root.x, q.y - root.y)).slice(0, 45);
+    }
+    const b = bounds(list), pad = 28;
+    const bw = Math.max(60, b.x1 - b.x0), bh = Math.max(60, b.y1 - b.y0);
+    const lo = mode === "core" ? 0.55 : 0.06;
+    const k = Math.max(lo, Math.min(1.8, Math.min((w - pad * 2) / bw, (h - pad * 2) / bh)));
+    view.k = k; view.x = w / 2 - ((b.x0 + b.x1) / 2) * k; view.y = h / 2 - ((b.y0 + b.y1) / 2) * k;
+    coreMode = mode === "core";
     if (!quiet) { touched = false; draw(); }
   }
-  function zoom(f) {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    const k = Math.max(0.2, Math.min(4, view.k * f));
-    view.x = w / 2 - ((w / 2 - view.x) / view.k) * k; view.y = h / 2 - ((h / 2 - view.y) / view.k) * k; view.k = k;
-    touched = true; draw();
+  /** First framing: everything if it stays legible, else the core around the subject. */
+  function autoFit() {
+    if (!nodes.length) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight, b = bounds(nodes);
+    const kAll = Math.min((w - 56) / Math.max(60, b.x1 - b.x0), (h - 56) / Math.max(60, b.y1 - b.y0));
+    if (kAll < 0.34 && nodes.length > 40 && layoutMode === "force") { fit("core", true); UI.toast("Large graph: showing the core around the subject. “Fit all” shows everything."); }
+    else fit("all", true);
   }
+  /** Keep part of the graph on screen whatever the analyst does. */
+  function clampView() {
+    if (!nodes.length) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight, b = bounds(nodes), m = 90;
+    const sx0 = b.x0 * view.k + view.x, sx1 = b.x1 * view.k + view.x, sy0 = b.y0 * view.k + view.y, sy1 = b.y1 * view.k + view.y;
+    if (sx1 < m) view.x += m - sx1; else if (sx0 > w - m) view.x -= sx0 - (w - m);
+    if (sy1 < m) view.y += m - sy1; else if (sy0 > h - m) view.y -= sy0 - (h - m);
+  }
+  function zoomAt(px, py, f) {
+    const k = Math.max(0.05, Math.min(4, view.k * f));
+    view.x = px - ((px - view.x) / view.k) * k; view.y = py - ((py - view.y) / view.k) * k; view.k = k;
+    touched = true; clampView(); draw();
+  }
+  const zoom = (f) => zoomAt(canvas.clientWidth / 2, canvas.clientHeight / 2, f);
+
+  // ---------------------------------------------------------------- layouts
+  /** Static layouts compute a target for every node; nodes glide there. "force" keeps the live physics. */
+  function applyLayout(mode) {
+    layoutMode = mode;
+    for (const n of nodes) { n.tx = n.ty = null; }
+    if (mode === "force") { for (const n of nodes) if (n.type !== "subject") n.fixed = false; fitted = false; touched = false; kick(0.8); return; }
+    const { lvl, par, root, max } = hops();
+    const cx = 0, cy = 0;
+    const set = (n, x, y) => { n.tx = x; n.ty = y; };
+    const byType = (a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : String(a.value).localeCompare(String(b.value)));
+    if (mode === "radial" || mode === "tree") {
+      const levels = [];
+      for (let i = 0; i <= max + 1; i++) levels.push([]);
+      for (const n of nodes) levels[lvl.get(n)].push(n);
+      set(root, cx, cy);
+      const pos = new Map([[root, mode === "radial" ? 0 : 0]]); // angle (radial) or y (tree)
+      let prevR = 0;
+      for (let l = 1; l < levels.length; l++) {
+        const list = levels[l];
+        if (!list.length) continue;
+        list.sort((a, b) => ((pos.get(par.get(a)) ?? 0) - (pos.get(par.get(b)) ?? 0)) || byType(a, b));
+        if (mode === "radial") {
+          const r = Math.max(prevR + (l === 1 ? 170 : 120), (list.length * 30) / (2 * Math.PI));
+          prevR = r;
+          list.forEach((n, i) => { const a = (i / list.length) * Math.PI * 2 - Math.PI / 2; pos.set(n, a); set(n, cx + Math.cos(a) * r, cy + Math.sin(a) * r); });
+        } else {
+          list.forEach((n, i) => { const y = (i - (list.length - 1) / 2) * 30; pos.set(n, y); set(n, cx + l * 250, cy + y); });
+        }
+      }
+    } else if (mode === "circle") {
+      const rest = nodes.filter((n) => n !== root).sort(byType), r = Math.max(220, (rest.length * 24) / (2 * Math.PI));
+      set(root, cx, cy);
+      rest.forEach((n, i) => { const a = (i / rest.length) * Math.PI * 2 - Math.PI / 2; set(n, cx + Math.cos(a) * r, cy + Math.sin(a) * r); });
+    } else if (mode === "clusters") {
+      const groups = new Map();
+      for (const n of nodes) if (n !== root) (groups.get(n.type) || groups.set(n.type, []).get(n.type)).push(n);
+      const order = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+      const R = Math.max(300, order.length * 90);
+      set(root, cx, cy);
+      order.forEach(([, list], gi) => {
+        const a = (gi / order.length) * Math.PI * 2 - Math.PI / 2, gx = cx + Math.cos(a) * R, gy = cy + Math.sin(a) * R;
+        list.sort(byType).forEach((n, i) => { const t = i * 2.39996, d = 24 * Math.sqrt(i + 0.5); set(n, gx + Math.cos(t) * d, gy + Math.sin(t) * d); });
+      });
+    }
+    for (const n of nodes) if (n.fixed && n.type !== "subject") { /* dragged by hand: stays where the analyst put it */ n.tx = n.x; n.ty = n.y; }
+    settling = true; fitted = false; touched = false;
+    kick(0);
+  }
+
+  // ---------------------------------------------------------------- minimap
+  const MM = { w: 168, h: 116 };
+  function drawMini() {
+    if (!mini || mini.hidden) return;
+    const dpr = window.devicePixelRatio || 1, W = mini.clientWidth || MM.w, H = mini.clientHeight || MM.h;
+    if (mini.width !== Math.round(W * dpr)) { mini.width = Math.round(W * dpr); mini.height = Math.round(H * dpr); }
+    mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mctx.clearRect(0, 0, W, H);
+    if (!nodes.length) return;
+    const b = bounds(nodes), bw = Math.max(60, b.x1 - b.x0), bh = Math.max(60, b.y1 - b.y0);
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    // include the viewport so it never leaves the map
+    const vx0 = -view.x / view.k, vy0 = -view.y / view.k, vx1 = vx0 + w / view.k, vy1 = vy0 + h / view.k;
+    const x0 = Math.min(b.x0, vx0), y0 = Math.min(b.y0, vy0), x1 = Math.max(b.x1, vx1), y1 = Math.max(b.y1, vy1);
+    const s = Math.min((W - 8) / (x1 - x0), (H - 8) / (y1 - y0)), ox = (W - (x1 - x0) * s) / 2 - x0 * s, oy = (H - (y1 - y0) * s) / 2 - y0 * s;
+    mmap = { s, ox, oy };
+    if (edges.length < 600) {
+      mctx.strokeStyle = T.line; mctx.globalAlpha = 0.45; mctx.lineWidth = 0.6; mctx.beginPath();
+      for (const e of edges) { mctx.moveTo(e.a.x * s + ox, e.a.y * s + oy); mctx.lineTo(e.b.x * s + ox, e.b.y * s + oy); }
+      mctx.stroke();
+    }
+    mctx.globalAlpha = 1;
+    for (const n of nodes) {
+      const sub = n.type === "subject";
+      mctx.fillStyle = sub ? T.strong : n.strong || n.input ? T.text2 : T.text4;
+      const r = sub ? 3 : n.strong || n.input ? 1.8 : 1.2;
+      mctx.fillRect(n.x * s + ox - r, n.y * s + oy - r, r * 2, r * 2);
+    }
+    mctx.strokeStyle = T.strong; mctx.lineWidth = 1.5;
+    mctx.strokeRect(vx0 * s + ox, vy0 * s + oy, (vx1 - vx0) * s, (vy1 - vy0) * s);
+  }
+  function miniMove(ev) {
+    if (!mmap) return;
+    const r = mini.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    const wx = (mx - mmap.ox) / mmap.s, wy = (my - mmap.oy) / mmap.s;
+    view.x = canvas.clientWidth / 2 - wx * view.k; view.y = canvas.clientHeight / 2 - wy * view.k;
+    touched = true; clampView(); draw();
+  }
+  function setMini(on) {
+    showMini = on;
+    if (mini) { mini.hidden = !on; if (on) drawMini(); }
+    const b = document.getElementById("graphMiniBtn");
+    if (b) b.setAttribute("aria-pressed", String(!!on));
+  }
+
+  // -------------------------------------------------------------- fullscreen
+  function isFull() { return document.fullscreenElement === shell || shell.classList.contains("is-full"); }
+  function toggleFull() {
+    if (isFull()) { if (document.fullscreenElement) document.exitFullscreen(); shell.classList.remove("is-full"); }
+    else if (shell.requestFullscreen) shell.requestFullscreen().catch(() => shell.classList.add("is-full"));
+    else shell.classList.add("is-full");
+    setTimeout(() => { if (!touched) fitted = false; kick(0); draw(); }, 200);
+  }
+
   function focusNode(n) {
     selected = n;
     const w = canvas.clientWidth, h = canvas.clientHeight;
     view.k = Math.max(view.k, 1.2); view.x = w / 2 - n.x * view.k; view.y = h / 2 - n.y * view.k;
-    touched = true; draw();
+    touched = true; clampView(); draw();
   }
 
   // ----------------------------------------------------------------- export
@@ -353,20 +538,38 @@
   const local = (ev) => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
 
   function bindCanvas() {
+    const pinchMid = () => { const [a, b] = [...ptrs.values()]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.hypot(a[0] - b[0], a[1] - b[1]) || 1]; };
     canvas.addEventListener("pointerdown", (ev) => {
       const [px, py] = local(ev);
-      const n = pick(px, py);
+      ptrs.set(ev.pointerId, [px, py]);
       canvas.setPointerCapture(ev.pointerId);
+      if (ptrs.size === 2) {
+        drag = null; canvas.classList.remove("drag");
+        const [mx, my, d] = pinchMid();
+        pinch = { d, k: view.k, wx: (mx - view.x) / view.k, wy: (my - view.y) / view.k };
+        return;
+      }
+      const n = pick(px, py);
       drag = { n, sx: px, sy: py, ox: view.x, oy: view.y, moved: false };
       if (!n) canvas.classList.add("drag");
       kick(0.3);
     });
     canvas.addEventListener("pointermove", (ev) => {
       const [px, py] = local(ev);
+      if (ptrs.has(ev.pointerId)) ptrs.set(ev.pointerId, [px, py]);
+      if (pinch && ptrs.size === 2) {
+        const [mx, my, d] = pinchMid();
+        const k = Math.max(0.05, Math.min(4, pinch.k * (d / pinch.d)));
+        view.k = k; view.x = mx - pinch.wx * k; view.y = my - pinch.wy * k; touched = true; clampView(); draw();
+        return;
+      }
       if (drag) {
         if (Math.hypot(px - drag.sx, py - drag.sy) > 3) { drag.moved = true; touched = true; }
-        if (drag.n && drag.moved) { const [x, y] = toWorld(px, py); drag.n.x = x; drag.n.y = y; drag.n.fixed = true; drag.n.vx = drag.n.vy = 0; kick(0.3); }
-        else if (!drag.n) { view.x = drag.ox + (px - drag.sx); view.y = drag.oy + (py - drag.sy); draw(); }
+        if (drag.n && drag.moved) {
+          const [x, y] = toWorld(px, py); drag.n.x = x; drag.n.y = y; drag.n.fixed = true; drag.n.vx = drag.n.vy = 0;
+          if (layoutMode !== "force") { drag.n.tx = x; drag.n.ty = y; }
+          kick(layoutMode === "force" ? 0.3 : 0);
+        } else if (!drag.n) { view.x = drag.ox + (px - drag.sx); view.y = drag.oy + (py - drag.sy); clampView(); draw(); }
         return;
       }
       const n = pick(px, py);
@@ -374,32 +577,42 @@
       if (n) {
         tip.hidden = false;
         tip.textContent = n.type === "subject" ? "subject" : `${n.type}: ${n.value}\n${n.strong ? "strong lead" : "weak lead"}${n.source ? " · from " + n.source : ""}`;
-        tip.style.left = Math.min(px + 14, canvas.clientWidth - 260) + "px"; tip.style.top = py + 14 + "px";
+        tip.style.left = Math.max(4, Math.min(px + 14, canvas.clientWidth - 260)) + "px"; tip.style.top = Math.min(py + 14, canvas.clientHeight - 60) + "px";
       } else tip.hidden = true;
     });
-    canvas.addEventListener("pointerup", () => {
+    const up = (ev) => {
+      ptrs.delete(ev.pointerId);
+      if (pinch) { if (ptrs.size < 2) pinch = null; drag = null; canvas.classList.remove("drag"); return; }
       if (drag && drag.n && !drag.moved) {
         selected = drag.n;
         if (drag.n.type !== "subject") UI.showEntity({ type: drag.n.type, value: drag.n.value, strong: drag.n.strong, source: drag.n.source });
       } else if (drag && !drag.n && !drag.moved) selected = null;
       canvas.classList.remove("drag");
       drag = null; draw();
-    });
+    };
+    canvas.addEventListener("pointerup", up);
+    canvas.addEventListener("pointercancel", up);
     canvas.addEventListener("pointerleave", () => { tip.hidden = true; if (hover) { hover = null; draw(); } });
-    canvas.addEventListener("dblclick", (ev) => { const n = pick(...local(ev)); if (n && n.type !== "subject") { n.fixed = false; kick(0.5); } });
+    canvas.addEventListener("dblclick", (ev) => { const n = pick(...local(ev)); if (n && n.type !== "subject") { n.fixed = false; if (layoutMode === "force") kick(0.5); } else if (!n) zoomAt(...local(ev), 1.6); });
     canvas.addEventListener("wheel", (ev) => {
       ev.preventDefault();
       const [px, py] = local(ev);
-      const k = Math.max(0.2, Math.min(4, view.k * (ev.deltaY < 0 ? 1.12 : 1 / 1.12)));
-      view.x = px - ((px - view.x) / view.k) * k; view.y = py - ((py - view.y) / view.k) * k; view.k = k;
-      touched = true; draw();
+      zoomAt(px, py, Math.exp(-ev.deltaY * (ev.ctrlKey ? 0.01 : 0.0016)));
     }, { passive: false });
     canvas.addEventListener("keydown", (e) => {
+      const step = 70;
       if (e.key === "+" || e.key === "=") { zoom(1.25); e.preventDefault(); }
       else if (e.key === "-") { zoom(1 / 1.25); e.preventDefault(); }
-      else if (e.key === "0") { fit(); e.preventDefault(); }
+      else if (e.key === "0") { fit("all"); e.preventDefault(); }
+      else if (e.key === "f" || e.key === "F") { toggleFull(); e.preventDefault(); }
+      else if (e.key === "ArrowLeft") { view.x += step; touched = true; clampView(); draw(); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { view.x -= step; touched = true; clampView(); draw(); e.preventDefault(); }
+      else if (e.key === "ArrowUp") { view.y += step; touched = true; clampView(); draw(); e.preventDefault(); }
+      else if (e.key === "ArrowDown") { view.y -= step; touched = true; clampView(); draw(); e.preventDefault(); }
     });
-    new ResizeObserver(() => draw()).observe(canvas);
+    new ResizeObserver(() => { if (!touched && fitted) fit(coreMode ? "core" : "all", true); draw(); }).observe(canvas);
+    document.addEventListener("fullscreenchange", () => { if (!shell) return; shell.classList.toggle("is-full", false); if (!touched) fitted = false; kick(0); draw(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && shell && shell.classList.contains("is-full")) { shell.classList.remove("is-full"); if (!touched) fitted = false; kick(0); } });
   }
 
   // ------------------------------------------------------------------ panel
@@ -415,23 +628,37 @@
     shade.addEventListener("change", () => { shadeBy = shade.value; legend(); draw(); });
     const weak = el("input", { type: "checkbox", id: "graphWeak", checked: "" });
     weak.addEventListener("change", () => { showWeak = weak.checked; build(); kick(0.7); });
+    const layoutSel = el("select", { "aria-label": "Layout" },
+      ...[["force", "Layout: organic (live)"], ["radial", "Layout: rings by hops"], ["tree", "Layout: tree, left to right"], ["circle", "Layout: circle"], ["clusters", "Layout: grouped by type"]].map(([v, t]) => el("option", { value: v, text: t })));
+    layoutSel.addEventListener("change", () => applyLayout(layoutSel.value));
+    const miniBtn = UI.btn("Map", { icon: "map", title: "Show or hide the minimap", on: () => setMini(!(mini && !mini.hidden)) });
+    miniBtn.id = "graphMiniBtn";
     const bar = el("div", { class: "graph-bar" },
-      el("div", { class: "searchbox" }, UI.icon("search"), find), shade,
+      el("div", { class: "searchbox" }, UI.icon("search"), find), shade, layoutSel,
       el("label", { class: "check sm", for: "graphWeak" }, weak, el("span", { text: "weak leads" })),
       el("span", { class: "grow" }),
       el("div", { class: "btn-group", role: "group", "aria-label": "View" },
         UI.btn("", { icon: "minus", cls: "icon-btn", title: "Zoom out ( - )", on: () => zoom(1 / 1.25) }),
         UI.btn("", { icon: "plus", cls: "icon-btn", title: "Zoom in ( + )", on: () => zoom(1.25) }),
-        UI.btn("Fit", { icon: "fit", title: "Fit the whole graph on screen ( 0 )", on: () => fit() }),
-        UI.btn("Re-layout", { icon: "graph", title: "Release pinned nodes and settle the layout again", on: () => { nodes.forEach((n) => { if (n.type !== "subject") n.fixed = false; }); fitted = false; touched = false; kick(0.9); } })),
+        UI.btn("Fit all", { icon: "fit", title: "Put every node on screen ( 0 )", on: () => fit("all") }),
+        UI.btn("Core", { icon: "user", title: "Zoom to the subject and what is within two hops, at a readable size", on: () => fit("core") }),
+        miniBtn,
+        UI.btn("", { icon: "expand", cls: "icon-btn", title: "Full screen ( f )", on: toggleFull }),
+        UI.btn("Re-layout", { icon: "graph", title: "Release pinned nodes and settle the layout again", on: () => { nodes.forEach((n) => { if (n.type !== "subject") n.fixed = false; }); applyLayout(layoutMode); } })),
       el("div", { class: "btn-group", role: "group", "aria-label": "Export" },
         UI.btn("PNG", { icon: "download", title: "Save the current view as a PNG picture", on: exportPNG }),
         UI.btn("SVG", { icon: "download", title: "Save the whole graph as an SVG drawing", on: exportSVG })));
     canvas = el("canvas", { id: "graph", tabindex: "0", role: "img", "aria-label": "Relationship graph of discovered entities. The intelligence tree lists the same items as text." });
     tip = el("div", { class: "graph-tip", hidden: true });
-    root.append(bar, el("div", { id: "graphLegend", class: "chips legend" }),
-      el("div", { class: "graph-wrap" }, canvas, tip, el("div", { class: "graph-stats num", id: "graphStats" })),
-      el("p", { class: "hint pad", text: "Edges show where a lead came from: the subject → what the first pass found → what following those leads found. Drag to pan, wheel to zoom, select a node for details, double-click to release a pinned node." }));
+    mini = el("canvas", { class: "graph-mini", "aria-hidden": "true", hidden: true });
+    mini.addEventListener("pointerdown", (ev) => { mini.setPointerCapture(ev.pointerId); miniMove(ev); mini.dataset.down = "1"; });
+    mini.addEventListener("pointermove", (ev) => { if (mini.dataset.down) miniMove(ev); });
+    mini.addEventListener("pointerup", () => { delete mini.dataset.down; });
+    mctx = mini.getContext("2d");
+    shell = el("div", { class: "graph-shell" }, bar, el("div", { id: "graphLegend", class: "chips legend" }),
+      el("div", { class: "graph-wrap" }, canvas, mini, tip, el("div", { class: "graph-stats num", id: "graphStats" })));
+    root.append(shell,
+      el("p", { class: "hint pad", text: "Edges show where a lead came from: the subject → what the first pass found → what following those leads found. Drag to pan, wheel or pinch to zoom, arrows to move, select a node for details, double-click a node to release it or empty space to zoom in. Pick another layout to see the same graph as rings, a tree, a circle or groups; pinned nodes stay where you put them." }));
     ctx = canvas.getContext("2d");
     bindCanvas();
   }
@@ -439,13 +666,15 @@
   function update() {
     const root = $("tab-graph");
     if (!root.querySelector("canvas")) {
-      nodes = []; edges = []; byId = new Map(); view = { x: 0, y: 0, k: 1 }; hover = selected = null; fitted = false; touched = false;
+      nodes = []; edges = []; byId = new Map(); view = { x: 0, y: 0, k: 1 }; hover = selected = null; fitted = false; touched = false; layoutMode = "force"; settling = false; coreMode = false; showMini = null;
       buildPanel(root);
     }
     readTokens();
     const before = nodes.length;
     build();
-    kick(nodes.length !== before ? 0.7 : 0.15);
+    if (showMini === null) setMini(nodes.length > 40 && canvas.clientWidth > 560);
+    if (layoutMode !== "force" && nodes.length !== before) applyLayout(layoutMode);
+    else kick(nodes.length !== before ? 0.7 : 0.15);
     if (nodes.length !== before) fitted = touched; // new nodes: re-frame unless the analyst has taken control of the view
   }
 
