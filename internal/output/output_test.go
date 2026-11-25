@@ -29,7 +29,7 @@ func sample() *models.Report {
 
 func TestAllFormats(t *testing.T) {
 	r := sample()
-	for _, f := range []string{"json", "csv", "txt", "html", "graphml", "stix", "entities", "misp", "spiderfoot", "maltego"} {
+	for _, f := range []string{"json", "csv", "txt", "html", "graphml", "stix", "entities", "misp", "spiderfoot", "maltego", "md", "sql"} {
 		var b bytes.Buffer
 		if err := Render(&b, r, f); err != nil {
 			t.Fatalf("%s: %v", f, err)
@@ -74,4 +74,44 @@ func TestLivePDF(t *testing.T) {
 		t.Fatalf("not a pdf: %d bytes", b.Len())
 	}
 	t.Logf("pdf %d bytes", b.Len())
+}
+
+func TestMarkdownIsSafeAndLinked(t *testing.T) {
+	r := sample()
+	r.Findings = append(r.Findings, models.Finding{Module: "domain", Source: "Site", Category: "web", URL: "https://example.com/x", Status: models.StatusFound, Confidence: 0.9,
+		Details: map[string]string{"list": "a\nb"}})
+	var b bytes.Buffer
+	if err := Render(&b, r, "md"); err != nil {
+		t.Fatal(err)
+	}
+	md := b.String()
+	for _, want := range []string{"---\ntool: argus", "# Jane Roe", "[[jane@example.com]]", "[[example.com]]", "[Site](https://example.com/x)", "### web (1)"} {
+		if !strings.Contains(md, want) {
+			t.Errorf("markdown lacks %q", want)
+		}
+	}
+	if strings.Contains(md, "javascript:") {
+		t.Error("javascript: links must not reach the note")
+	}
+	if !strings.Contains(md, "a ¦ b") {
+		t.Error("multi-line details must stay on one list line")
+	}
+}
+
+func TestSQLEscapesAndHasSchema(t *testing.T) {
+	r := sample()
+	r.Findings[0].Details["name"] = "O'Brien; DROP TABLE findings;--"
+	var b bytes.Buffer
+	if err := Render(&b, r, "sql"); err != nil {
+		t.Fatal(err)
+	}
+	sql := b.String()
+	if !strings.Contains(sql, "'O''Brien; DROP TABLE findings;--'") {
+		t.Error("single quotes must be doubled")
+	}
+	for _, want := range []string{"CREATE TABLE findings", "CREATE TABLE finding_details", "INSERT INTO identities", "BEGIN;", "COMMIT;"} {
+		if !strings.Contains(sql, want) {
+			t.Errorf("sql lacks %q", want)
+		}
+	}
 }

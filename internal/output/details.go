@@ -24,7 +24,7 @@ func detailLines(d map[string]string, max int) []string {
 	})
 	var out []string
 	for _, k := range keys {
-		v := strings.Join(strings.Fields(d[k]), " ")
+		v := strings.Join(strings.Fields(strings.ReplaceAll(d[k], "\n", " ¦ ")), " ")
 		if len(v) > 260 {
 			v = v[:260] + "…"
 		}
