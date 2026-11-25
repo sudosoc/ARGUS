@@ -320,11 +320,11 @@ tr.detail > td { background: var(--well); padding: var(--sp-3) var(--sp-4) var(-
 .fr-kv i { color: var(--text-3); font-style: normal; font-family: var(--mono); font-size: var(--fs-xs); }
 .fr-conf { padding-top: 2px; }
 .hbars { display: grid; gap: 6px; }
-.hbar { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; font-size: var(--fs-sm); }
-.hbar.clickable { cursor: pointer; } .hbar.clickable:hover .hb-l { color: var(--text); }
+.kbar { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; font-size: var(--fs-sm); }
+.kbar.clickable { cursor: pointer; } .kbar.clickable:hover .hb-l { color: var(--text); }
 .hb-l { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hb-t { height: 8px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
-.hb-f { display: block; height: 100%; background: var(--text-3); border-radius: 99px; }
+.hb-t { height: 10px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.hb-f { display: block; height: 100%; background: var(--emph, var(--accent)); border-radius: 99px; }
 .hb-n { color: var(--text-3); font-size: var(--fs-xs); white-space: nowrap; }
 .ctable tr.clickable { cursor: pointer; } .ctable tr.clickable:hover td { background: var(--surface-2); }
 .gauge { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
