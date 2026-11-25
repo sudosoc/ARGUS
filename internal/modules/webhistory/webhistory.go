@@ -26,7 +26,7 @@ import (
 var base = "https://web.archive.org"
 
 // maxSnapshots bounds how many archived copies are downloaded.
-const maxSnapshots = 10
+const maxSnapshots = 30
 
 // Scanner is the module.
 type Scanner struct{}

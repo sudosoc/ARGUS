@@ -36,7 +36,7 @@ func TestTop(t *testing.T) {
 }
 
 func TestClip(t *testing.T) {
-	if got := util.ClipList([]string{"a", "b", "c"}, 2); !reflect.DeepEqual(got, []string{"a", "b"}) {
+	if got := util.ClipList([]string{"a", "b", "c"}, 2); !reflect.DeepEqual(got, []string{"a", "b", "c"}) { // nothing below the floor is dropped
 		t.Errorf("%v", got)
 	}
 }

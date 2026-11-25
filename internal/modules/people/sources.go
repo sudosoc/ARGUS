@@ -38,7 +38,7 @@ func crossref(ctx context.Context, c *httpx.Client, t models.Target, emit func(m
 			} `json:"items"`
 		} `json:"message"`
 	}
-	if !getJSON(ctx, c, "https://api.crossref.org/works?rows=40&select=title,container-title,author&query.author="+esc(t.FullName), nil, &r) {
+	if !getJSON(ctx, c, "https://api.crossref.org/works?rows=200&select=title,container-title,author&query.author="+esc(t.FullName), nil, &r) {
 		return
 	}
 	type cand struct {
@@ -326,7 +326,7 @@ func archiveOrg(ctx context.Context, c *httpx.Client, t models.Target, emit func
 		} `json:"response"`
 	}
 	q := `creator:"` + t.FullName + `"`
-	if !getJSON(ctx, c, "https://archive.org/advancedsearch.php?output=json&rows=12&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&fl%5B%5D=creator&q="+esc(q), nil, &r) || len(r.Response.Docs) == 0 {
+	if !getJSON(ctx, c, "https://archive.org/advancedsearch.php?output=json&rows=50&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&fl%5B%5D=creator&q="+esc(q), nil, &r) || len(r.Response.Docs) == 0 {
 		return
 	}
 	var works []string

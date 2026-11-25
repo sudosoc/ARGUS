@@ -285,11 +285,8 @@ func reverseIPJob(ctx context.Context, c *httpx.Client, a netip.Addr, emit func(
 	}
 	sort.Strings(hosts)
 	shown := hosts
-	if len(shown) > 80 {
-		shown = shown[:80]
-	}
 	var ents []models.Entity
-	for _, h := range shown[:min(len(shown), 25)] {
+	for _, h := range shown[:min(len(shown), 200)] {
 		if dom, ok := intel.NormalizeDomain(h); ok {
 			ents = append(ents, models.Entity{Type: models.EntDomain, Value: dom})
 		}

@@ -45,7 +45,7 @@ func (s *Scanner) CanRun(t models.Target) bool {
 }
 
 const (
-	maxDocs  = 12
+	maxDocs  = 100
 	maxBytes = 8 << 20
 )
 

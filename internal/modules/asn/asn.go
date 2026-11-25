@@ -97,9 +97,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 		sort.Strings(v4)
 		sort.Strings(v6)
 		show := func(l []string) string {
-			if len(l) > 40 {
-				return strings.Join(l[:40], ", ") + " … (+" + strconv.Itoa(len(l)-40) + " more)"
-			}
 			return strings.Join(l, ", ")
 		}
 		det := map[string]string{"IPv4 prefixes": strconv.Itoa(len(v4)), "IPv6 prefixes": strconv.Itoa(len(v6))}
@@ -134,9 +131,6 @@ func (s *Scanner) Scan(ctx context.Context, t models.Target, d scanner.Deps, emi
 			}
 		}
 		cut := func(l []string) string {
-			if len(l) > 25 {
-				return strings.Join(l[:25], ", ") + " …"
-			}
 			return strings.Join(l, ", ")
 		}
 		emit(models.Finding{Source: asn + " BGP neighbours", Category: "network", Status: models.StatusFound, Confidence: 0.85,

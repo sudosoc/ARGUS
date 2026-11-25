@@ -21,7 +21,7 @@ import (
 )
 
 // maxCandidates bounds how many names are resolved per run.
-const maxCandidates = 450
+const maxCandidates = 1500
 
 // resolveHost and hasMX are variables so tests can run offline.
 var (

@@ -19,7 +19,7 @@ import (
 
 const (
 	maxBytes = 3 << 20
-	maxPages = 8
+	maxPages = 50
 	maxText  = 200 << 10
 )
 

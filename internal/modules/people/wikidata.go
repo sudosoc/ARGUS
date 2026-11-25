@@ -22,7 +22,7 @@ func wikidata(ctx context.Context, c *httpx.Client, t models.Target, emit func(m
 			Description string `json:"description"`
 		} `json:"search"`
 	}
-	if !getJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=8&type=item&search="+esc(t.FullName), nil, &sr) {
+	if !getJSON(ctx, c, "https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=50&type=item&search="+esc(t.FullName), nil, &sr) {
 		return
 	}
 	var ids []string

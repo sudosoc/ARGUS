@@ -2,6 +2,7 @@ package mentions
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/sudosoc/argus/internal/models"
@@ -21,8 +22,11 @@ func TestClip(t *testing.T) {
 	if got := util.Clip("abc", 5); got != "abc" {
 		t.Errorf("got %q", got)
 	}
-	if got := util.Clip("héllo wörld", 5); len([]rune(got)) > 7 || got == "héllo wörld" {
-		t.Errorf("rune-safe clip failed: %q", got)
+	if got := util.Clip("héllo wörld", 5); got != "héllo wörld" {
+		t.Errorf("short values must not be cut: %q", got)
+	}
+	if got := util.Clip(strings.Repeat("ö", util.MinClip+5), 5); len([]rune(got)) != util.MinClip+1 {
+		t.Errorf("rune-safe clip failed: %d", len([]rune(got)))
 	}
 }
 

@@ -80,7 +80,7 @@ func githubCommits(ctx context.Context, c *httpx.Client, user string, emit func(
 		Name string `json:"name"`
 		Fork bool   `json:"fork"`
 	}
-	if !util.GetJSON(ctx, c, "https://api.github.com/users/"+esc(user)+"/repos?sort=pushed&per_page=8&type=owner", &repos) {
+	if !util.GetJSON(ctx, c, "https://api.github.com/users/"+esc(user)+"/repos?sort=pushed&per_page=30&type=owner", &repos) {
 		return
 	}
 	emails := map[string]string{}
@@ -102,7 +102,7 @@ func githubCommits(ctx context.Context, c *httpx.Client, user string, emit func(
 				Login string `json:"login"`
 			} `json:"author"`
 		}
-		if !util.GetJSON(ctx, c, "https://api.github.com/repos/"+esc(user)+"/"+esc(rp.Name)+"/commits?author="+esc(user)+"&per_page=10", &commits) {
+		if !util.GetJSON(ctx, c, "https://api.github.com/repos/"+esc(user)+"/"+esc(rp.Name)+"/commits?author="+esc(user)+"&per_page=100", &commits) {
 			continue
 		}
 		for _, cm := range commits {

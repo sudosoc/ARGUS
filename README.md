@@ -123,6 +123,7 @@ History is kept in memory (last 50 cases); add `-o DIR` to also save every finis
 - **Raw output is always kept.** Every external tool run (`maigret`, `sherlock`, `holehe`, `phoneinfoga`, `whois`, `dig`, `theHarvester`, `subfinder`, `whatweb`, custom tools) is stored whole, unparsed, in the report (`tool_runs`), shown in **Coverage → Raw tool output** (with copy and download), written as one file per run in a `<report>.tools/` folder when you export, and loaded into the SQL export (`tool_runs` table). So even where a parser extracts only part of what a tool printed, the original text is there.
 - **Every username-site check is listed**: *social: every check* is a full table of site, username, outcome (found, not found, blocked, inconclusive, failed) and HTTP status, so inconclusive and blocked responses are not silently discarded.
 - **No result caps.** Parsers no longer limit the number of items, subdomains and fields; Maigret runs on **all** its sites with recursion on and every field it extracts is kept; holehe runs without `--only-used` and reports registered, not registered and rate-limited sites (an unknown result is a coverage gap, not silence); coverage gaps are never cut off (CLI, HTML and UI list all of them).
+- **Collectors are not cut short either.** Every username and alias is probed by `profiles` (not just the first three); API page sizes are raised to the largest the services allow (ORCID, Wikidata, Crossref, Bluesky, Mastodon, GitHub repos and commits…); long text values are kept to 5,000 characters; co-hosted domains, ASN prefixes, ad-network accounts, pictures (up to 1,000), archive snapshots (30), documents (100), look-alike candidates (1,500) and resolved subdomains (3,000) are no longer capped at a few dozen; the identity view keeps up to 60 candidates.
 - **Honest limits.** A tool's output is captured up to 64 MiB; beyond that the run is flagged *capture limit reached*, never cut quietly. Sites behind anti-bot systems a plain client cannot pass are not probed (ARGUS does not evade protections); `-v` keeps the not-found and error records in exports as well.
 
 ### CLI
@@ -136,12 +137,12 @@ Other flags worth knowing (`argus -h` lists all):
 | `-list-modules`, `-version` | list the modules / print the version and exit |
 | `-v` | keep not-found and error records in exported reports |
 | `-no-color` | plain console output |
-| `-pivot-depth N`, `-max-pivots N` | rounds of following discovered leads (default 2) / leads followed per round (default 10) |
+| `-pivot-depth N`, `-max-pivots N` | rounds of following discovered leads (default 3; `-aggressive` 4) / leads followed (default 30; `-aggressive` 80) |
 | `-retries N`, `-tool-timeout D` | retries on transient errors (default 1) / cap on any external tool's runtime |
 | `-proxy-file F` | one proxy URL per line, rotated |
 | `-insecure` | skip TLS verification (use only for broken targets you are allowed to test) |
 | `-no-wayback` | skip the Internet Archive query in the domain module |
-| `-dork-engines`, `-dork-delay`, `-max-dorks` | dorking engines in order (default `brave,bing,duckduckgo,google`), per-engine delay (3s), dork cap (60) |
+| `-dork-engines`, `-dork-delay`, `-max-dorks` | dorking engines in order (default `brave,bing,duckduckgo,google`), per-engine delay (3s), dork cap (default 200; `-aggressive` 500) |
 | `-site-tier core\|extended\|all` | how deep into the username-site list to go (default `all`) |
 | `-selftest-sites` | validate every site signature, see *Reliability* |
 
