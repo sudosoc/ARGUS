@@ -74,8 +74,29 @@
   }
 
   // ------------------------------------------------- compare two candidates
-  UI.compareIdentities = function compareIdentities(a, b) {
-    const body = UI.openDrawer("Compare people", "same facts are marked =");
+  UI.compareIdentities = async function compareIdentities(a, b) {
+    const body = UI.openDrawer("Compare people", "how likely they are one person, and what is different");
+    body.append(el("div", { class: "skel skel-line" }), el("div", { class: "skel skel-line" }));
+    let cmp = null;
+    try { cmp = await UI.api("/api/scans/" + UI.S.id + "/compare?a=" + a.id + "&b=" + b.id); } catch (e) { cmp = null; }
+    const out = [];
+    const VERDICT = { same: "Almost certainly the same person", likely: "Likely the same person", possible: "Possibly the same person", unlikely: "Probably different people" };
+    if (cmp) {
+      const pct = Math.round(cmp.score * 100);
+      out.push(el("div", { class: "cmp-verdict v-" + cmp.verdict },
+        el("div", { class: "cv-t" }, el("b", { text: VERDICT[cmp.verdict] || cmp.verdict }), el("span", { class: "num", text: pct + "%" })), UI.meter(pct),
+        el("p", { class: "hint", text: "From the signals below: each one is how convincing it would be alone, they are combined, and what speaks against lowers the result. A lead to check, not a verdict." })));
+      if ((cmp.photos || []).length) {
+        const pp = cmp.photos[0];
+        const pic = (u) => el("figure", { class: "cmp-pic" }, UI.queueImg(el("img", { alt: "picture", class: "cmp-img" }, null), u, true));
+        out.push(el("div", { class: "cmp-pics" }, pic(pp.a), pic(pp.b),
+          el("p", { class: "hint", text: pp.kind === "identical" ? "The same picture." : pp.kind === "near" ? "Almost the same picture (a crop, resize or recolour)." : "Pictures that look alike." + " " + pp.distance + " of 64 fingerprint bits differ." })));
+      }
+      const rows = (cmp.signals || []).map((s) => el("tr", {}, el("td", { class: "nowrap" }, el("span", { class: "tag " + (s.effect === "against" ? "bad" : ""), text: s.effect === "for" ? "for" : s.effect === "against" ? "against" : "note" })), el("td", { text: s.name }), el("td", { class: "num", text: s.weight ? Math.round(s.weight * 100) + "%" : "" }), el("td", { text: s.detail })));
+      if (rows.length) out.push(el("div", { class: "tablewrap" }, el("table", { class: "ctable" }, el("thead", {}, el("tr", {}, ...["", "Signal", "Weight", "What was seen"].map((h) => el("th", { scope: "col", text: h })))), el("tbody", {}, ...rows))));
+      else out.push(el("p", { class: "hint", text: "Nothing in common was found." }));
+      if ((cmp.advice || []).length) out.push(el("div", { class: "callout" }, UI.icon("check"), el("span", {}, el("b", { text: "To settle it: " }), cmp.advice.join(" "))));
+    }
     const rows = [["headlines", "Role"], ["employers", "Employers"], ["locations", "Location"], ["education", "Education"], ["emails", "E-mail"],
       ["phones", "Phone"], ["usernames", "Accounts"], ["websites", "Websites"], ["interests", "Interests"]];
     const tbl = el("table", { class: "ctable cmp" }, el("thead", {}, el("tr", {}, el("th", { scope: "col", text: "" }), el("th", { scope: "col", text: a.label }), el("th", { scope: "col", text: b.label }))));
@@ -91,13 +112,14 @@
       return td;
     };
     tb.append(el("tr", {}, el("th", { scope: "row", text: "Match score" }), el("td", { class: "num", text: Math.round(a.score * 100) + "%" }), el("td", { class: "num", text: Math.round(b.score * 100) + "%" })));
-    for (const [k, label] of rows) {
+    for (const [k, label] of [["names", "Names"], ...rows]) {
       if (!(a[k] || []).length && !(b[k] || []).length) continue;
       tb.append(el("tr", {}, el("th", { scope: "row", text: label }), cell(a[k], b[k]), cell(b[k], a[k])));
     }
     tb.append(el("tr", {}, el("th", { scope: "row", text: "Sources" }), el("td", { text: (a.records || []).map((r) => r.platform).join(" · ") }), el("td", { text: (b.records || []).map((r) => r.platform).join(" · ") })));
     tbl.append(tb);
-    body.append(el("p", { class: "hint", text: "Lines marked = are stated by both. Values on only one side (≠) are what tells the two people apart." }), el("div", { class: "tablewrap" }, tbl));
+    out.push(el("h3", { class: "fsec-h", text: "Side by side" }), el("p", { class: "hint", text: "Lines marked = are stated by both. Values on only one side (≠) are what tells the two people apart." }), el("div", { class: "tablewrap" }, tbl));
+    body.replaceChildren(...out);
   };
 
   // --------------------------------------------------------- source status

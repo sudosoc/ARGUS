@@ -46,6 +46,7 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![Sources](docs/screenshots/51-posts-sources.png)<br>**51. Sources:** what was copied from each account and why anything is missing. |  |
 | ![Activity](docs/screenshots/52-posts-activity.png)<br>**52. Activity:** items per month, hour and weekday. |  |
 | ![Topics and people](docs/screenshots/53-posts-topics.png)<br>**53. Topics and people:** tags, who they talk to, links and writing habits. |  |
+| ![Compare people](docs/screenshots/54-compare-people.png)<br>**54. Compare people:** how likely two candidates are one person, pictures side by side, each signal with its weight. |  |
 
 ## Insights
 
@@ -318,6 +319,8 @@ Profile pictures from ~22 sources (and Gravatar by e-mail) are downloaded by ARG
 See [docs/COVERAGE.md](docs/COVERAGE.md) for the per-identifier map of sources and limits. Anything that needs a login, CAPTCHA or payment is not automated; the report lists those sources as **manual leads** with pre-filled links.
 
 ### Identity resolution: different people stay different
+
+The resolver never merges two accounts on the same platform (a copy or a namesake looks exactly like a second account), so a person's second account, or an alias with a different name, stays a separate candidate. To avoid losing that link, every candidate lists **other people who may be the same individual** (a similar picture, a shared first name, one handle inside the other, a shared e-mail or site), and **Compare** weighs the evidence for and against: pictures side by side, each signal with its weight, what speaks against, and what would settle it. It is a lead, never a merge; a copied picture and name is also what an impersonator looks like, and the advice says how to tell.
 
 A name or a handle is not an identity. Every profile-like finding (GitHub, Keybase, ORCID, Wikidata, OpenAlex, LinkedIn's public view, personal sites, CVs, Gravatar, …) becomes a **record**, and records are clustered into **identities** only on evidence:
 

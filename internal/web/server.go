@@ -36,7 +36,9 @@ import (
 	"github.com/sudosoc/argus/internal/files"
 	"github.com/sudosoc/argus/internal/health"
 	"github.com/sudosoc/argus/internal/httpx"
+	"github.com/sudosoc/argus/internal/identity"
 	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
 	"github.com/sudosoc/argus/internal/modules/dorks"
 	"github.com/sudosoc/argus/internal/modules/social"
 	"github.com/sudosoc/argus/internal/output"
@@ -161,6 +163,7 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	mux.HandleFunc("POST /api/plan", s.handlePlan)
 	mux.HandleFunc("GET /api/scans/{id}", s.handleGet)
 	mux.HandleFunc("POST /api/scans/{id}/cancel", s.handleCancel)
+	mux.HandleFunc("GET /api/scans/{id}/compare", s.handleCompare)
 	mux.HandleFunc("GET /api/scans/{id}/events", s.handleEvents)
 	mux.HandleFunc("GET /api/scans/{id}/export", s.handleExport)
 	mux.HandleFunc("POST /api/scans/{id}/notes", s.handleNotes)
@@ -656,4 +659,41 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		out.Skipped = append(out.Skipped, skip{Name: name, Reason: why})
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// handleCompare weighs the evidence that two resolved people of a scan are one individual:
+// GET /api/scans/{id}/compare?a=1&b=2 (identity numbers as shown in the case).
+func (s *Server) handleCompare(w http.ResponseWriter, r *http.Request) {
+	sc, ok := s.mgr.get(r.PathValue("id"))
+	if !ok {
+		writeErr(w, http.StatusNotFound, "no such scan")
+		return
+	}
+	a, e1 := strconv.Atoi(r.URL.Query().Get("a"))
+	b, e2 := strconv.Atoi(r.URL.Query().Get("b"))
+	if e1 != nil || e2 != nil || a == b {
+		writeErr(w, http.StatusBadRequest, "give two different identity numbers: ?a=1&b=2")
+		return
+	}
+	sc.mu.Lock()
+	ids := sc.idents
+	var photos []models.Photo
+	if sc.report != nil {
+		ids, photos = sc.report.Identities, sc.report.Photos
+	}
+	sc.mu.Unlock()
+	var ia, ib *models.Identity
+	for i := range ids {
+		switch ids[i].ID {
+		case a:
+			ia = &ids[i]
+		case b:
+			ib = &ids[i]
+		}
+	}
+	if ia == nil || ib == nil {
+		writeErr(w, http.StatusNotFound, "no such person in this scan")
+		return
+	}
+	writeJSON(w, http.StatusOK, identity.Compare(*ia, *ib, photos))
 }

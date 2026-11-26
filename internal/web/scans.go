@@ -52,8 +52,9 @@ type scan struct {
 	live     map[string]engine.ModuleLive // what each collector is doing right now
 	hits     int
 	report   *models.Report
-	caseID   string           // saved case file this scan belongs to
-	all      []models.Finding // positive findings so far, for live identity resolution
+	caseID   string            // saved case file this scan belongs to
+	all      []models.Finding  // positive findings so far, for live identity resolution
+	idents   []models.Identity // the latest resolved people while the scan runs
 	cancel   context.CancelFunc
 }
 
@@ -459,6 +460,9 @@ func liveIdentities(ctx context.Context, sc *scan, t models.Target) {
 		if len(res.Identities) == 0 {
 			continue
 		}
+		sc.mu.Lock()
+		sc.idents = res.Identities
+		sc.mu.Unlock()
 		sc.push(event{Type: "identities", Data: map[string]any{
 			"identities": res.Identities, "ambiguity": res.Note, "same_name": res.SameName, "target": t,
 		}})

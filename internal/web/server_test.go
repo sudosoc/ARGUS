@@ -19,6 +19,7 @@ import (
 
 	"github.com/sudosoc/argus/internal/app"
 	"github.com/sudosoc/argus/internal/media"
+	"github.com/sudosoc/argus/internal/models"
 )
 
 const testToken = "0123456789abcdef0123456789abcdef"
@@ -289,5 +290,28 @@ func TestPlanListsOptInCollectorsButNeverProposesThem(t *testing.T) {
 	}
 	if seen != 4 {
 		t.Fatalf("expected the four posts collectors in the plan, saw %d", seen)
+	}
+}
+
+func TestCompareEndpointOnASavedCase(t *testing.T) {
+	ts, srv := newTestServerWith(t)
+	rep := &models.Report{Target: models.Target{Username: "x"}, Identities: []models.Identity{
+		{ID: 1, Label: "A", Names: []models.Fact{{Value: "Seif Alsayed"}}, Usernames: []models.Fact{{Value: "github:programmingman1"}}, Photos: []string{"pa"}},
+		{ID: 2, Label: "B", Names: []models.Fact{{Value: "sudosoc, Seif"}}, Usernames: []models.Fact{{Value: "github:sudosoc"}}, Photos: []string{"pb"}},
+	}, Photos: []models.Photo{{URL: "pa", DHash: "ffff0000ffff0000"}, {URL: "pb", DHash: "ffff0000ffff01ff"}}}
+	sc := srv.mgr.restore(rep)
+	resp := do(t, "GET", ts.URL+"/api/scans/"+sc.ID+"/compare?a=1&b=2", "", authed())
+	var c models.Comparison
+	if err := json.NewDecoder(resp.Body).Decode(&c); err != nil || resp.StatusCode != 200 {
+		t.Fatalf("status %d err %v", resp.StatusCode, err)
+	}
+	if c.A != 1 || c.B != 2 || len(c.Signals) == 0 || len(c.Photos) != 1 || c.Verdict == "unlikely" {
+		t.Errorf("%+v", c)
+	}
+	if r := do(t, "GET", ts.URL+"/api/scans/"+sc.ID+"/compare?a=1&b=1", "", authed()); r.StatusCode != 400 {
+		t.Errorf("same person twice: %d", r.StatusCode)
+	}
+	if r := do(t, "GET", ts.URL+"/api/scans/"+sc.ID+"/compare?a=1&b=9", "", authed()); r.StatusCode != 404 {
+		t.Errorf("unknown person: %d", r.StatusCode)
 	}
 }
