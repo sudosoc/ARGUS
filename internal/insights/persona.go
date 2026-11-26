@@ -59,6 +59,11 @@ func persona(c *ctx) *models.Persona {
 	for _, r := range recs {
 		texts = append(texts, r.Bio, r.Headline)
 	}
+	for _, post := range c.rep.Posts { // what the person wrote in public
+		if writing(post) {
+			texts = append(texts, post.Text)
+		}
+	}
 	p.Languages = languages(texts)
 
 	// ---- expertise from developer traces, interests and headlines

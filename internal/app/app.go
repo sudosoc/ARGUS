@@ -36,6 +36,7 @@ import (
 	"github.com/sudosoc/argus/internal/modules/mentions"
 	"github.com/sudosoc/argus/internal/modules/people"
 	"github.com/sudosoc/argus/internal/modules/phone"
+	"github.com/sudosoc/argus/internal/modules/posts"
 	"github.com/sudosoc/argus/internal/modules/profiles"
 	"github.com/sudosoc/argus/internal/modules/records"
 	"github.com/sudosoc/argus/internal/modules/sanctions"
@@ -182,6 +183,9 @@ func Build(o Options) (*Built, error) {
 	eng.Register(sanctions.New())
 	eng.Register(bskygraph.New())
 	eng.Register(codesearch.New())
+	for _, m := range posts.New() { // opt-in: copies public posts only when named
+		eng.Register(m)
+	}
 
 	return &Built{Engine: eng, SocialSites: socialMod.SiteCount()}, nil
 }

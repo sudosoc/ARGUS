@@ -17,6 +17,7 @@ type Insights struct {
 	HiddenLinks  []HiddenLink  `json:"hidden_links,omitempty"`
 	Life         *LifeTimeline `json:"life,omitempty"`
 	Movement     *Movement     `json:"movement,omitempty"`
+	Content      *Content      `json:"content,omitempty"`
 	Explain      []Explanation `json:"explain,omitempty"`
 	Limits       []string      `json:"limits,omitempty"` // what the evidence did not allow
 }
@@ -186,4 +187,42 @@ type Explanation struct {
 	Sources   []string `json:"sources,omitempty"`
 	Against   []string `json:"against,omitempty"`
 	Earliest  string   `json:"earliest,omitempty"`
+}
+
+// Content is what the copied public posts add up to. Topics, accounts and sites that touch religion,
+// health, sexual orientation or political affiliation are never listed (see package sensitive).
+type Content struct {
+	Total        int           `json:"total"`
+	Authored     int           `json:"authored"` // items the person wrote (not boosts, stars or repositories)
+	Sources      []PostSource  `json:"sources,omitempty"`
+	Kinds        []Labelled    `json:"kinds,omitempty"`
+	PerMonth     []MonthCount  `json:"per_month,omitempty"`
+	Hours        [24]int       `json:"hours"`    // authored items by UTC hour
+	Weekdays     [7]int        `json:"weekdays"` // Sunday = 0
+	PeakHour     int           `json:"peak_hour"`
+	Languages    []Labelled    `json:"languages,omitempty"`
+	Topics       []Labelled    `json:"topics,omitempty"`
+	Interactions []Labelled    `json:"interactions,omitempty"` // accounts the person talks to or shares
+	Domains      []Labelled    `json:"domains,omitempty"`
+	Style        *WritingStyle `json:"style,omitempty"`
+	First        string        `json:"first,omitempty"`
+	Last         string        `json:"last,omitempty"`
+	Notes        []string      `json:"notes,omitempty"`
+}
+
+// MonthCount is items per month (YYYY-MM).
+type MonthCount struct {
+	Month string `json:"month"`
+	N     int    `json:"n"`
+}
+
+// WritingStyle describes how the person writes, from measurable habits only.
+type WritingStyle struct {
+	AvgWords      float64 `json:"avg_words"`
+	LinkShare     float64 `json:"link_share"`
+	MediaShare    float64 `json:"media_share"`
+	QuestionShare float64 `json:"question_share"`
+	EmojiShare    float64 `json:"emoji_share"`
+	ShoutShare    float64 `json:"shout_share"` // items mostly in capitals
+	ReplyShare    float64 `json:"reply_share"` // of authored items, how many answer someone
 }

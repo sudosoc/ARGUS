@@ -9,7 +9,7 @@ func TestMatchProtected(t *testing.T) {
 	for _, s := range []string{
 		"Proud Muslim and father of two", "Devout Christian, pastor at heart", "Jewish heritage", "praise the Lord",
 		"Living with cancer, sharing my journey", "mental health advocate", "type 1 diabetic", "diagnosed with ADHD",
-		"Gay rights", "proud lesbian", "LGBTQ+ ally", "non-binary writer", "she/her",
+		"r/atheism", "r/lgbt", "Gay rights", "proud lesbian", "LGBTQ+ ally", "non-binary writer", "she/her",
 		"Democrat, vote for change", "Conservative party member", "left-wing activist", "trade union rep", "MAGA",
 		"مسلم وأفتخر", "في المسجد كل جمعة", "حزب الوفد", "ناشط سياسي", "مصاب بالسرطان", "الكنيسة", "مثلي",
 	} {

@@ -117,6 +117,30 @@ func brief(c *ctx, in *models.Insights) models.Brief {
 		}
 		b.Paragraphs = append(b.Paragraphs, "Closest connections: "+strings.Join(ns, ", ")+".")
 	}
+	if ct := in.Content; ct != nil && ct.Total > 0 {
+		places := map[string]bool{}
+		for _, s := range ct.Sources {
+			if s.Count > 0 {
+				places[s.Platform] = true
+			}
+		}
+		s := fmt.Sprintf("%s public items were copied from %s", itoa(ct.Total), plural(len(places), "place", "places"))
+		if ct.First != "" && ct.Last != "" {
+			s += " (" + day10(ct.First) + " to " + day10(ct.Last) + ")"
+		}
+		s += "."
+		if len(ct.Topics) > 0 {
+			var ts []string
+			for i, t := range ct.Topics {
+				if i == 3 {
+					break
+				}
+				ts = append(ts, t.Label)
+			}
+			s += " Most written about: " + strings.Join(ts, ", ") + "."
+		}
+		b.Paragraphs = append(b.Paragraphs, s)
+	}
 	if mv := in.Movement; mv != nil && mv.Home != "" {
 		s := "The evidence places the person around " + mv.Home + "."
 		if len(mv.Trips) > 0 {
@@ -196,4 +220,11 @@ func topFactors(a *models.Authenticity) string {
 		return "no strong signal either way"
 	}
 	return "driven by " + strings.Join(parts, ", ")
+}
+
+func day10(s string) string {
+	if len(s) >= 10 {
+		return s[:10]
+	}
+	return s
 }

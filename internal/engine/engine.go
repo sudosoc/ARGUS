@@ -136,6 +136,14 @@ func (e *Engine) Plan(t models.Target) (run []scanner.Scanner, skipped []string,
 	return e.plan(t, e.cfg.Modules)
 }
 
+// optIn is implemented by collectors that run only when named, because they copy content rather than look something up.
+type optInner interface{ OptIn() bool }
+
+func optIn(s scanner.Scanner) bool {
+	o, ok := s.(optInner)
+	return ok && o.OptIn()
+}
+
 func (e *Engine) plan(t models.Target, only []string) (run []scanner.Scanner, skipped []string, err error) {
 	want := map[string]bool{}
 	for _, m := range only {
@@ -154,6 +162,8 @@ func (e *Engine) plan(t models.Target, only []string) (run []scanner.Scanner, sk
 		switch {
 		case len(want) > 0 && !want[s.Name()]:
 			skipped = append(skipped, s.Name()+": not selected")
+		case len(want) == 0 && optIn(s):
+			skipped = append(skipped, s.Name()+": opt-in (off unless you name it)")
 		case !s.CanRun(t):
 			skipped = append(skipped, s.Name()+": required input not provided")
 		default:
@@ -229,6 +239,7 @@ func (e *Engine) Run(ctx context.Context, t models.Target) (*models.Report, erro
 	}
 
 	rep.Entities = collectEntities(rep)
+	collectPosts(rep)
 	e.photoStage(ctx, rep)
 	e.identityStage(rep)
 	e.locationStage(ctx, rep)
@@ -281,7 +292,8 @@ func digest(rep *models.Report) *models.Integrity {
 		Target   models.Target    `json:"target"`
 		Entities []models.Entity  `json:"entities"`
 		Findings []models.Finding `json:"findings"`
-	}{rep.Target, rep.Entities, rep.Findings})
+		Posts    []models.Post    `json:"posts,omitempty"`
+	}{rep.Target, rep.Entities, rep.Findings, rep.Posts})
 	sum := sha256.Sum256(b)
 	return &models.Integrity{Algorithm: "sha256", Digest: hex.EncodeToString(sum[:]),
 		Findings: len(rep.Findings), Entities: len(rep.Entities)}
@@ -314,6 +326,7 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 	var kept []models.Finding
 	var failed []models.Failure
 	var toolRuns []models.ToolRun
+	var postSources []models.PostSource
 	var collector sync.WaitGroup
 	collector.Add(1)
 	go func() {
@@ -322,6 +335,9 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 			if f.Category == "toolrun" { // raw tool output: stored whole, never counted as a finding
 				toolRuns = append(toolRuns, toolRunFrom(f))
 				continue
+			}
+			if f.PostSource != nil { // what was copied (or why not), kept even when nothing was found
+				postSources = append(postSources, *f.PostSource)
 			}
 			c := perModule[f.Module]
 			c.checked++
@@ -434,6 +450,26 @@ func (e *Engine) runTarget(ctx context.Context, t models.Target, mods []scanner.
 	rep.Findings = append(rep.Findings, kept...)
 	rep.Failures = append(rep.Failures, failed...)
 	rep.ToolRuns = append(rep.ToolRuns, toolRuns...)
+	rep.PostSources = append(rep.PostSources, postSources...)
+}
+
+// collectPosts moves the public posts out of the findings that carried them into the report,
+// oldest information last, so the case file holds each item once.
+func collectPosts(rep *models.Report) {
+	seen := map[string]bool{}
+	for i := range rep.Findings {
+		f := &rep.Findings[i]
+		for _, p := range f.Posts {
+			k := p.Platform + "|" + p.Handle + "|" + p.Kind + "|" + p.ID + "|" + p.URL + "|" + p.Time
+			if seen[k] {
+				continue
+			}
+			seen[k] = true
+			rep.Posts = append(rep.Posts, p)
+		}
+		f.Posts = nil
+	}
+	sort.SliceStable(rep.Posts, func(a, b int) bool { return rep.Posts[a].Time > rep.Posts[b].Time })
 }
 
 const maxFailures = 100000 // effectively unlimited: every check that could not complete is listed

@@ -81,6 +81,7 @@ type Server struct {
 type moduleInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Optional    bool   `json:"optional,omitempty"` // opt-in: copies content, off unless ticked
 }
 
 // New validates the configuration and prepares the server.
@@ -137,7 +138,7 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 		return nil, err
 	}
 	for _, sc := range built.Engine.Scanners() {
-		s.modules = append(s.modules, moduleInfo{sc.Name(), sc.Description()})
+		s.modules = append(s.modules, moduleInfo{sc.Name(), sc.Description(), plan.IsOptional(sc.Name())})
 	}
 	s.siteCnt = built.SocialSites
 	s.tiers = map[string]int{}
@@ -566,6 +567,7 @@ type planCollector struct {
 	Weight      string   `json:"weight"`
 	Requests    int      `json:"requests,omitempty"` // about how many requests (only where it is large and known)
 	Selected    bool     `json:"selected"`           // proposed for the chosen goal
+	Optional    bool     `json:"optional"`           // opt-in: copies content and is never proposed
 }
 
 // handlePlan answers, before anything runs: which collectors the question needs, what each
@@ -578,7 +580,10 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	req.Modules = nil // the proposal covers every collector that could apply
+	req.Modules = nil // the proposal covers every collector that could apply, opt-in ones included
+	for _, m := range s.modules {
+		req.Modules = append(req.Modules, m.Name)
+	}
 	probe, built, err := s.mgr.prepare(&req)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err.Error())
@@ -630,7 +635,7 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		pc := planCollector{Name: sc.Name(), Description: desc[sc.Name()], Question: m.Question, Uses: uses, SendsTo: m.SendsTo,
-			Weight: m.Weight, Selected: goal.Includes(sc.Name())}
+			Weight: m.Weight, Selected: goal.Includes(sc.Name()) && !plan.IsOptional(sc.Name()), Optional: plan.IsOptional(sc.Name())}
 		if len(uses) == 0 && m.SendsTo == "" { // offline and nothing of yours to read: it would do nothing
 			pc.Selected = false
 		}

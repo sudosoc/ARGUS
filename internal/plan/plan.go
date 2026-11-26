@@ -98,6 +98,27 @@ var meta = map[string]Meta{
 	"context":    {"Nearby places and news for a place and period", []string{"coords", "period"}, "map tiles, geo search and news archives", "medium"},
 }
 
+func init() {
+	for name, what := range map[string]string{
+		"postsmastodon": "Mastodon", "postsbluesky": "Bluesky", "postsgithub": "GitHub", "postsreddit": "Reddit",
+	} {
+		meta[name] = Meta{Question: "Copy the public " + what + " posts of the username you typed", Uses: []string{"username"},
+			SendsTo: map[string]string{
+				"Mastodon": "the Mastodon servers' public API (no sign-in)", "Bluesky": "the public Bluesky API (no sign-in)",
+				"GitHub": "the public GitHub API (no sign-in)", "Reddit": "Reddit's public JSON pages (no sign-in; often refused)"}[what],
+			Weight: "light"}
+	}
+}
+
+// IsOptional reports whether a collector is opt-in: it copies content, so it is never proposed and runs only when ticked.
+func IsOptional(name string) bool {
+	switch name {
+	case "postsmastodon", "postsbluesky", "postsgithub", "postsreddit":
+		return true
+	}
+	return false
+}
+
 // Of returns what is known about a collector (a generic entry for one added later).
 func Of(name string) Meta {
 	if m, ok := meta[name]; ok {

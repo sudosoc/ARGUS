@@ -5,6 +5,7 @@ package insights
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -279,5 +280,66 @@ func TestProtectedCharacteristicsNeverDerived(t *testing.T) {
 	}
 	if len(in.Limits) == 0 || !strings.Contains(in.Limits[0], "left out") {
 		t.Errorf("the withheld items are not accounted for: %v", in.Limits)
+	}
+}
+
+func postsFixture() *models.Report {
+	rep := fixture()
+	mk := func(kind, text, at string, tags, mentions []string, replyTo, author string) models.Post {
+		return models.Post{Platform: "Mastodon", Handle: "lhassan@m.example", Kind: kind, Text: text, Time: at, Tags: tags, Mentions: mentions, ReplyTo: replyTo, Author: author}
+	}
+	for i := 0; i < 12; i++ {
+		d := fmt.Sprintf("2026-%02d-%02dT14:%02d:00Z", 1+i%6, 3+i, i)
+		rep.Posts = append(rep.Posts, mk("post", "Writing about detection engineering and incident response today. Any questions?", d, []string{"dfir", "osint"}, []string{"sam.example"}, "", ""))
+	}
+	rep.Posts = append(rep.Posts,
+		mk("reply", "Thanks, that helped a lot https://example.org/x", "2026-02-02T20:00:00Z", []string{"dfir"}, nil, "dina.example", ""),
+		mk("reply", "Good point", "2026-02-03T20:00:00Z", nil, nil, "dina.example", ""),
+		mk("boost", "something", "2026-02-04T20:00:00Z", []string{"lgbtq", "r/atheism"}, nil, "", "omar.example"),
+		mk("post", "My friend runs islamweb stuff", "2026-02-05T09:00:00Z", []string{"islam"}, []string{"lgbtqrights.example"}, "", ""),
+		mk("repo", "tool — a DFIR helper", "2026-02-06T09:00:00Z", []string{"go"}, nil, "", ""))
+	rep.Posts[len(rep.Posts)-3].Links = []string{"https://www.islamweb.example/a"}
+	rep.PostSources = []models.PostSource{{Platform: "Mastodon", Handle: "lhassan@m.example", Count: len(rep.Posts)}, {Platform: "Reddit", Handle: "lhassan", Note: "Reddit did not show this account's history"}}
+	return rep
+}
+
+func TestContentSummaryAndProtectedTopicsLeftOut(t *testing.T) {
+	in := Build(postsFixture())
+	ct := in.Content
+	if ct == nil || ct.Total != 17 || ct.Authored != 15 {
+		t.Fatalf("content: %+v", ct)
+	}
+	if len(ct.Topics) == 0 || ct.Topics[0].Label != "dfir" {
+		t.Errorf("topics %+v", ct.Topics)
+	}
+	b, _ := json.Marshal(in)
+	text := strings.ToLower(string(b))
+	for _, w := range []string{"lgbtq", "atheism", "islam"} {
+		if strings.Contains(text, w) {
+			t.Errorf("derived output mentions %q", w)
+		}
+	}
+	var dina, omar bool
+	for _, x := range ct.Interactions {
+		dina = dina || (x.Label == "dina.example" && x.N >= 6)
+		omar = omar || x.Label == "omar.example"
+	}
+	if !dina || !omar {
+		t.Errorf("interactions %+v", ct.Interactions)
+	}
+	if ct.Style == nil || ct.Style.QuestionShare <= 0 || ct.Hours[14] == 0 || len(ct.PerMonth) == 0 || ct.First == "" {
+		t.Errorf("style/hours/months: %+v", ct)
+	}
+	if len(ct.Sources) != 2 {
+		t.Errorf("a source with nothing must still be listed with its note: %+v", ct.Sources)
+	}
+	if !strings.Contains(strings.Join(in.Brief.Paragraphs, " "), "public items were copied") {
+		t.Errorf("brief does not mention the posts: %v", in.Brief.Paragraphs)
+	}
+}
+
+func TestNoPostsNoContent(t *testing.T) {
+	if Build(fixture()).Content != nil {
+		t.Error("no posts and no opt-in: no content section")
 	}
 }

@@ -382,3 +382,13 @@ tr.detail > td { background: var(--well); padding: var(--sp-3) var(--sp-4) var(-
 .act-p { color: var(--text-3); font-size: var(--fs-xs); }
 .act-w { margin: 0; }
 .act-f { display: flex; gap: var(--sp-3); align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+/* ---- copied posts ---- */
+.postlist { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0; }
+.post { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); padding: var(--sp-3); display: grid; gap: var(--sp-2); }
+.post-h { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--fs-sm); }
+.post-h .grow { flex: 1; }
+.post-t { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.post-pics { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.post-img { max-height: 120px; max-width: 160px; border-radius: var(--r-sm); border: 1px solid var(--line); object-fit: cover; }
+.post-f { display: flex; gap: var(--sp-1); flex-wrap: wrap; align-items: center; }

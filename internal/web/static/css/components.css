@@ -340,3 +340,4 @@ details.proxies summary { color: var(--text-2); font-size: var(--fs-sm); display
 .plan-q0, .plan-list, .plan-spare, .plan-never, .plan-foot { flex: none; }
 .plan-meta .tag { white-space: normal; overflow-wrap: anywhere; text-align: start; }
 .plan-foot { margin-top: var(--sp-2); bottom: calc(var(--sp-4) * -1); padding-bottom: var(--sp-4); }
+.plan-opt { flex: none; margin-top: var(--sp-3); }

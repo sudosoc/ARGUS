@@ -212,6 +212,9 @@ func (c *Console) Summary(r *models.Report) {
 	if r.Interrupted {
 		cYellow.Fprintln(c.out, "  run interrupted — results are partial")
 	}
+	if len(r.Posts) > 0 {
+		fmt.Fprintf(c.out, "  public posts copied: %d (see the Posts view or the JSON report)\n", len(r.Posts))
+	}
 	if in := r.Insights; in != nil && in.Brief.Headline != "" {
 		fmt.Fprintln(c.out)
 		cCyan.Fprintln(c.out, "── Insights ─────────────────────────────")
