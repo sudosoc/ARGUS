@@ -261,6 +261,54 @@
   // ------------------------------------------------------------------ photos
   UI.imgSrc = (u) => "/api/img?u=" + encodeURIComponent(u);
 
+  // Pictures are fetched through /api/img, and a browser allows only six connections to this page at once.
+  // A few slow third-party hosts could hold all six and leave Stop, opening a case and the live stream waiting
+  // behind them. So pictures load two at a time, the same picture is fetched once however many times it is
+  // drawn, and a picture that failed is not retried for a few minutes.
+  const IQ = { active: 0, max: 2, waiting: [], byUrl: new Map() };
+  const RETRY_MS = 5 * 60 * 1000;
+  function pumpImages() {
+    while (IQ.active < IQ.max && IQ.waiting.length) {
+      const e = IQ.waiting.shift();
+      e.started = true;
+      IQ.active++;
+      let released = false;
+      const release = (ok) => {
+        if (released) return;
+        released = true;
+        IQ.active--;
+        e.done = true; e.ok = ok; e.at = Date.now();
+        for (const im of e.imgs.slice(1)) settle(e, im);
+        pumpImages();
+      };
+      const lead = e.imgs[0];
+      lead.addEventListener("load", () => release(true), { once: true });
+      lead.addEventListener("error", () => release(false), { once: true });
+      setTimeout(() => release(false), 30000); // never hold a slot for longer than the server's own timeout
+      lead.src = UI.imgSrc(e.url);
+    }
+  }
+  function settle(e, im) {
+    if (e.ok) im.src = UI.imgSrc(e.url); // already downloaded: served from the browser cache
+    else im.dispatchEvent(new Event("error"));
+  }
+  /** Load a picture into img through the queue. first = the person asked for it (a drawer), so it goes to the front. */
+  UI.queueImg = function queueImg(img, url, first) {
+    let e = IQ.byUrl.get(url);
+    if (e && e.done && !e.ok && Date.now() - e.at > RETRY_MS) { IQ.byUrl.delete(url); e = null; }
+    if (!e) {
+      e = { url, imgs: [img], started: false, done: false, ok: false, at: 0 };
+      IQ.byUrl.set(url, e);
+      if (first) IQ.waiting.unshift(e); else IQ.waiting.push(e);
+      setTimeout(pumpImages, 0);
+      return img;
+    }
+    e.imgs.push(img);
+    if (e.done) setTimeout(() => settle(e, img), 0);
+    else if (first && !e.started) { IQ.waiting.splice(IQ.waiting.indexOf(e), 1); IQ.waiting.unshift(e); }
+    return img;
+  };
+
   // Pictures found so far: live from image entities, enriched with size / hash /
   // "same picture" group / EXIF once the final report is in.
   UI.photoList = function photoList() {
@@ -310,7 +358,9 @@
   // ----------------------------------------------------------------- wiring
   $("cancelBtn").addEventListener("click", async () => {
     if (!UI.S) return;
-    try { await UI.api("/api/scans/" + UI.S.id + "/cancel", { method: "POST", body: "{}" }); UI.toast("Stopping collectors…"); } catch (e) { UI.toast(e.message); }
+    const b = $("cancelBtn");
+    b.disabled = true;
+    try { await UI.api("/api/scans/" + UI.S.id + "/cancel", { method: "POST", body: "{}" }); UI.toast("Stopping collectors…"); } catch (e) { UI.toast("Could not stop: " + e.message + ". Try again."); b.disabled = false; }
   });
   $("liveToggle").addEventListener("click", () => {
     const open = $("livePanel").hidden;

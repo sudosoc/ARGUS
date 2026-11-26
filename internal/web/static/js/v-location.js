@@ -133,7 +133,7 @@
           done();
         };
         img.onerror = () => { failed++; done(); };
-        img.src = `/api/tile/${z}/${((tx % n) + n) % n}/${ty}`;
+        img.src = `/api/tile/${z}/${((tx % n) + n) % n}/${ty}`; // the server answers within 8 s (see tiles.go), so a few at a time cannot starve the page
       }
     }
     if (pending === 0) markers();

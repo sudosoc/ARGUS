@@ -110,7 +110,7 @@
   // ------------------------------------------------------------------ photo
   UI.showPhoto = function showPhoto(p) {
     const body = UI.openDrawer("Photo", p.group ? "Same picture · group " + p.group : "");
-    const img = el("img", { class: "bigimg", alt: "profile picture", src: UI.imgSrc(p.url) });
+    const img = UI.queueImg(el("img", { class: "bigimg", alt: "profile picture" }), p.url, true);
     img.addEventListener("error", () => img.replaceWith(el("div", { class: "empty-line", text: "The image could not be loaded (the host may have removed it or blocked the download)." })));
     body.append(img);
     const meta = { "found at": (p.sources || []).join("  ·  ") || "—" };
