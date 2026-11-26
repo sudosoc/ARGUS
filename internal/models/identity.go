@@ -73,4 +73,44 @@ type Identity struct {
 	IDs     map[string]string `json:"ids,omitempty"`
 	Docs    []string          `json:"documents,omitempty"` // CV / resume URLs
 	Records []RecordRef       `json:"records"`
+	Related []Related         `json:"related,omitempty"` // other people who may be the same individual
+}
+
+// Related says that another resolved person may be the same individual (a second account, an alias).
+// Identities stay separate: this is a lead to check, never a merge.
+type Related struct {
+	ID      int      `json:"id"`
+	Label   string   `json:"label"`
+	Verdict string   `json:"verdict"` // same | likely | possible
+	Score   float64  `json:"score"`
+	Why     []string `json:"why,omitempty"`
+}
+
+// Comparison is the evidence for and against two resolved people being the same individual.
+type Comparison struct {
+	A       int         `json:"a"`
+	B       int         `json:"b"`
+	ALabel  string      `json:"a_label"`
+	BLabel  string      `json:"b_label"`
+	Verdict string      `json:"verdict"` // same | likely | possible | unlikely
+	Score   float64     `json:"score"`   // 0-1, how likely they are one person, from the signals below
+	Signals []Signal    `json:"signals"`
+	Photos  []PhotoPair `json:"photos,omitempty"`
+	Advice  []string    `json:"advice,omitempty"` // what would settle it
+}
+
+// Signal is one observation that raises or lowers the likelihood.
+type Signal struct {
+	Name   string  `json:"name"`
+	Effect string  `json:"effect"` // for | against | note
+	Weight float64 `json:"weight,omitempty"`
+	Detail string  `json:"detail"`
+}
+
+// PhotoPair is the closest pair of pictures between two people.
+type PhotoPair struct {
+	A        string `json:"a"`
+	B        string `json:"b"`
+	Distance int    `json:"distance"` // differing bits of a 64-bit fingerprint
+	Kind     string `json:"kind"`     // identical | near | similar
 }

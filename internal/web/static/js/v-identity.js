@@ -148,6 +148,8 @@
     card.append(legend, cols);
 
     for (const c of id.conflicts || []) card.append(el("div", { class: "callout warn" }, UI.icon("alert"), el("span", { text: c })));
+    const rel = relatedChips(id);
+    if (rel) card.append(rel);
     if ((id.reasons || []).length) {
       const ul = el("ul", { class: "plain" });
       for (const r of id.reasons) ul.append(el("li", { text: r }));
@@ -173,6 +175,24 @@
     return card;
   }
 
+  /**
+   * Other people who may be the same individual (a second account, an alias): the resolver never merges two accounts on one
+   * platform, so these are shown as leads. Clicking opens the evidence.
+   */
+  function relatedChips(id) {
+    const list = (id.related || []).filter((r) => (UI.S.identities || []).some((x) => x.id === r.id));
+    if (!list.length) return null;
+    const wrap = el("div", { class: "related" }, el("span", { class: "muted", text: "May be the same person as" }));
+    for (const r of list) {
+      const other = UI.S.identities.find((x) => x.id === r.id);
+      const b = el("button", { type: "button", class: "chip " + (r.verdict === "same" || r.verdict === "likely" ? "strong" : "weak"), title: (r.why || []).join(" · ") },
+        UI.icon("link"), el("span", { class: "k", text: r.verdict }), el("span", { class: "chip-v", text: r.label }));
+      b.addEventListener("click", () => UI.compareIdentities(id, other));
+      wrap.append(b);
+    }
+    return wrap;
+  }
+
   /** Compact card for another candidate, laid out so several read side by side. */
   function candidate(id, best, topId) {
     const c = el("article", { class: "ccard" + (best ? " best" : "") });
@@ -190,11 +210,22 @@
     }
     if (ul.childNodes.length) c.append(ul);
     c.append(el("div", { class: "csrc", text: id.records.map((r) => r.platform).join(" · ") }));
+    const rel = relatedChips(id);
+    if (rel) c.append(rel);
     const row = el("div", { class: "pickrow" });
     const use = UI.btn("This is the person", { cls: "sm", title: "Search again with these details" });
     use.addEventListener("click", () => UI.refine(id));
     const open = UI.btn("Full profile", { cls: "sm ghost" });
-    open.addEventListener("click", () => c.replaceWith(dossier(id)));
+    open.addEventListener("click", () => {
+      // The full profile needs the whole width of the list, not one narrow cell; "Back" restores the card.
+      const full = dossier(id);
+      full.classList.add("span-all");
+      const back = UI.btn("Back to the list", { cls: "sm", icon: "chevron-l" });
+      back.addEventListener("click", () => { full.replaceWith(c); c.scrollIntoView({ block: "nearest" }); });
+      full.prepend(el("div", { class: "actions" }, back));
+      c.replaceWith(full);
+      full.scrollIntoView({ block: "nearest" });
+    });
     const cb = el("input", { type: "checkbox", id: "cmp-" + id.id });
     cb.checked = cmpPick.has(id.id);
     cb.addEventListener("change", () => { cb.checked ? cmpPick.add(id.id) : cmpPick.delete(id.id); cmpChanged(); });

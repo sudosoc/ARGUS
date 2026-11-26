@@ -40,7 +40,9 @@ func ResolveFindings(findings []models.Finding, t models.Target, photos []models
 		}
 		inputs = append(inputs, in)
 	}
-	return Resolve(inputs, a)
+	res := Resolve(inputs, a)
+	Link(res.Identities, photos) // other candidates that may be the same person (never merged)
+	return res
 }
 
 var platformNames = []struct{ prefix, name string }{
