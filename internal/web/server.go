@@ -28,6 +28,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sudosoc/argus/internal/app"
@@ -72,6 +73,8 @@ type Server struct {
 	loopback bool
 	handler  http.Handler
 	img      *httpx.Client // fetches profile pictures for the image proxy
+	imgSlots chan struct{} // bounds how many pictures are fetched at once
+	imgFail  failures
 	settings *settings.Store
 }
 
@@ -92,7 +95,7 @@ func New(ctx context.Context, cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid listen address %q: %w", cfg.Addr, err)
 	}
-	s := &Server{cfg: cfg, token: cfg.Token}
+	s := &Server{cfg: cfg, token: cfg.Token, imgSlots: make(chan struct{}, 6)}
 	if s.token == "" {
 		b := make([]byte, 16)
 		if _, err := rand.Read(b); err != nil {
@@ -494,10 +497,27 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusForbidden, "unknown image")
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	// A picture whose host did not answer is not asked again for a few minutes: the page would
+	// otherwise keep a connection busy for the full timeout every time it redraws.
+	if s.imgFail.recent(u) {
+		writeErr(w, http.StatusBadGateway, "this picture could not be fetched a moment ago")
+		return
+	}
+	// At most a handful of pictures are fetched at once, so slow hosts cannot pile up.
+	select {
+	case s.imgSlots <- struct{}{}:
+		defer func() { <-s.imgSlots }()
+	case <-r.Context().Done():
+		return
+	case <-time.After(5 * time.Second):
+		writeErr(w, http.StatusServiceUnavailable, "busy: too many pictures are loading")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 12*time.Second)
 	defer cancel()
 	img, err := media.Fetch(ctx, s.img, u)
 	if err != nil {
+		s.imgFail.mark(u)
 		writeErr(w, http.StatusBadGateway, err.Error())
 		return
 	}
@@ -507,6 +527,33 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	h.Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	h.Set("Content-Length", strconv.Itoa(len(img.Data)))
 	_, _ = w.Write(img.Data)
+}
+
+// failures remembers URLs that could not be fetched, for a short time.
+type failures struct {
+	mu sync.Mutex
+	at map[string]time.Time
+}
+
+const failureTTL = 3 * time.Minute
+
+func (f *failures) mark(u string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.at == nil {
+		f.at = map[string]time.Time{}
+	}
+	if len(f.at) > 5000 {
+		f.at = map[string]time.Time{}
+	}
+	f.at[u] = time.Now()
+}
+
+func (f *failures) recent(u string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	t, ok := f.at[u]
+	return ok && time.Since(t) < failureTTL
 }
 
 // planCollector is one row of the "what will be collected" step.

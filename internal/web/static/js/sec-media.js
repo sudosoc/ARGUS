@@ -61,7 +61,7 @@
       page.append(K.hint("SUDOSOC ARGUS does not upload anything. Each link opens a search engine with the picture's public address; a person decides whether a match is the same person or place."));
       const engines = [["Google Lens", (u) => "https://lens.google.com/uploadbyurl?url=" + encodeURIComponent(u)], ["Yandex", (u) => "https://yandex.com/images/search?rpt=imageview&url=" + encodeURIComponent(u)], ["TinEye", (u) => "https://tineye.com/search?url=" + encodeURIComponent(u)], ["SauceNAO", (u) => "https://saucenao.com/search.php?url=" + encodeURIComponent(u)], ["Bing", (u) => "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:" + encodeURIComponent(u)]];
       for (const p of M.photos.slice(0, 40)) {
-        const row = el("div", { class: "revrow" }, el("img", { class: "revthumb", src: UI.imgSrc(p.url), alt: "", loading: "lazy" }),
+        const row = el("div", { class: "revrow" }, UI.queueImg(el("img", { class: "revthumb", alt: "" }), p.url),
           el("div", { class: "revmain" }, el("div", { class: "fr-title", text: ((p.sources || [])[0] || UI.host(p.url)).replace(/^[a-z]+: /, "") }), K.links(engines.map(([n, f]) => ({ label: n, url: f(p.url) })))));
         page.append(el("div", { class: "panel" }, row));
       }

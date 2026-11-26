@@ -56,8 +56,10 @@ window.UI = window.UI || {};
   // ------------------------------------------------------------- network
   UI.api = async function api(path, opts = {}) {
     const r = await fetch(path, { credentials: "same-origin", ...opts, headers: { ...HDR, ...(opts.headers || {}) } });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    const raw = await r.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch (e) { /* not JSON */ }
+    if (!r.ok) throw new Error(data.error || (raw && raw.length < 160 ? `HTTP ${r.status}: ${raw.trim()}` : `HTTP ${r.status}`));
     return data;
   };
 

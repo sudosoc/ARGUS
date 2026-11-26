@@ -41,9 +41,9 @@ func (t *tileProxy) handle(w http.ResponseWriter, r *http.Request) {
 	data, ok := t.cache[key]
 	t.mu.Unlock()
 	if !ok {
-		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
 		defer cancel()
-		resp, err := t.c.Do(ctx, httpx.Request{URL: "https://tile.openstreetmap.org/" + key + ".png", Timeout: 15 * time.Second, MaxBody: 1 << 20,
+		resp, err := t.c.Do(ctx, httpx.Request{URL: "https://tile.openstreetmap.org/" + key + ".png", Timeout: 8 * time.Second, MaxBody: 1 << 20,
 			Headers: map[string]string{"User-Agent": "argus/1.0 (+https://github.com/sudosoc/argus)", "Accept": "image/png"}})
 		if err != nil || resp.StatusCode != 200 {
 			writeErr(w, http.StatusBadGateway, "tile unavailable")

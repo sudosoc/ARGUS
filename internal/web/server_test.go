@@ -253,3 +253,14 @@ func TestPlanProposesTheSmallestSet(t *testing.T) {
 		t.Errorf("dorks is not part of identify")
 	}
 }
+
+func TestFailedPicturesAreNotRetriedAtOnce(t *testing.T) {
+	var f failures
+	if f.recent("u") {
+		t.Fatal("nothing has failed yet")
+	}
+	f.mark("u")
+	if !f.recent("u") || f.recent("other") {
+		t.Fatal("a failed picture must be remembered, and only that one")
+	}
+}

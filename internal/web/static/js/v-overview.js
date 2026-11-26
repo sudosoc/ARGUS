@@ -106,7 +106,7 @@
       any = true;
       const th = el("div", { class: "thumbs" });
       for (const p of photos.slice(0, 8)) {
-        const im = el("img", { src: UI.imgSrc(p.url), alt: "" });
+        const im = UI.queueImg(el("img", { alt: "" }), p.url);
         const b = el("button", { type: "button", class: "thumb", title: (p.sources || []).join(" · "), "aria-label": "Open photo" }, im);
         im.addEventListener("error", () => { b.remove(); if (!th.querySelector(".thumb")) th.closest(".krow") && th.closest(".krow").remove(); }); // host removed the picture or blocked the download
         b.addEventListener("click", () => UI.showPhoto(p));

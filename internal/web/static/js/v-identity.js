@@ -53,7 +53,7 @@
     const photo = (id.photos || [])[0];
     const ph = el("button", { type: "button", class: "avatar " + size, title: photo ? "Open photo" : "No photo found", "aria-label": photo ? "Open photo" : "No photo found" }, UI.icon("user"));
     if (photo) {
-      const img = el("img", { src: UI.imgSrc(photo), alt: "profile picture" });
+      const img = UI.queueImg(el("img", { alt: "profile picture" }), photo);
       img.addEventListener("load", () => ph.replaceChildren(img));
       ph.addEventListener("click", () => UI.showPhoto({ url: photo, sources: id.records.map((r) => r.platform), group: 0 }));
     } else ph.disabled = true;
@@ -66,7 +66,7 @@
     const extra = el("div", { class: "thumbs" });
     for (const u of (id.photos || []).slice(1, 9)) {
       const t = el("button", { type: "button", class: "thumb", "aria-label": "Open photo" });
-      const im = el("img", { src: UI.imgSrc(u), alt: "" });
+      const im = UI.queueImg(el("img", { alt: "" }), u);
       im.addEventListener("error", () => t.remove());
       t.append(im);
       t.addEventListener("click", () => UI.showPhoto({ url: u, sources: id.records.map((r) => r.platform), group: 0 }));
