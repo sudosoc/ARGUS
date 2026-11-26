@@ -264,3 +264,30 @@ func TestFailedPicturesAreNotRetriedAtOnce(t *testing.T) {
 		t.Fatal("a failed picture must be remembered, and only that one")
 	}
 }
+
+func TestPlanListsOptInCollectorsButNeverProposesThem(t *testing.T) {
+	ts := newTestServer(t)
+	resp := do(t, "POST", ts.URL+"/api/plan", `{"username":"ann","goal":"everything"}`, authed())
+	var out struct {
+		Collectors []struct {
+			Name     string
+			Selected bool
+			Optional bool
+		}
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatal(err)
+	}
+	seen := 0
+	for _, c := range out.Collectors {
+		if strings.HasPrefix(c.Name, "posts") {
+			seen++
+			if !c.Optional || c.Selected {
+				t.Errorf("%s must be listed as optional and not proposed: %+v", c.Name, c)
+			}
+		}
+	}
+	if seen != 4 {
+		t.Fatalf("expected the four posts collectors in the plan, saw %d", seen)
+	}
+}

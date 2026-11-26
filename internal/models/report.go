@@ -51,7 +51,9 @@ type Finding struct {
 	Details    map[string]string `json:"details,omitempty"`
 	Entities   []Entity          `json:"entities,omitempty"`
 	Record     *Record           `json:"record,omitempty"` // set when the finding describes a person profile
-	Via        string            `json:"via,omitempty"`    // set when found by following another finding, e.g. "email:a@b.c"
+	Posts      []Post            `json:"posts,omitempty"`  // public posts copied by the posts collectors (moved to Report.Posts)
+	PostSource *PostSource       `json:"post_source,omitempty"`
+	Via        string            `json:"via,omitempty"` // set when found by following another finding, e.g. "email:a@b.c"
 	Timestamp  time.Time         `json:"timestamp"`
 }
 
@@ -94,6 +96,8 @@ type Report struct {
 	Settings    map[string]string `json:"settings,omitempty"`  // how the run was configured, for reproducibility
 	Integrity   *Integrity        `json:"integrity,omitempty"`
 	Insights    *Insights         `json:"insights,omitempty"` // conclusions derived from the evidence by fixed rules
+	Posts       []Post            `json:"posts,omitempty"`    // public posts and other items copied from accounts the operator opted in
+	PostSources []PostSource      `json:"post_sources,omitempty"`
 }
 
 // ToolRun is the complete, unfiltered output of one external tool run (or the

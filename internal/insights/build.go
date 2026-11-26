@@ -36,6 +36,7 @@ func Build(rep *models.Report) *models.Insights {
 	in.HiddenLinks = hiddenLinks(c)
 	in.Life = life(c)
 	in.Movement = movement(c)
+	in.Content = content(c)
 	in.Explain = explain(c)
 	in.Brief = brief(c, in)
 	in.Actions = actions(c, in)

@@ -190,8 +190,9 @@ window.UI = window.UI || {};
     records: "name, domain or IP", footprint: "e-mail / phone", phone: "phone", crypto: "wallet", dorks: "anything", syswrap: "domain / username",
     iddecode: "username or ID", keys: "e-mail or username", lookalike: "domain", webhistory: "domain", sanctions: "name or company", bskygraph: "username", codesearch: "username, e-mail or domain",
     uploads: "an uploaded file", context: "coordinates or a period",
+    postsmastodon: "username", postsbluesky: "username", postsgithub: "username", postsreddit: "username",
   };
-  UI.MODULE_ORDER = ["social", "profiles", "footprint", "phone", "domain", "ip", "asn", "company", "people", "images", "activity", "breach", "sitefiles", "bizreg", "mentions", "devtrace", "docmeta", "records", "crypto", "iddecode", "keys", "lookalike", "webhistory", "sanctions", "bskygraph", "codesearch", "uploads", "context", "dorks", "syswrap"];
+  UI.MODULE_ORDER = ["social", "profiles", "footprint", "phone", "domain", "ip", "asn", "company", "people", "images", "activity", "breach", "sitefiles", "bizreg", "mentions", "devtrace", "docmeta", "records", "crypto", "iddecode", "keys", "lookalike", "webhistory", "sanctions", "bskygraph", "codesearch", "uploads", "context", "dorks", "syswrap", "postsmastodon", "postsbluesky", "postsgithub", "postsreddit"];
   UI.modRank = (m) => { const i = UI.MODULE_ORDER.indexOf(m); return i < 0 ? 999 : i; };
 
   // --------------------------------------------------------- hint buttons

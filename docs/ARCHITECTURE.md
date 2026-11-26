@@ -41,6 +41,7 @@ Everything a run produces is one `models.Report`: the target, the findings, the 
 | `internal/extract`, `internal/cvparse`, `internal/jsonld`, `internal/doc` | Text extraction: e-mails, phones, links, CV structure, structured data, PDFs. |
 | `internal/intel`, `internal/rdap`, `internal/openpgp`, `internal/probe` | Domain/IP helpers, registration data, PGP keys, username-site probing. |
 | `internal/insights` | The conclusions stage: brief, next actions, persona, authenticity, associates, hidden links, life timeline, movement and per-fact reasoning, by fixed rules (see [INSIGHTS.md](INSIGHTS.md)). |
+| `internal/modules/posts` | The opt-in collectors that copy public posts (Mastodon, Bluesky, GitHub, Reddit) without signing in; see [POSTS.md](POSTS.md). |
 | `internal/plan` | The question (goal) behind a run and what each collector reads and sends: the plan shown before anything is collected. |
 | `internal/sensitive` | The word list that keeps religion, health, sexual orientation and political affiliation out of everything ARGUS derives. |
 | `internal/leads` | The pre-filled manual links for sources that need a login or payment. |

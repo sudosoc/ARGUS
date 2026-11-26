@@ -104,6 +104,11 @@ func Match(text string) []string {
 	var forms []string
 	for _, w := range words {
 		forms = append(forms, stripAl(w)...)
+		if strings.ContainsAny(w, "/-'") { // r/atheism, anti-war, don't: look at the parts as well
+			for _, part := range strings.FieldsFunc(w, func(r rune) bool { return r == '/' || r == '-' || r == '\'' }) {
+				forms = append(forms, stripAl(part)...)
+			}
+		}
 	}
 	var cats []string
 	for _, r := range rules {

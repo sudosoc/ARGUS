@@ -39,6 +39,7 @@ func writeMarkdown(w io.Writer, r *models.Report) error {
 	}
 
 	writeInsightsMarkdown(&b, r)
+	writePostsMarkdown(&b, r)
 
 	if len(r.Identities) > 0 {
 		b.WriteString("## Identity\n\n")
@@ -364,4 +365,58 @@ func writeInsightsMarkdown(b *strings.Builder, r *models.Report) {
 	if len(in.Limits) > 0 {
 		b.WriteString("_" + strings.Join(in.Limits, " ") + "_\n\n")
 	}
+}
+
+// writePostsMarkdown lists what was copied from the accounts the operator opted in (the most recent items only;
+// the complete copy is in the JSON report).
+func writePostsMarkdown(b *strings.Builder, r *models.Report) {
+	if len(r.Posts) == 0 && len(r.PostSources) == 0 {
+		return
+	}
+	b.WriteString("## Public posts\n\n")
+	b.WriteString("Copied as they were public, without signing in, from the accounts named below. They are evidence, not conclusions.\n\n")
+	for _, s := range r.PostSources {
+		line := fmt.Sprintf("- **%s** @%s: %d item(s)", s.Platform, s.Handle, s.Count)
+		if s.Oldest != "" {
+			line += fmt.Sprintf(" (%s to %s)", s.Oldest[:min(10, len(s.Oldest))], s.Newest[:min(10, len(s.Newest))])
+		}
+		if s.Note != "" {
+			line += " — " + s.Note
+		}
+		b.WriteString(line + "\n")
+	}
+	b.WriteString("\n")
+	if c := r.Insights; c != nil && c.Content != nil && len(c.Content.Topics) > 0 {
+		var ts []string
+		for i, t := range c.Content.Topics {
+			if i == 8 {
+				break
+			}
+			ts = append(ts, fmt.Sprintf("%s (%d)", t.Label, t.N))
+		}
+		fmt.Fprintf(b, "Most used tags and subjects: %s.\n\n", strings.Join(ts, ", "))
+	}
+	n := len(r.Posts)
+	if n > 40 {
+		n = 40
+	}
+	for _, p := range r.Posts[:n] {
+		text := strings.Join(strings.Fields(p.Text), " ")
+		if len([]rune(text)) > 240 {
+			text = string([]rune(text)[:240]) + "…"
+		}
+		d := p.Time
+		if len(d) > 10 {
+			d = d[:10]
+		}
+		fmt.Fprintf(b, "- %s · %s %s · %s", d, p.Platform, p.Kind, text)
+		if p.URL != "" {
+			fmt.Fprintf(b, " <%s>", p.URL)
+		}
+		b.WriteString("\n")
+	}
+	if len(r.Posts) > n {
+		fmt.Fprintf(b, "\n…and %d more in the JSON report.\n", len(r.Posts)-n)
+	}
+	b.WriteString("\n")
 }

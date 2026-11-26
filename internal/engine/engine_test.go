@@ -491,3 +491,55 @@ func TestCollectorsRunInParallelAndReportLiveState(t *testing.T) {
 		t.Fatalf("live state for %d collectors, want %d", len(last), n)
 	}
 }
+
+type optFake struct{ *fake }
+
+func (optFake) OptIn() bool { return true }
+
+// Opt-in collectors (those that copy content) run only when named, and the posts they copy are moved
+// into the report once.
+func TestOptInCollectorsRunOnlyWhenNamedAndPostsAreCollected(t *testing.T) {
+	c, err := httpx.New(httpx.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mk := func() *Engine {
+		e := New(Config{}, c)
+		e.Register(&fake{name: "social", can: func(models.Target) bool { return true }})
+		e.Register(optFake{&fake{name: "postsx", can: func(models.Target) bool { return true },
+			run: func(_ models.Target, emit func(models.Finding)) {
+				p := models.Post{Platform: "Mastodon", Handle: "a", ID: "1", Kind: "post", Text: "hello", Time: "2026-01-01T00:00:00Z"}
+				emit(models.Finding{Source: "Mastodon public posts", Status: models.StatusFound, Posts: []models.Post{p, p},
+					PostSource: &models.PostSource{Platform: "Mastodon", Handle: "a", Count: 1}})
+				emit(models.Finding{Source: "Reddit public posts", Status: models.StatusNotFound,
+					PostSource: &models.PostSource{Platform: "Reddit", Handle: "a", Note: "not shown"}})
+			}}})
+		return e
+	}
+	rep, err := mk().Run(context.Background(), models.Target{Username: "a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range rep.Modules {
+		if m.Name == "postsx" {
+			t.Fatal("an opt-in collector ran without being named")
+		}
+	}
+	e := mk()
+	e.cfg.Modules = []string{"social", "postsx"}
+	rep, err = e.Run(context.Background(), models.Target{Username: "a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.Posts) != 1 || rep.Posts[0].Text != "hello" {
+		t.Fatalf("posts should be collected once: %+v", rep.Posts)
+	}
+	if len(rep.PostSources) != 2 {
+		t.Fatalf("both sources (even the one with nothing) must be recorded: %+v", rep.PostSources)
+	}
+	for _, f := range rep.Findings {
+		if len(f.Posts) != 0 {
+			t.Error("posts must not be stored twice")
+		}
+	}
+}

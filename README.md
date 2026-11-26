@@ -42,6 +42,10 @@ All screenshots show a **synthetic demonstration case** (an invented person and 
 | ![What will be collected](docs/screenshots/46-collection-plan.png)<br>**46. What will be collected:** the question, each collector's inputs and destinations, tick or untick before anything is sent. |  |
 | ![Live collectors](docs/screenshots/47-live-collectors.png)<br>**47. Live collectors:** all run at once; each row says what it is checking now. |  |
 | ![Collection plan, Arabic](docs/screenshots/48-collection-plan-ar.png)<br>**48. The same step in Arabic.** |  |
+| ![Posts](docs/screenshots/50-posts-feed.png)<br>**50. Posts:** what the chosen accounts published in public, searchable, with the original link. |  |
+| ![Sources](docs/screenshots/51-posts-sources.png)<br>**51. Sources:** what was copied from each account and why anything is missing. |  |
+| ![Activity](docs/screenshots/52-posts-activity.png)<br>**52. Activity:** items per month, hour and weekday. |  |
+| ![Topics and people](docs/screenshots/53-posts-topics.png)<br>**53. Topics and people:** tags, who they talk to, links and writing habits. |  |
 
 ## Insights
 
@@ -63,6 +67,10 @@ The brief and the next actions are also in the console summary, the Markdown and
 
 The web form asks **what you want to find out** (identify, check a claimed identity, see what is exposed, investigate a domain or company, or everything) and proposes only the collectors that answer it. Starting shows **what will be collected**: for each collector, which of your details it reads and where it sends them, with a rough request count; you tick or untick before anything is sent. While it runs, every collector is shown live (waiting, running, finished or stopped) with what it is checking right now. On the command line use `-goal` and `-plan`. ARGUS never analyses religion or belief, health, sexual orientation or gender identity, or political and trade-union affiliation, even when they appear in the evidence. Details in [docs/COLLECTION.md](docs/COLLECTION.md).
 
+## Copying public posts (opt-in)
+
+For the accounts you choose, ARGUS can copy what they publish in public (Mastodon, Bluesky, GitHub, Reddit) without signing in, and show it in a **Posts** view with the topics, rhythm, people and writing habits it adds up to. It is off unless you tick it, uses only the username you typed, skips accounts that asked not to be shown to visitors, stops at the first refusal, and never analyses religion, health, sexual orientation or political affiliation. Details in [docs/POSTS.md](docs/POSTS.md).
+
 ## Settings: language, API keys and model
 
 The **Settings** button (top bar, or `Ctrl+K` → Settings) holds the interface **language** (English or Arabic; Arabic switches the whole interface and layout to right-to-left, the choice is kept in your browser, reports and exports stay in English) and keys for model providers (Claude, OpenAI, Gemini, a local Ollama or OpenAI-compatible server) and for tools that need one (a Google API key for The 3rd Eye). Each provider has a masked field, an Enabled switch and **Test connection**; pick the provider and type the exact model name under *Model*. Keys are saved in an AES-256-GCM encrypted file under your config directory (`~/.config/argus/settings.enc`, mode 0600; the key sits next to it, or set `ARGUS_SETTINGS_KEY`), are never sent back to the browser (only the last four characters) and never enter reports or cases. Environment variables (`GOOGLE_API_KEY`, `OPENAI_API_KEY`, …) are read when nothing is stored. A tool that needs a key is skipped, with a note in the report, when its provider is off or has no key; otherwise the key is passed to it in its environment variable only. The encryption protects the file from accidental exposure (backups, a stray copy); it cannot protect against someone who already controls your user account. ARGUS has no model-powered feature yet: the model choice is stored and tested for when one is added.
@@ -81,6 +89,7 @@ It removes the `argus` program, the helper tools `install.sh` put in its private
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised, what happens in a run, the web server, the front end and the language layer.
 - [docs/WRITING-A-MODULE.md](docs/WRITING-A-MODULE.md): add a collector (the contract, an example, every place to wire it in, how to test it offline, wrapping external programs).
+- [docs/POSTS.md](docs/POSTS.md): copying public posts: what, from whom, what is respected and what is analysed.
 - [docs/COLLECTION.md](docs/COLLECTION.md): choosing what is collected, the plan shown before a run and the live collector view.
 - [docs/INSIGHTS.md](docs/INSIGHTS.md): how each insight is computed: rules, weights and limits.
 - [docs/COMPARING-CASES.md](docs/COMPARING-CASES.md): saved cases, comparing two runs, how to read a difference, comparing from the command line.

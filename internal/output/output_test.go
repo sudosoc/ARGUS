@@ -151,3 +151,19 @@ func TestInsightsAppearInMarkdownAndHTML(t *testing.T) {
 		t.Fatal("html lacks the brief")
 	}
 }
+
+func TestPostsAppearInMarkdownAndNotPastTheLimit(t *testing.T) {
+	r := &models.Report{Target: models.Target{Username: "ann"}}
+	r.PostSources = []models.PostSource{{Platform: "Mastodon", Handle: "ann", Count: 2, Oldest: "2026-01-01T00:00:00Z", Newest: "2026-02-01T00:00:00Z"}, {Platform: "Reddit", Handle: "ann", Note: "Reddit did not show this account's history"}}
+	for i := 0; i < 45; i++ {
+		r.Posts = append(r.Posts, models.Post{Platform: "Mastodon", Kind: "post", Handle: "ann", Time: "2026-02-01T00:00:00Z", Text: "hello world", URL: "https://m.example/1"})
+	}
+	var b strings.Builder
+	writePostsMarkdown(&b, r)
+	out := b.String()
+	for _, want := range []string{"## Public posts", "without signing in", "Reddit did not show", "and 5 more in the JSON report"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("markdown lacks %q:\n%s", want, out)
+		}
+	}
+}

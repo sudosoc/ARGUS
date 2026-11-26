@@ -18,6 +18,9 @@ In the web form, **Question** decides which collectors are proposed. On the comm
 `uploads`, `iddecode`, `crypto` and `context` stay in every question: they only ever work on something you supplied explicitly
 (a file, pasted links, a wallet, a place or period). A collector is proposed only if you entered something it can use.
 
+Following leads (a username, e-mail or domain found along the way) stays inside the collectors you ticked. Collectors that copy content
+(public posts) are opt-in: they run only when you tick them. See [POSTS.md](POSTS.md).
+
 ## 2. See what will be collected
 
 Pressing **Start investigation** does not start anything: it opens **What will be collected**, listing for every proposed collector

@@ -145,9 +145,9 @@
       count.textContent = all.filter((c) => c.checked).length + "/" + all.length + " selected";
     };
     for (const m of mods) {
-      const cb = el("input", { type: "checkbox", name: "mod", value: m.name, id: "m_" + m.name, checked: "" });
+      const cb = el("input", { type: "checkbox", name: "mod", value: m.name, id: "m_" + m.name, checked: m.optional ? null : "" });
       box.append(el("label", { class: "check mod", for: "m_" + m.name, title: m.description }, cb,
-        el("span", { class: "t" }, el("b", { text: m.name }), el("span", { class: "need", text: UI.MODULE_NEEDS[m.name] || "any input" })),
+        el("span", { class: "t" }, el("b", { text: m.name }), el("span", { class: "need", text: m.optional ? "opt-in · " + (UI.MODULE_NEEDS[m.name] || "username") : UI.MODULE_NEEDS[m.name] || "any input" })),
         UI.infoBtn("mod:" + m.name)));
     }
     $("modAll").onclick = () => { box.querySelectorAll('input[name="mod"]').forEach((c) => (c.checked = true)); saveOpts(); };
@@ -207,7 +207,7 @@
         const allowed = chosen.length === mods.length ? null : new Set(chosen);
         const ok = await UI.confirmPlan({ ...body, modules: [] }, allowed);
         if (!ok) return;
-        body.modules = ok.all && !allowed ? [] : ok.modules;
+        body.modules = ok.modules; // always explicit: following leads stays inside what was chosen, and opt-in collectors run only when ticked
         const s = await UI.api("/api/scans", { method: "POST", body: JSON.stringify(body) });
         UI.openScan(s.id);
         if (window.innerWidth < 1100) UI.showPanel(false);

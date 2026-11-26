@@ -62,7 +62,8 @@
       });
       const goalNow = plan.goals.find((g) => g.id === plan.goal) || plan.goals[0];
       const need = plan.collectors.filter((c) => c.selected && (!allowed || allowed.has(c.name)));
-      const spare = plan.collectors.filter((c) => !need.includes(c));
+      const optional = plan.collectors.filter((c) => c.optional);
+      const spare = plan.collectors.filter((c) => !need.includes(c) && !c.optional);
       const sup = plan.supplied.map((k) => KIND[k] || k).join(", ");
 
       const startRow = el("div", { class: "plan-foot" },
@@ -82,6 +83,9 @@
         el("p", { class: "hint", text: "Using what you entered (" + (sup || "nothing") + "). Collectors that need something you did not enter are not listed." }),
         el("h3", { class: "fsec-h", text: "Will run (" + need.length + ")" }),
         need.length ? el("div", { class: "plan-list" }, ...need.map(row)) : el("p", { class: "hint", text: "Nothing in this question applies to what you entered. Add a detail, or choose another question." }),
+        optional.length ? el("div", { class: "plan-opt" }, el("h3", { class: "fsec-h", text: "Optional: copy public posts (off unless you tick)" }),
+          el("p", { class: "hint", text: "Copies what the account publicly shows to anyone without an account: no sign-in, no keys. Only the username you typed is used, never a guess. Accounts that asked not to be shown to visitors are skipped, and each place is asked a handful of times, one request a second." }),
+          el("div", { class: "plan-list" }, ...optional.map(row))) : null,
         spare.length ? el("details", { class: "plan-spare" }, el("summary", { text: "Also available, not needed for this question (" + spare.length + ")" }), el("div", { class: "plan-list" }, ...spare.map(row))) : null,
         plan.skipped.length ? el("details", { class: "plan-spare" }, el("summary", { text: "Skipped: they need details you did not enter (" + plan.skipped.length + ")" }), el("p", { class: "hint", text: plan.skipped.map((s) => s.name).join(", ") })) : null,
         el("div", { class: "plan-never" }, UI.icon("shield"), el("span", { text: "Never collected or analysed, even if it appears in the evidence: " + plan.never.join("; ") + "." })),
